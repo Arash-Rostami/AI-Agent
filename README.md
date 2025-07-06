@@ -2,30 +2,6 @@
 A minimal, full-stack Node.js agent powered by Google's Gemini API. Includes chat history, dynamic routing, error handling, and tool integration patterns — built for devs who want to go beyond "Hello, world" with real AI workflows.
 
 
-## Steps to Add This to Your README.md
-
-1. **Header Section**
-   Copy the project title, description, and horizontal rule (`---`).
-
-2. **Setup & Configuration**
-   Paste the “⚙️ Setup and Configuration” section, including the environment‑variable instructions.
-
-3. **Environment Variables Block**
-   Insert the fenced code block for `.env`, replacing placeholders with your actual keys.
-
-4. **API Keys Instructions**
-   Copy the sub‑lists explaining how to get each API key.
-
-5. **Installation & Running**
-   Add the installation commands and instructions for running with `nodemon`.
-
-6. **Emoji and Formatting**
-   Emojis (e.g. `🤖`, `⚙️`, `🚨`) are just Unicode characters—GitHub will render them fine.
-
----
-
-## Full Markdown Text
-
 ````markdown
 # 🤖 Gemini AI Agent — Your Smart Assistant Starter Kit
 
