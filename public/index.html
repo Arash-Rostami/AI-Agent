@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Arash Rostami</title>
+    <link rel="stylesheet" href="./assets/css/fontAwesome.css"></link>
+    <link rel="stylesheet" href="./assets/css/myStyles.css"></link>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                AI Assistant
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="status-text">Online</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+                <i class="fas fa-sun"></i>
+            </button>
+        </div>
+    </header>
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            <div class="welcome-message">
+                <h2>Welcome to AI Assistant</h2>
+                <p>Developed by Express JS - Start a conversation below</p>
+            </div>
+        </div>
+        <div class="input-container">
+            <form class="input-form" id="chat-form">
+                <div class="input-wrapper">
+                        <textarea
+                                class="message-input"
+                                id="message-input"
+                                placeholder="Type your message..."
+                                rows="1"
+                                autocomplete="off"
+                        ></textarea>
+                    <button type="submit" class="send-button" id="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <button type="button" class="clear-button" id="clear-button">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="module">
+    import ChatFacade from './assets/js/ChatFacade.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        new ChatFacade();
+    });
+</script>
+</body>
+</html>
