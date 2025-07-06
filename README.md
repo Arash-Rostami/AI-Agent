@@ -1,14 +1,6 @@
 🤖 Gemini AI Agent — Your Smart Assistant Starter Kit
 A minimal, full-stack Node.js agent powered by Google's Gemini API. Includes chat history, dynamic routing, error handling, and tool integration patterns — built for devs who want to go beyond "Hello, world" with real AI workflows.
 
-
-````markdown
-# 🤖 Gemini AI Agent — Your Smart Assistant Starter Kit
-
-A minimal, full-stack Node.js agent powered by Google's Gemini API. It includes chat history, dynamic routing, robust error handling, and practical tool integration patterns. This project is built for developers who want to go beyond "Hello, world" and dive into real AI workflows.
-
----
-
 ## ⚙️ Setup and Configuration
 
 To get this AI Agent up and running on your local machine, you'll need to set up a few environment variables for API keys and configuration.
@@ -19,6 +11,10 @@ This project relies on environment variables to manage sensitive API keys and ot
 
 Populate your `.env` file with the following:
 
+
+````markdown
+
+
 ```dotenv
 GOOGLE_API_KEY=YOUR_GEMINI_API_KEY_HERE
 GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
@@ -26,9 +22,10 @@ WEATHER_API_KEY=YOUR_WEATHER_API_KEY_HERE
 PORT=3000
 ````
 
-🚨 **Important:** Remember to replace the placeholder values (`YOUR_GEMINI_API_KEY_HERE`, `YOUR_WEATHER_API_KEY_HERE`) with your actual API keys.
 
 ---
+
+🚨 **Important:** Remember to replace the placeholder values (`YOUR_GEMINI_API_KEY_HERE`, `YOUR_WEATHER_API_KEY_HERE`) with your actual API keys.
 
 #### 🔑 How to Get Your API Keys:
 
