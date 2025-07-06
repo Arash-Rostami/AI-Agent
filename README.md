@@ -1,6 +1,6 @@
-Here’s how you can integrate the provided content into your GitHub README.md—broken down into clear steps, followed by the full Markdown text ready to copy‑and‑paste.
+🤖 Gemini AI Agent — Your Smart Assistant Starter Kit
+A minimal, full-stack Node.js agent powered by Google's Gemini API. Includes chat history, dynamic routing, error handling, and tool integration patterns — built for devs who want to go beyond "Hello, world" with real AI workflows.
 
----
 
 ## Steps to Add This to Your README.md
 
@@ -128,5 +128,3 @@ We use `nodemon` for automatic restarts on code changes.
 
 Good luck, and happy coding! 😉
 
-```
-```
