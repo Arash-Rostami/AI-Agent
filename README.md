@@ -13,9 +13,6 @@ Populate your `.env` file with the following:
 
 
 ````markdown
-
-
-```dotenv
 GOOGLE_API_KEY=YOUR_GEMINI_API_KEY_HERE
 GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
 WEATHER_API_KEY=YOUR_WEATHER_API_KEY_HERE
