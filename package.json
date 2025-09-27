@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "node app.js",
+    "auto": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -15,13 +17,11 @@
   "description": "AI an AI agents Play Ground",
   "dependencies": {
     "-": "^0.0.1",
-    "@google/generative-ai": "^0.24.1",
-    "@mastra/core": "^0.10.10",
-    "@mastra/mcp": "^0.10.5",
     "axios": "^1.9.0",
     "config": "^3.3.12",
     "express": "^5.1.0",
     "g": "^2.0.1",
+    "groq-sdk": "^0.32.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "uuid": "^11.1.0"

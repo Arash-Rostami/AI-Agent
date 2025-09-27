@@ -14,7 +14,17 @@ export default async function callGeminiAPI(message, conversationHistory = []) {
 
         const requestBody = {
             contents,
-            tools: TOOL_DEFINITIONS
+            tools: TOOL_DEFINITIONS,
+            tool_config: {
+                function_calling_config: {
+                    mode: "AUTO"
+                }
+            },
+            systemInstruction: {
+                parts: [{
+                    text: "You are a helpful general-purpose assistant. Answer all questions directly. Only use tools when the user specifically asks for real-time data like weather. For recipes, general knowledge, or conversations, respond normally without tools."
+                }]
+            }
         };
 
         const response = await axios.post(

@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 const router = express.Router();
 
 
-export default function createRouter(callGeminiAPI) {
+export default function createRouter(callGeminiAPI, callGrokAPI = null) {
 
     router.get('', (req, res) => {
         res.sendFile(join(__dirname, 'public', 'index.html'));
@@ -48,6 +48,26 @@ export default function createRouter(callGeminiAPI) {
             });
         }
     });
+// Groq chat endpoint
+    router.post('/ask-groq', async (req, res) => {
+        if (!callGrokAPI) return res.status(501).json({error: 'Groq service not available'});
+
+        const {message, history} = req.body;
+        if (!message || typeof message !== 'string') {
+            return res.status(400).json({error: 'Valid message is required'});
+        }
+
+        try {
+            const response = await callGrokAPI(message, history || []);
+            res.json({reply: response});
+        } catch (error) {
+            console.error('Groq error:', error.message);
+            res.status(500).json({
+                error: 'Sorry, I encountered an error. Please try again.',
+                details: error.message
+            });
+        }
+    });
 
 // Test endpoint
     router.get('/test', async (req, res) => {
@@ -63,6 +83,21 @@ export default function createRouter(callGeminiAPI) {
                 status: 'error',
                 error: error.message,
                 details: error.response?.data || 'Unknown error'
+            });
+        }
+    });
+// Alternative service endpoint
+    router.get('/grok', async (req, res) => {
+        try {
+            // const reply = await callGrokAPI(message, history || []);
+            const reply = await callGrokAPI('Hi — give one-sentence reason why fast LMs matter.');
+
+            res.json({reply});
+        } catch (error) {
+            console.error('Grok error:', error.message || error);
+            res.status(500).json({
+                error: 'Grok API error',
+                details: error.message || String(error)
             });
         }
     });

@@ -7,6 +7,8 @@ export default class ChatFacade {
         this.chatForm = document.getElementById('chat-form');
         this.themeToggle = document.getElementById('theme-toggle');
         this.statusText = document.getElementById('status-text');
+        this.serviceSelect = document.getElementById('service-select');
+
 
         this.conversationHistory = [];
         this.isTyping = false;
@@ -64,6 +66,7 @@ export default class ChatFacade {
     async handleSubmit(e) {
         e.preventDefault();
         const message = this.messageInput.value.trim();
+        const selectedService = this.serviceSelect.value;
 
         if (!message || this.isTyping) return;
 
@@ -73,7 +76,8 @@ export default class ChatFacade {
         this.setTyping(true);
 
         try {
-            const response = await fetch('/ask', {
+            const endpoint = selectedService === 'groq' ? '/ask-groq' : '/ask';
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
