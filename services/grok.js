@@ -1,4 +1,7 @@
 import Groq from 'groq-sdk';
+import fs from 'fs';
+import path from 'path';
+import {fileURLToPath} from 'url';
 import {GROK_API_KEY} from '../config/index.js';
 
 if (!GROK_API_KEY) {
@@ -7,10 +10,15 @@ if (!GROK_API_KEY) {
 
 const groq = new Groq({apiKey: GROK_API_KEY});
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const instructionPath = path.resolve(__dirname, '..', 'documents', 'instructions.txt');
+const SYSTEM_INSTRUCTION_TEXT = fs.readFileSync(instructionPath, 'utf-8');
+
 
 export async function getGroqChatCompletion() {
     return groq.chat.completions.create({
-        messages: [{role: 'user', content: 'Explain the importance of fast language models'}],
+        messages: [{role: 'system', content: SYSTEM_INSTRUCTION_TEXT}],
         model: 'openai/gpt-oss-120b'
     });
 }

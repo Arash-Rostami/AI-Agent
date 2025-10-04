@@ -387,6 +387,61 @@ body {
     color: var(--text-color);
 }
 
+.message-content.rtl {
+    text-align: right;
+}
+
+.message-content p {
+    margin: 0;
+}
+
+.message-content h1,
+.message-content h2,
+.message-content h3 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.message-content ul,
+.message-content ol {
+    padding-left: 20px;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.message-content.rtl ul,
+.message-content.rtl ol {
+    padding-left: 0;
+    padding-right: 20px;
+}
+
+.message-content pre {
+    background-color: var(--scrollbar-track);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+}
+
+.message-content code {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: var(--border-color);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.message-content pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+}
+
 @media (max-width: 768px) {
     .header {
         padding: 1rem;

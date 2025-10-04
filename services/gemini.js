@@ -1,6 +1,14 @@
 import axios from "axios";
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import {GEMINI_API_KEY, GEMINI_API_URL} from "../config/index.js";
 import {allToolDefinitions, availableTools} from "../tools/toolDefinitions.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const instructionPath = path.resolve(__dirname, '..', 'documents', 'instructions.txt');
+const SYSTEM_INSTRUCTION_TEXT = fs.readFileSync(instructionPath, 'utf-8');
 
 const API_KEY = GEMINI_API_KEY;
 const API_URL = GEMINI_API_URL;
@@ -22,7 +30,8 @@ export default async function callGeminiAPI(message, conversationHistory = []) {
             },
             systemInstruction: {
                 parts: [{
-                    text: "You are a helpful general-purpose assistant. Answer all questions directly. Only use tools when the user specifically asks for real-time data like weather. For recipes, general knowledge, or conversations, respond normally without tools."
+                    // text: "You are a helpful general-purpose assistant. Answer all questions directly. Only use tools when the user specifically asks for real-time data like weather. For recipes, general knowledge, or conversations, respond normally without tools."
+                    text: SYSTEM_INSTRUCTION_TEXT
                 }]
             }
         };

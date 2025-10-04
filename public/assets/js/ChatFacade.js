@@ -76,7 +76,14 @@ export default class ChatFacade {
         this.setTyping(true);
 
         try {
-            const endpoint = selectedService === 'groq' ? '/ask-groq' : '/ask';
+            let endpoint = '/ask';
+            if (selectedService === 'groq') {
+                endpoint = '/ask-groq';
+            } else if (selectedService === 'openai') {
+                endpoint = '/ask-openai';
+            }
+
+
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -118,6 +125,9 @@ export default class ChatFacade {
         contentEl.className = 'message-content';
 
         if (sender === 'ai') {
+            const direction = this.detectLanguageDirection(content);
+            contentEl.dir = direction;
+            contentEl.classList.add(direction);
             contentEl.innerHTML = this.formatMarkdown(content);
         } else {
             contentEl.textContent = content;
@@ -133,33 +143,73 @@ export default class ChatFacade {
         this.messages.appendChild(messageEl);
         this.scrollToBottom();
 
-        // Update conversation history
         this.conversationHistory.push({
             role: sender === 'user' ? 'user' : 'assistant',
             content: content
         });
     }
 
+    detectLanguageDirection(text) {
+        const rtlRegex = /[\u0600-\u06FF]/;
+        return rtlRegex.test(text) ? 'rtl' : 'ltr';
+    }
+
     formatMarkdown(text) {
-        // Convert **bold** to <strong>
-        text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        let html = ` ${text} `.trim();
 
-        // Remove bullet point markers and keep the content
-        text = text.replace(/^[\*\-]\s+/gm, '');
+        html = html.replace(/```(?:\w+)?\n([\s\S]+?)\n```/g, (match, code) => {
+            const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<pre><code>${escapedCode}</code></pre>`;
+        });
 
-        // Convert single line breaks to <br>
-        text = text.replace(/\n/g, '<br>');
+        const lines = html.split('\n');
+        let inList = null; // Can be 'ul' or 'ol'
+        const processedLines = [];
 
-        // Convert double <br> to paragraph breaks
-        text = text.replace(/<br><br>/g, '</p><p>');
+        for (const line of lines) {
+            const ulMatch = line.match(/^[\*\-]\s(.*)/);
+            const olMatch = line.match(/^\d+\.\s(.*)/);
 
-        // Wrap in paragraphs
-        text = '<p>' + text + '</p>';
+            if (ulMatch) {
+                if (inList !== 'ul') {
+                    if (inList) processedLines.push(`</${inList}>`);
+                    processedLines.push('<ul>');
+                    inList = 'ul';
+                }
+                processedLines.push(`<li>${ulMatch[1]}</li>`);
+            } else if (olMatch) {
+                if (inList !== 'ol') {
+                    if (inList) processedLines.push(`</${inList}>`);
+                    processedLines.push('<ol>');
+                    inList = 'ol';
+                }
+                processedLines.push(`<li>${olMatch[1]}</li>`);
+            } else {
+                if (inList) {
+                    processedLines.push(`</${inList}>`);
+                    inList = null;
+                }
+                processedLines.push(line);
+            }
+        }
+        if (inList) {
+            processedLines.push(`</${inList}>`);
+        }
+        html = processedLines.join('\n');
 
-        // Clean up empty paragraphs
-        text = text.replace(/<p><\/p>/g, '');
+        html = html.replace(/^###\s(.+)/gm, '<h3>$1</h3>');
+        html = html.replace(/^##\s(.+)/gm, '<h2>$1</h2>');
+        html = html.replace(/^#\s(.+)/gm, '<h1>$1</h1>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
 
-        return text;
+        return html.split('\n\n').map(paragraph => {
+            if (paragraph.startsWith('<') && paragraph.endsWith('>')) {
+                return paragraph;
+            }
+            return paragraph ? `<p>${paragraph.replace(/\n/g, '<br>')}</p>` : '';
+        }).join('');
     }
 
     setTyping(isTyping) {
