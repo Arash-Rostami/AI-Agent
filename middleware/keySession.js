@@ -2,7 +2,9 @@ import { KeySessionManager } from '../utils/sessionManager.js';
 
 const sessionManager = new KeySessionManager([
     process.env.GOOGLE_API_KEY,
-    process.env.GEMINI_API_KEY
+    process.env.GOOGLE_API_KEY_ALT,
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_ALT
 ]);
 
 export const apiKeyMiddleware = (req, res, next) => {
