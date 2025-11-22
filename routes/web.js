@@ -19,7 +19,9 @@ export default function createRouter(callGeminiAPI, callGrokAPI = null) {
     router.get('/initial-prompt', async (req, res) => {
         try {
             const greeting = await callGeminiAPI(
-                'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way.'
+                'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way.',
+                [],
+                req.geminiApiKey
             );
             res.json({response: greeting});
         } catch (error) {
@@ -38,7 +40,7 @@ export default function createRouter(callGeminiAPI, callGrokAPI = null) {
         }
 
         try {
-            const response = await callGeminiAPI(message, history || []);
+            const response = await callGeminiAPI(message, history || [], req.geminiApiKey);
             res.json({reply: response});
         } catch (error) {
             console.error('Chat error:', error.message);
@@ -72,7 +74,11 @@ export default function createRouter(callGeminiAPI, callGrokAPI = null) {
 // Test endpoint
     router.get('/test', async (req, res) => {
         try {
-            const testResponse = await callGeminiAPI('Say "Connection test successful!" if you can receive this message.');
+            const testResponse = await callGeminiAPI(
+                'Say "Connection test successful!" if you can receive this message.',
+                [],
+                req.geminiApiKey
+            );
             res.json({
                 status: 'success',
                 message: 'API connection working!',

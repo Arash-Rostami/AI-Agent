@@ -1,8 +1,9 @@
 import axios from "axios";
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import {GEMINI_API_KEY, GEMINI_API_URL} from "../config/index.js";
+import {fileURLToPath} from 'url';
+// import {GEMINI_API_KEY, GEMINI_API_URL} from "../config/index.js";
+import {GEMINI_API_URL} from "../config/index.js";
 import {allToolDefinitions, availableTools} from "../tools/toolDefinitions.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -10,15 +11,16 @@ const __dirname = path.dirname(__filename);
 const instructionPath = path.resolve(__dirname, '..', 'documents', 'instructions.txt');
 const SYSTEM_INSTRUCTION_TEXT = fs.readFileSync(instructionPath, 'utf-8');
 
-const API_KEY = GEMINI_API_KEY;
-const API_URL = GEMINI_API_URL;
 const TOOL_DEFINITIONS = allToolDefinitions;
 const EXECUTING_TOOLS = availableTools;
 
 
-export default async function callGeminiAPI(message, conversationHistory = []) {
+export default async function callGeminiAPI(message, conversationHistory = [], apiKey) {
+    if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
+
     try {
         const contents = _formatConversationContents(conversationHistory, message);
+
 
         const requestBody = {
             contents,
@@ -37,18 +39,16 @@ export default async function callGeminiAPI(message, conversationHistory = []) {
         };
 
         const response = await axios.post(
-            `${API_URL}?key=${API_KEY}`, // Use module-scoped constants
+            `${GEMINI_API_URL}?key=${apiKey}`,
             requestBody,
             {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: {'Content-Type': 'application/json'},
                 timeout: 60000
             }
         );
 
         const candidate = response.data.candidates?.[0];
-        return await _handleGeminiResponse(candidate, message, conversationHistory);
+        return await _handleGeminiResponse(candidate, message, conversationHistory, apiKey);
 
     } catch (error) {
         console.error('❌ Gemini API Error:', error.response?.data || error.message);
@@ -96,7 +96,7 @@ function _formatConversationContents(conversationHistory, newMessage) {
     return contents;
 }
 
-async function _handleGeminiResponse(candidate, originalMessage, currentConversationHistory) {
+async function _handleGeminiResponse(candidate, originalMessage, currentConversationHistory, apiKey) {
     if (!candidate || !candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
         throw new Error('No valid content received from Gemini API.');
     }
@@ -122,7 +122,7 @@ async function _handleGeminiResponse(candidate, originalMessage, currentConversa
                 {role: 'tool_response', name: toolName, content: toolResult}
             ];
 
-            return await callGeminiAPI("continue", newConversationHistory);
+            return await callGeminiAPI("continue", newConversationHistory, apiKey);
 
         } else {
             throw new Error(`Tool "${toolName}" declared by Gemini is not found in your EXECUTING_TOOLS mapping.`);
