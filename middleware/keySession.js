@@ -1,4 +1,4 @@
-import { KeySessionManager } from '../utils/sessionManager.js';
+import {KeySessionManager} from '../utils/sessionManager.js';
 
 const sessionManager = new KeySessionManager([
     process.env.GOOGLE_API_KEY,
@@ -8,7 +8,7 @@ const sessionManager = new KeySessionManager([
 ]);
 
 export const apiKeyMiddleware = (req, res, next) => {
-    // 1. Get IP reliably
+    // 1. Get IP
     const userIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
 
     // 2. Get the Sticky Key

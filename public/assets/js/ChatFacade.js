@@ -86,7 +86,10 @@ export default class ChatFacade {
 
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Frame-Referer': document.referrer
+                },
                 body: JSON.stringify({
                     message,
                     history: this.conversationHistory
@@ -267,7 +270,11 @@ export default class ChatFacade {
 
     async loadInitialGreeting() {
         try {
-            const response = await fetch('/initial-prompt');
+            const response = await fetch('/initial-prompt', {
+                headers: {
+                    'X-Frame-Referer': document.referrer
+                }
+            });
             const data = await response.json();
             this.addMessage(data.response, 'ai');
         } catch (error) {

@@ -6,6 +6,8 @@ export const GEMINI_API_KEY = process.env.GOOGLE_API_KEY;
 export const GEMINI_API_URL = process.env.GEMINI_API_URL;
 export const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 export const GROK_API_KEY = process.env.GROK_API_KEY;
+export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()) : [];
 
 
 if (!GEMINI_API_URL) {

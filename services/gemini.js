@@ -2,7 +2,6 @@ import axios from "axios";
 import fs from 'fs';
 import path from 'path';
 import {fileURLToPath} from 'url';
-// import {GEMINI_API_KEY, GEMINI_API_URL} from "../config/index.js";
 import {GEMINI_API_URL} from "../config/index.js";
 import {allToolDefinitions, availableTools} from "../tools/toolDefinitions.js";
 
@@ -15,25 +14,25 @@ const TOOL_DEFINITIONS = allToolDefinitions;
 const EXECUTING_TOOLS = availableTools;
 
 
-export default async function callGeminiAPI(message, conversationHistory = [], apiKey) {
+export default async function callGeminiAPI(message, conversationHistory = [], apiKey, isRestrictedMode = false) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
     try {
         const contents = _formatConversationContents(conversationHistory, message);
 
-
         const requestBody = {
             contents,
-            tools: TOOL_DEFINITIONS,
-            tool_config: {
+            tools: isRestrictedMode ? undefined : TOOL_DEFINITIONS,
+            tool_config: isRestrictedMode ? undefined : {
                 function_calling_config: {
                     mode: "AUTO"
                 }
             },
             systemInstruction: {
                 parts: [{
-                    // text: "You are a helpful general-purpose assistant. Answer all questions directly. Only use tools when the user specifically asks for real-time data like weather. For recipes, general knowledge, or conversations, respond normally without tools."
-                    text: SYSTEM_INSTRUCTION_TEXT
+                    text: isRestrictedMode
+                        ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
+                        : SYSTEM_INSTRUCTION_TEXT
                 }]
             }
         };
@@ -48,10 +47,45 @@ export default async function callGeminiAPI(message, conversationHistory = [], a
         );
 
         const candidate = response.data.candidates?.[0];
-        return await _handleGeminiResponse(candidate, message, conversationHistory, apiKey);
+        // Pass the restricted mode flag to the handler as well, just in case
+        return await _handleGeminiResponse(candidate, message, conversationHistory, apiKey, isRestrictedMode);
 
     } catch (error) {
         console.error('❌ Gemini API Error:', error.response?.data || error.message);
+        throw error;
+    }
+}
+
+
+export async function callSimpleGeminiAPI(message, apiKey) {
+    if (!apiKey) throw new Error("API Key is missing");
+
+    try {
+        const requestBody = {
+            contents: [{
+                role: 'user',
+                parts: [{text: message}]
+            }]
+        };
+
+        const response = await axios.post(
+            `${GEMINI_API_URL}?key=${apiKey}`,
+            requestBody,
+            {
+                headers: {'Content-Type': 'application/json'},
+                timeout: 30000
+            }
+        );
+
+        const candidate = response.data.candidates?.[0];
+        if (!candidate || !candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+            throw new Error('No valid content received');
+        }
+
+        return candidate.content.parts[0].text;
+
+    } catch (error) {
+        console.error('❌ Simple Gemini API Error:', error.response?.data || error.message);
         throw error;
     }
 }
@@ -96,7 +130,7 @@ function _formatConversationContents(conversationHistory, newMessage) {
     return contents;
 }
 
-async function _handleGeminiResponse(candidate, originalMessage, currentConversationHistory, apiKey) {
+async function _handleGeminiResponse(candidate, originalMessage, currentConversationHistory, apiKey, isRestrictedMode) {
     if (!candidate || !candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
         throw new Error('No valid content received from Gemini API.');
     }
@@ -104,6 +138,8 @@ async function _handleGeminiResponse(candidate, originalMessage, currentConversa
     const firstPart = candidate.content.parts[0];
 
     if (firstPart.functionCall) {
+        if (isRestrictedMode) return "I apologize, but I cannot perform external actions in this mode.";
+
         const functionCall = firstPart.functionCall;
         const toolName = functionCall.name;
         const toolArgs = functionCall.args;
@@ -122,7 +158,7 @@ async function _handleGeminiResponse(candidate, originalMessage, currentConversa
                 {role: 'tool_response', name: toolName, content: toolResult}
             ];
 
-            return await callGeminiAPI("continue", newConversationHistory, apiKey);
+            return await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode);
 
         } else {
             throw new Error(`Tool "${toolName}" declared by Gemini is not found in your EXECUTING_TOOLS mapping.`);
@@ -133,5 +169,3 @@ async function _handleGeminiResponse(candidate, originalMessage, currentConversa
         throw new Error('Unexpected part type in Gemini response.');
     }
 }
-
-
