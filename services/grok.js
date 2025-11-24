@@ -4,9 +4,8 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 import {GROK_API_KEY} from '../config/index.js';
 
-if (!GROK_API_KEY) {
-    console.warn('GROK_API_KEY is not set. Set it in .env or your environment.');
-}
+if (!GROK_API_KEY) console.warn('GROK_API_KEY is not set. Set it in .env or your environment.');
+
 
 const groq = new Groq({apiKey: GROK_API_KEY});
 

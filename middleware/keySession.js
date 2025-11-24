@@ -1,4 +1,6 @@
 import {KeySessionManager} from '../utils/sessionManager.js';
+import {ConversationManager} from '../utils/conversationManager.js';
+
 
 const sessionManager = new KeySessionManager([
     process.env.GOOGLE_API_KEY,
@@ -8,16 +10,34 @@ const sessionManager = new KeySessionManager([
 ]);
 
 export const apiKeyMiddleware = (req, res, next) => {
-    // 1. Get IP
+    // 1. user identifier (flexible)
+    const userId = req.query.user || req.headers['x-user-id'];
     const userIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
 
-    // 2. Get the Sticky Key
-    const allocatedKey = sessionManager.getKeyForIP(userIp);
+    // 2. API key based on userId OR IP (fallback)
+    const keyIdentifier = userId || userIp;
+    const allocatedKey = sessionManager.getKeyForIP(keyIdentifier);
 
-    // 3. Attach to the Request object
+    // 3. session ID for conversation history
+    const sessionId = ConversationManager.getOrCreateSessionId(userId, userIp);
+    const conversationHistory = ConversationManager.getHistory(sessionId);
+
+    // 4. request payload
     req.geminiApiKey = allocatedKey;
+    req.sessionId = sessionId;
+    req.userId = userId;
+    req.userIp = userIp;
+    req.conversationHistory = conversationHistory;
 
-    console.log(`🔑 Request from ${userIp} assigned key: ...${allocatedKey.slice(-4)}`);
+    console.log(`🔑 ID: ${userId || 'standalone'} | IP: ${userIp} | Session: ...${sessionId.slice(-8)} | Key: ...${allocatedKey.slice(-4)}`);
 
     next();
 };
+
+export function saveConversationHistory(sessionId, history) {
+    ConversationManager.saveHistory(sessionId, history);
+}
+
+export function clearConversationHistory(sessionId) {
+    ConversationManager.clearHistory(sessionId);
+}

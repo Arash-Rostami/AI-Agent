@@ -1,8 +1,7 @@
-// const config = require('config')
 import express from 'express';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-
+import {clearConversationHistory, saveConversationHistory} from '../middleware/keySession.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -10,48 +9,49 @@ const __dirname = dirname(__filename);
 const router = express.Router();
 
 export default function createRouter(callGeminiAPI, callGrokAPI = null, callSimpleGeminiAPI = null) {
-    router.get('', (req, res) => {
-        res.sendFile(join(__dirname, 'public', 'index.html'));
-    });
+    const sendIndex = (req, res) => res.sendFile(join(__dirname, 'public', 'index.html'));
 
-// Initial greeting endpoint
+    const appendAndSave = (sessionId, conversationHistory, userMsg, assistantMsg) => {
+        const updated = [
+            ...conversationHistory,
+            ...(userMsg ? [{role: 'user', content: userMsg}] : []),
+            ...(assistantMsg ? [{role: 'assistant', content: assistantMsg}] : [])
+        ];
+        saveConversationHistory(sessionId, updated);
+        return updated;
+    };
+
+    const validateMessage = (msg) => msg && typeof msg === 'string';
+
+    router.get('', sendIndex);
+
     router.get('/initial-prompt', async (req, res) => {
-        const {isRestrictedMode} = req;
-
+        const {isRestrictedMode, geminiApiKey, sessionId, conversationHistory} = req;
         const prompt = isRestrictedMode
             ? 'سلام! لطفاً خودتان را به عنوان یک دستیار هوش مصنوعی مفید به زبان فارسی و به صورت دوستانه و مختصر معرفی کنید.'
             : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way.';
 
         try {
-            const greeting = await callGeminiAPI(
-                prompt,
-                [],
-                req.geminiApiKey,
-                isRestrictedMode
-            );
+            const greeting = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode);
+            appendAndSave(sessionId, conversationHistory, null, greeting);
             res.json({response: greeting});
         } catch (error) {
             const fallback = isRestrictedMode
                 ? 'سلام! من دستیار هوش مصنوعی شما هستم. چطور می‌توانم امروز به شما کمک کنم؟'
                 : 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?';
-            res.json({
-                response: fallback
-            });
+            res.json({response: fallback});
         }
     });
 
-// Chat endpoint
     router.post('/ask', async (req, res) => {
-        const {message, history} = req.body;
+        const {message} = req.body;
+        if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
-        if (!message || typeof message !== 'string') {
-            return res.status(400).json({error: 'Valid message is required'});
-        }
-
-        const {isRestrictedMode} = req;
+        const {isRestrictedMode, geminiApiKey, sessionId, conversationHistory} = req;
 
         try {
-            const response = await callGeminiAPI(message, history || [], req.geminiApiKey, isRestrictedMode);
+            const response = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode);
+            appendAndSave(sessionId, conversationHistory, message, response);
             res.json({reply: response});
         } catch (error) {
             console.error('Chat error:', error.message);
@@ -61,17 +61,18 @@ export default function createRouter(callGeminiAPI, callGrokAPI = null, callSimp
             });
         }
     });
-// Groq chat endpoint
+
     router.post('/ask-groq', async (req, res) => {
         if (!callGrokAPI) return res.status(501).json({error: 'Groq service not available'});
 
-        const {message, history} = req.body;
-        if (!message || typeof message !== 'string') {
-            return res.status(400).json({error: 'Valid message is required'});
-        }
+        const {message} = req.body;
+        if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
+
+        const {sessionId, conversationHistory} = req;
 
         try {
-            const response = await callGrokAPI(message, history || []);
+            const response = await callGrokAPI(message, conversationHistory);
+            appendAndSave(sessionId, conversationHistory, message, response);
             res.json({reply: response});
         } catch (error) {
             console.error('Groq error:', error.message);
@@ -82,7 +83,12 @@ export default function createRouter(callGeminiAPI, callGrokAPI = null, callSimp
         }
     });
 
-// Test endpoint
+    router.post('/clear-chat', (req, res) => {
+        const {sessionId} = req;
+        clearConversationHistory(sessionId);
+        res.json({success: true});
+    });
+
     router.get('/test', async (req, res) => {
         try {
             const testResponse = await callGeminiAPI(
@@ -103,12 +109,10 @@ export default function createRouter(callGeminiAPI, callGrokAPI = null, callSimp
             });
         }
     });
-// Alternative service endpoint
+
     router.get('/grok', async (req, res) => {
         try {
-            // const reply = await callGrokAPI(message, history || []);
             const reply = await callGrokAPI('Hi — give one-sentence reason why fast LMs matter.');
-
             res.json({reply});
         } catch (error) {
             console.error('Grok error:', error.message || error);
@@ -119,23 +123,14 @@ export default function createRouter(callGeminiAPI, callGrokAPI = null, callSimp
         }
     });
 
-
     router.post('/api/', async (req, res) => {
         if (!callSimpleGeminiAPI) return res.status(501).json({error: 'Simple API service not configured'});
 
-        let finalMessage = '';
-
-        if (req.body) {
-            if (typeof req.body === 'string') {
-                finalMessage = req.body;
-            } else if (typeof req.body === 'object') {
-                if (req.body.message) {
-                    finalMessage = req.body.message;
-                } else {
-                    finalMessage = JSON.stringify(req.body);
-                }
-            }
-        }
+        const finalMessage = req.body
+            ? (typeof req.body === 'string'
+                ? req.body
+                : (req.body.message ?? JSON.stringify(req.body)))
+            : '';
 
         if (!finalMessage || typeof finalMessage !== 'string' || finalMessage.trim().length === 0) {
             return res.status(400).json({
@@ -157,4 +152,3 @@ export default function createRouter(callGeminiAPI, callGrokAPI = null, callSimp
 
     return router;
 }
-

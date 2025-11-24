@@ -10,16 +10,21 @@ export default class ChatFacade {
         this.serviceSelect = document.getElementById('service-select');
 
 
-        this.conversationHistory = [];
         this.isTyping = false;
+        this.userId = this.getUserId();
 
         this.init();
+    }
+
+    getUserId() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('user');
     }
 
     init() {
         this.setupEventListeners();
         this.setupTheme();
-        this.loadInitialGreeting();
+        void this.loadInitialGreeting();
         this.setupTextareaAutoResize();
     }
 
@@ -88,12 +93,10 @@ export default class ChatFacade {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Frame-Referer': document.referrer
+                    'X-User-Id': this.userId,
+                    'X-Frame-Referer': document.referrer,
                 },
-                body: JSON.stringify({
-                    message,
-                    history: this.conversationHistory
-                })
+                body: JSON.stringify({message})
             });
 
             if (!response.ok) throw new Error('Server error');
@@ -113,9 +116,8 @@ export default class ChatFacade {
 
     addMessage(content, sender, isError = false) {
         const welcomeMessage = this.messages.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            welcomeMessage.remove();
-        }
+        if (welcomeMessage) welcomeMessage.remove();
+
 
         const messageEl = document.createElement('div');
         messageEl.className = `message ${sender}`;
@@ -136,20 +138,14 @@ export default class ChatFacade {
             contentEl.textContent = content;
         }
 
-        if (isError) {
-            contentEl.style.color = '#dc2626';
-        }
+        if (isError) contentEl.style.color = '#dc2626';
+
 
         messageEl.appendChild(avatar);
         messageEl.appendChild(contentEl);
 
         this.messages.appendChild(messageEl);
         this.scrollToBottom();
-
-        this.conversationHistory.push({
-            role: sender === 'user' ? 'user' : 'assistant',
-            content: content
-        });
     }
 
     detectLanguageDirection(text) {
@@ -247,14 +243,24 @@ export default class ChatFacade {
         }
     }
 
-    clearChat() {
+    async clearChat() {
+        try {
+            await fetch('/clear-chat', {
+                method: 'POST',
+                headers: {
+                    'X-User-Id': this.userId
+                }
+            });
+        } catch (error) {
+            console.error('Clear chat error:', error);
+        }
+
         this.messages.innerHTML = `
                     <div class="welcome-message">
-                        <h2>Welcome to AI Assistant</h2>
-                        <p>Developed by Express JS - Start a conversation below</p>
+                        <h2>Welcome to AI Assistant ֎</h2>
+                        <p>⚡ Express JS | 👩‍💻  Arash R. </p>
                     </div>
                 `;
-        this.conversationHistory = [];
         this.updateStatus('Online', 'success');
     }
 
@@ -272,6 +278,7 @@ export default class ChatFacade {
         try {
             const response = await fetch('/initial-prompt', {
                 headers: {
+                    'X-User-Id': this.userId,
                     'X-Frame-Referer': document.referrer
                 }
             });
