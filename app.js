@@ -4,6 +4,7 @@ import {PORT} from './config/index.js';
 //Instantiating
 import callGeminiAPI, {callSimpleGeminiAPI} from './services/gemini.js';
 import callGrokAPI from './services/grok.js';
+import callOpenRouterAPI from './services/openRouter.js';
 import errorHandler from './middleware/errorHandler.js';
 import createRouter from './routes/web.js';
 import {apiKeyMiddleware} from './middleware/keySession.js';
@@ -25,8 +26,7 @@ app.use(express.text());
 //     console.log('Grok reply:', reply);
 // })();
 
-app.use('/', createRouter(callGeminiAPI, callGrokAPI, callSimpleGeminiAPI));
-
+app.use('/', createRouter(callGeminiAPI, callGrokAPI, callOpenRouterAPI, callSimpleGeminiAPI));
 app.use(errorHandler);
 
 // Start server

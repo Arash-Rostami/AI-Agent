@@ -8,7 +8,12 @@ const __dirname = dirname(__filename);
 
 const router = express.Router();
 
-export default function createRouter(callGeminiAPI, callGrokAPI = null, callSimpleGeminiAPI = null) {
+export default function createRouter(
+    callGeminiAPI,
+    callGrokAPI = null,
+    callOpenRouterAPI = null,
+    callSimpleGeminiAPI = null
+) {
     const sendIndex = (req, res) => res.sendFile(join(__dirname, 'public', 'index.html'));
 
     const appendAndSave = (sessionId, conversationHistory, userMsg, assistantMsg) => {
@@ -76,6 +81,27 @@ export default function createRouter(callGeminiAPI, callGrokAPI = null, callSimp
             res.json({reply: response});
         } catch (error) {
             console.error('Groq error:', error.message);
+            res.status(500).json({
+                error: 'Sorry, I encountered an error. Please try again.',
+                details: error.message
+            });
+        }
+    });
+
+    router.post('/ask-openrouter', async (req, res) => {
+        if (!callOpenRouterAPI) return res.status(501).json({error: 'OpenRouter Grok service not available'});
+
+        const {message} = req.body;
+        if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
+
+        const {sessionId, conversationHistory} = req;
+
+        try {
+            const response = await callOpenRouterAPI(message, conversationHistory);
+            appendAndSave(sessionId, conversationHistory, message, response);
+            res.json({reply: response});
+        } catch (error) {
+            console.error('OpenRouter Grok error:', error.message);
             res.status(500).json({
                 error: 'Sorry, I encountered an error. Please try again.',
                 details: error.message

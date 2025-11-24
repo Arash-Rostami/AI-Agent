@@ -82,12 +82,13 @@ export default class ChatFacade {
 
         try {
             let endpoint = '/ask';
-            if (selectedService === 'groq') {
-                endpoint = '/ask-groq';
-            } else if (selectedService === 'openai') {
-                endpoint = '/ask-openai';
-            }
+            const serviceEndpoints = {
+                'groq': '/ask-groq',
+                'openai': '/ask-openai',
+                'openrouter': '/ask-openrouter'
+            };
 
+            endpoint = serviceEndpoints[selectedService] || endpoint;
 
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -257,7 +258,9 @@ export default class ChatFacade {
 
         this.messages.innerHTML = `
                     <div class="welcome-message">
-                        <h2>Welcome to AI Assistant ֎</h2>
+                        <h2>Welcome to AI Assistant 
+                          <span class="spin-icon"> ֎ </span>
+                        </h2>
                         <p>⚡ Express JS | 👩‍💻  Arash R. </p>
                     </div>
                 `;
