@@ -6,16 +6,24 @@ export async function getWebSearch(query) {
 
     try {
         console.log(`🔍 Searching the web for: "${query}"`);
-        const results = await search({ query: query }, "web");
+        const searchResponse = await search({ query: query }, "web");
 
-        if (!results || results.length === 0) return "No results found.";
+        // The library returns { data: [...], ... }
+        const results = searchResponse.data;
+
+        if (!results || !Array.isArray(results) || results.length === 0) {
+            return { results: "No results found." };
+        }
 
         // Limit to top 7 results
         const topResults = results.slice(0, 7).map(result => {
             return `Title: ${result.title}\nLink: ${result.url}\nSnippet: ${result.description || 'No description available.'}\n`;
         });
 
-        return topResults.join('\n---\n');
+        // Return an object to satisfy Gemini's Struct requirement
+        return {
+            results: topResults.join('\n---\n')
+        };
 
     } catch (error) {
         console.error('❌ Web Search Error:', error.message);
