@@ -49,13 +49,13 @@ export default function createRouter(
     });
 
     router.post('/ask', async (req, res) => {
-        const {message} = req.body;
+        const {message, useWebSearch} = req.body;
         if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
         const {isRestrictedMode, geminiApiKey, sessionId, conversationHistory} = req;
 
         try {
-            const response = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode);
+            const response = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch);
             appendAndSave(sessionId, conversationHistory, message, response);
             res.json({reply: response});
         } catch (error) {

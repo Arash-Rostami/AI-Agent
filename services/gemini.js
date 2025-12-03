@@ -14,7 +14,13 @@ const TOOL_DEFINITIONS = allToolDefinitions;
 const EXECUTING_TOOLS = availableTools;
 
 
-export default async function callGeminiAPI(message, conversationHistory = [], apiKey, isRestrictedMode = false) {
+export default async function callGeminiAPI(
+    message,
+    conversationHistory = [],
+    apiKey,
+    isRestrictedMode = false,
+    useWebSearch = false
+) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
     try {
@@ -22,7 +28,9 @@ export default async function callGeminiAPI(message, conversationHistory = [], a
 
         const requestBody = {
             contents,
-            tools: isRestrictedMode ? undefined : TOOL_DEFINITIONS,
+            tools: isRestrictedMode
+                ? undefined
+                : ((!useWebSearch) ? TOOL_DEFINITIONS.filter(t => t.name !== 'getWebSearch') : TOOL_DEFINITIONS),
             tool_config: isRestrictedMode ? undefined : {
                 function_calling_config: {
                     mode: "AUTO"
@@ -47,8 +55,7 @@ export default async function callGeminiAPI(message, conversationHistory = [], a
         );
 
         const candidate = response.data.candidates?.[0];
-        // Pass the restricted mode flag to the handler as well, just in case
-        return await _handleGeminiResponse(candidate, message, conversationHistory, apiKey, isRestrictedMode);
+        return await _handleGeminiResponse(candidate, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch);
 
     } catch (error) {
         console.error('❌ Gemini API Error:', error.response?.data || error.message);
@@ -130,7 +137,14 @@ function _formatConversationContents(conversationHistory, newMessage) {
     return contents;
 }
 
-async function _handleGeminiResponse(candidate, originalMessage, currentConversationHistory, apiKey, isRestrictedMode) {
+async function _handleGeminiResponse(
+    candidate,
+    originalMessage,
+    currentConversationHistory,
+    apiKey,
+    isRestrictedMode,
+    useWebSearch = false
+) {
     if (!candidate || !candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
         throw new Error('No valid content received from Gemini API.');
     }
@@ -158,7 +172,7 @@ async function _handleGeminiResponse(candidate, originalMessage, currentConversa
                 {role: 'tool_response', name: toolName, content: toolResult}
             ];
 
-            return await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode);
+            return await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode, useWebSearch);
 
         } else {
             throw new Error(`Tool "${toolName}" declared by Gemini is not found in your EXECUTING_TOOLS mapping.`);

@@ -8,6 +8,7 @@ export default class ChatFacade {
         this.themeToggle = document.getElementById('theme-toggle');
         this.statusText = document.getElementById('status-text');
         this.serviceSelect = document.getElementById('service-select');
+        this.webSearchBtn = document.getElementById('web-search-btn');
 
 
         this.isTyping = false;
@@ -33,6 +34,26 @@ export default class ChatFacade {
         this.clearButton.addEventListener('click', () => this.clearChat());
         this.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
+        this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
+        this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
+    }
+
+    toggleWebSearch() {
+        this.isWebSearchActive = !this.isWebSearchActive;
+        (this.isWebSearchActive)
+            ? this.webSearchBtn.classList.add('active')
+            : this.webSearchBtn.classList.remove('active');
+    }
+
+    handleServiceChange() {
+        const selectedService = this.serviceSelect.value;
+
+        if (selectedService === 'gemini') {
+            this.webSearchBtn.classList.remove('hidden');
+        } else {
+            this.webSearchBtn.classList.add('hidden');
+            if (this.isWebSearchActive) this.toggleWebSearch();
+        }
     }
 
     setupTheme() {
@@ -72,6 +93,8 @@ export default class ChatFacade {
         e.preventDefault();
         const message = this.messageInput.value.trim();
         const selectedService = this.serviceSelect.value;
+        const useWebSearch = this.isWebSearchActive;
+
 
         if (!message || this.isTyping) return;
 
@@ -97,7 +120,7 @@ export default class ChatFacade {
                     'X-User-Id': this.userId,
                     'X-Frame-Referer': document.referrer,
                 },
-                body: JSON.stringify({message})
+                body: JSON.stringify({message, useWebSearch})
             });
 
             if (!response.ok) throw new Error('Server error');
