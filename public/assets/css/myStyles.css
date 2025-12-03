@@ -693,6 +693,46 @@ body {
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
+.web-search-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 1rem;
+    padding: 0.625rem 1rem;
+    background: var(--input-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    outline: none;
+}
+
+.web-search-btn:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.web-search-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.web-search-btn.active:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.web-search-btn.hidden {
+    display: none;
+}
+
 .message-content.rtl {
     text-align: right;
 }
