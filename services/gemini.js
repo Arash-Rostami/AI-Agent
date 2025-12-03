@@ -152,18 +152,36 @@ async function _handleGeminiResponse(
     const firstPart = candidate.content.parts[0];
 
     if (firstPart.functionCall) {
-        if (isRestrictedMode) return "I apologize, but I cannot perform external actions in this mode.";
+        if (isRestrictedMode) return { text: "I apologize, but I cannot perform external actions in this mode.", sources: [] };
 
         const functionCall = firstPart.functionCall;
         const toolName = functionCall.name;
         const toolArgs = functionCall.args;
+        let sources = [];
 
         console.log(`🤖 Gemini requested to call tool: ${toolName} with arguments:`, toolArgs);
 
         if (EXECUTING_TOOLS[toolName]) {
-            const toolResult = await EXECUTING_TOOLS[toolName](toolArgs.location, toolArgs.unit);
+            let toolResult;
+            try {
+                if (toolName === 'getCurrentWeather') {
+                    toolResult = await EXECUTING_TOOLS[toolName](toolArgs.location, toolArgs.unit);
+                } else if (toolName === 'getWebSearch') {
+                    toolResult = await EXECUTING_TOOLS[toolName](toolArgs.query);
+                    if (toolResult && toolResult.sources) {
+                        sources = toolResult.sources;
+                    }
+                } else if (toolName === 'getBusinessInfo') {
+                    toolResult = await EXECUTING_TOOLS[toolName]();
+                } else {
+                    toolResult = await EXECUTING_TOOLS[toolName](toolArgs);
+                }
+            } catch (error) {
+                console.error(`❌ Tool "${toolName}" execution failed:`, error.message);
+                toolResult = { error: `Error executing tool: ${error.message}` };
+            }
 
-            console.log(`✅ Tool "${toolName}" executed successfully. Result:`, toolResult);
+            console.log(`✅ Tool "${toolName}" executed successfully.`);
 
             const newConversationHistory = [
                 ...currentConversationHistory,
@@ -172,13 +190,19 @@ async function _handleGeminiResponse(
                 {role: 'tool_response', name: toolName, content: toolResult}
             ];
 
-            return await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode, useWebSearch);
+            const nextResponse = await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode, useWebSearch);
+
+            // Merge sources
+            return {
+                text: nextResponse.text,
+                sources: [...sources, ...nextResponse.sources]
+            };
 
         } else {
             throw new Error(`Tool "${toolName}" declared by Gemini is not found in your EXECUTING_TOOLS mapping.`);
         }
     } else if (firstPart.text) {
-        return firstPart.text;
+        return { text: firstPart.text, sources: [] };
     } else {
         throw new Error('Unexpected part type in Gemini response.');
     }

@@ -127,7 +127,7 @@ export default class ChatFacade {
 
             const data = await response.json();
             this.setTyping(false);
-            this.addMessage(data.reply, 'ai');
+            this.addMessage(data.reply, 'ai', false, data.sources);
 
             this.updateStatus('Online', 'success');
         } catch (error) {
@@ -138,7 +138,7 @@ export default class ChatFacade {
         }
     }
 
-    addMessage(content, sender, isError = false) {
+    addMessage(content, sender, isError = false, sources = []) {
         const welcomeMessage = this.messages.querySelector('.welcome-message');
         if (welcomeMessage) welcomeMessage.remove();
 
@@ -149,6 +149,9 @@ export default class ChatFacade {
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
         avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'message-wrapper';
 
         const contentEl = document.createElement('div');
         contentEl.className = 'message-content';
@@ -164,9 +167,23 @@ export default class ChatFacade {
 
         if (isError) contentEl.style.color = '#dc2626';
 
+        contentWrapper.appendChild(contentEl);
+
+        if (sources && sources.length > 0) {
+            const sourcesEl = document.createElement('div');
+            sourcesEl.className = 'message-sources';
+            sourcesEl.innerHTML = '<h4>Sources:</h4>' + sources.map(source =>
+                `<div class="source-item">
+                    <a href="${source.url}" target="_blank" rel="noopener noreferrer" title="${source.snippet || ''}">
+                        ${source.title || source.url}
+                    </a>
+                </div>`
+            ).join('');
+            contentWrapper.appendChild(sourcesEl);
+        }
 
         messageEl.appendChild(avatar);
-        messageEl.appendChild(contentEl);
+        messageEl.appendChild(contentWrapper);
 
         this.messages.appendChild(messageEl);
         this.scrollToBottom();

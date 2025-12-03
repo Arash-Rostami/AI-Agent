@@ -6,16 +6,34 @@ export async function getWebSearch(query) {
 
     try {
         console.log(`🔍 Searching the web for: "${query}"`);
-        const results = await search({ query: query }, "web");
+        const searchResponse = await search({ query: query }, "web");
 
-        if (!results || results.length === 0) return "No results found.";
+        // The library returns { data: [...], ... }
+        const results = searchResponse.data;
+
+        if (!results || !Array.isArray(results) || results.length === 0) {
+            return { results: "No results found." };
+        }
 
         // Limit to top 7 results
-        const topResults = results.slice(0, 7).map(result => {
-            return `Title: ${result.title}\nLink: ${result.url}\nSnippet: ${result.description || 'No description available.'}\n`;
-        });
+        const limitedResults = results.slice(0, 7);
 
-        return topResults.join('\n---\n');
+        const stringResult = limitedResults.map(result => {
+            return `Title: ${result.title}\nLink: ${result.url}\nSnippet: ${result.description || 'No description available.'}\n`;
+        }).join('\n---\n');
+
+        const sources = limitedResults.map(result => ({
+            title: result.title,
+            url: result.url,
+            snippet: result.description
+        }));
+
+        // Return an object to satisfy Gemini's Struct requirement
+        // We include 'sources' for the UI to consume, Gemini sees it too which is helpful.
+        return {
+            results: stringResult,
+            sources: sources
+        };
 
     } catch (error) {
         console.error('❌ Web Search Error:', error.message);
