@@ -161,7 +161,21 @@ async function _handleGeminiResponse(
         console.log(`🤖 Gemini requested to call tool: ${toolName} with arguments:`, toolArgs);
 
         if (EXECUTING_TOOLS[toolName]) {
-            const toolResult = await EXECUTING_TOOLS[toolName](toolArgs.location, toolArgs.unit);
+            let toolResult;
+            try {
+                if (toolName === 'getCurrentWeather') {
+                    toolResult = await EXECUTING_TOOLS[toolName](toolArgs.location, toolArgs.unit);
+                } else if (toolName === 'getWebSearch') {
+                    toolResult = await EXECUTING_TOOLS[toolName](toolArgs.query);
+                } else if (toolName === 'getBusinessInfo') {
+                    toolResult = await EXECUTING_TOOLS[toolName]();
+                } else {
+                    toolResult = await EXECUTING_TOOLS[toolName](toolArgs);
+                }
+            } catch (error) {
+                console.error(`❌ Tool "${toolName}" execution failed:`, error.message);
+                toolResult = { error: `Error executing tool: ${error.message}` };
+            }
 
             console.log(`✅ Tool "${toolName}" executed successfully. Result:`, toolResult);
 
