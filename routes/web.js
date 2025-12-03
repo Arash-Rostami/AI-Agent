@@ -37,7 +37,7 @@ export default function createRouter(
             : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way.';
 
         try {
-            const greeting = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode);
+            const { text: greeting } = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode);
             appendAndSave(sessionId, conversationHistory, null, greeting);
             res.json({response: greeting});
         } catch (error) {
@@ -55,9 +55,9 @@ export default function createRouter(
         const {isRestrictedMode, geminiApiKey, sessionId, conversationHistory} = req;
 
         try {
-            const response = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch);
-            appendAndSave(sessionId, conversationHistory, message, response);
-            res.json({reply: response});
+            const { text: responseText, sources } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch);
+            appendAndSave(sessionId, conversationHistory, message, responseText);
+            res.json({reply: responseText, sources: sources});
         } catch (error) {
             console.error('Chat error:', error.message);
             res.status(500).json({
@@ -117,7 +117,7 @@ export default function createRouter(
 
     router.get('/test', async (req, res) => {
         try {
-            const testResponse = await callGeminiAPI(
+            const { text: testResponse } = await callGeminiAPI(
                 'Say "Connection test successful!" if you can receive this message.',
                 [],
                 req.geminiApiKey
