@@ -17,6 +17,7 @@
   "description": "AI an AI agents Play Ground",
   "dependencies": {
     "-": "^0.0.1",
+    "@navetacandra/ddg": "^0.0.8",
     "axios": "^1.9.0",
     "config": "^3.3.12",
     "express": "^5.1.0",

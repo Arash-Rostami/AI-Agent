@@ -8,6 +8,7 @@ export default class ChatFacade {
         this.themeToggle = document.getElementById('theme-toggle');
         this.statusText = document.getElementById('status-text');
         this.serviceSelect = document.getElementById('service-select');
+        this.webSearchToggle = document.getElementById('web-search-toggle');
 
 
         this.isTyping = false;
@@ -72,6 +73,7 @@ export default class ChatFacade {
         e.preventDefault();
         const message = this.messageInput.value.trim();
         const selectedService = this.serviceSelect.value;
+        const useWebSearch = this.webSearchToggle ? this.webSearchToggle.checked : false;
 
         if (!message || this.isTyping) return;
 
@@ -97,7 +99,7 @@ export default class ChatFacade {
                     'X-User-Id': this.userId,
                     'X-Frame-Referer': document.referrer,
                 },
-                body: JSON.stringify({message})
+                body: JSON.stringify({message, useWebSearch})
             });
 
             if (!response.ok) throw new Error('Server error');
