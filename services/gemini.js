@@ -26,19 +26,33 @@ export default async function callGeminiAPI(
     try {
         const contents = _formatConversationContents(conversationHistory, message);
 
+        // Determine allowed tools based on mode and flags
+        let allowedTools;
+        const isWebSearchTool = (t) => t.functionDeclarations && t.functionDeclarations.some(fd => fd.name === 'getWebSearch');
+
+        if (isRestrictedMode) {
+            allowedTools = useWebSearch ? TOOL_DEFINITIONS.filter(isWebSearchTool) : undefined;
+        } else {
+            allowedTools = useWebSearch ? TOOL_DEFINITIONS : TOOL_DEFINITIONS.filter(t => !isWebSearchTool(t));
+        }
+
+        if (allowedTools) {
+             console.log('🛠️ Allowed Tools:', allowedTools.map(t => t.functionDeclarations?.[0]?.name || 'Unknown'));
+        } else {
+             console.log('🛠️ No Tools Allowed');
+        }
+
         const requestBody = {
             contents,
-            tools: isRestrictedMode
-                ? undefined
-                : ((!useWebSearch) ? TOOL_DEFINITIONS.filter(t => t.name !== 'getWebSearch') : TOOL_DEFINITIONS),
-            tool_config: isRestrictedMode ? undefined : {
+            tools: allowedTools,
+            tool_config: allowedTools ? {
                 function_calling_config: {
                     mode: "AUTO"
                 }
-            },
+            } : undefined,
             systemInstruction: {
                 parts: [{
-                    text: isRestrictedMode
+                    text: isRestrictedMode && !useWebSearch
                         ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
                         : SYSTEM_INSTRUCTION_TEXT
                 }]
@@ -152,18 +166,20 @@ async function _handleGeminiResponse(
     const firstPart = candidate.content.parts[0];
 
     if (firstPart.functionCall) {
-        if (isRestrictedMode) return {
-            text: "I apologize, but I cannot perform external actions in this mode.",
-            sources: []
-        };
-
         const functionCall = firstPart.functionCall;
         const toolName = functionCall.name;
         const toolArgs = functionCall.args;
         let sources = [];
 
-
         console.log(`🤖 Gemini requested to call tool: ${toolName} with arguments:`, toolArgs);
+
+        if (isRestrictedMode && (!useWebSearch || toolName !== 'getWebSearch')) {
+            console.log(`🚫 Blocked tool call in restricted mode. isRestrictedMode=${isRestrictedMode}, useWebSearch=${useWebSearch}, toolName=${toolName}`);
+            return {
+                text: "I apologize, but I cannot perform external actions in this mode.",
+                sources: []
+            };
+        }
 
         if (EXECUTING_TOOLS[toolName]) {
             let toolResult;
