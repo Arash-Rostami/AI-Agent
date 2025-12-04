@@ -11,7 +11,8 @@ const sessionManager = new KeySessionManager([
 
 export const apiKeyMiddleware = (req, res, next) => {
     // 1. user identifier (flexible)
-    const userId = req.query.user || req.headers['x-user-id'];
+    let userId = req.query.user || req.headers['x-user-id'];
+    if (userId && String(userId).trim().toLowerCase() === 'null') userId = null;
     const userIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
 
     // 2. API key based on userId OR IP (fallback)

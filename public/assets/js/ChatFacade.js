@@ -85,7 +85,9 @@ export default class ChatFacade {
     handleKeydown(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            this.handleSubmit(e);
+            (async () => {
+                await this.handleSubmit(e);
+            })();
         }
     }
 

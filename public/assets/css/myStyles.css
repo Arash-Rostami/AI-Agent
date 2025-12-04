@@ -462,6 +462,7 @@ body {
 .input-wrapper {
     flex: 1;
     position: relative;
+    overflow: hidden;
 }
 
 .message-input {
@@ -479,6 +480,22 @@ body {
     outline: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.message-input::-webkit-resizer {
+    display: none;
+}
+
+.message-input::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+.message-input {
+    scrollbar-width: none;
 }
 
 .message-input:focus {
@@ -505,7 +522,7 @@ body {
     height: 36px;
     border: none;
     border-radius: 50%;
-    background: var(--my-custom-color);
+    background: var(--primary-color);
     color: white;
     cursor: pointer;
     display: flex;
@@ -514,6 +531,7 @@ body {
     font-size: 0.95rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(57, 62, 70, 0.3);
+    z-index: 2;
 }
 
 .send-button:hover:not(:disabled) {
