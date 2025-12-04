@@ -4,6 +4,8 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 import {GEMINI_API_URL} from "../config/index.js";
 import {allToolDefinitions, availableTools} from "../tools/toolDefinitions.js";
+import {AFFIRMATION_REGEX} from '../utils/affirmationMemoryManager.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +26,8 @@ export default async function callGeminiAPI(
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
     try {
+        if (isRestrictedMode && _hasUserGrantedPermission(conversationHistory)) isRestrictedMode = false;
+
         const contents = _formatConversationContents(conversationHistory, message);
         const isWebSearchTool = (t) => t.functionDeclarations && t.functionDeclarations.some(fd => fd.name === 'getWebSearch');
 
@@ -99,6 +103,26 @@ export async function callSimpleGeminiAPI(message, apiKey) {
         throw error;
     }
 }
+
+function _hasUserGrantedPermission(history) {
+    const permissionPhraseEnglish = "outside my Persol expertise";
+    const permissionPhraseFarsi = "از حوزه‌ی کاری من در پرسال خارج است";
+
+    for (let i = 0; i < history.length - 1; i++) {
+        const msg = history[i];
+        if (msg.role === 'assistant' && msg.content) {
+            if (msg.content.includes(permissionPhraseEnglish) || msg.content.includes(permissionPhraseFarsi)) {
+                const nextMsg = history[i + 1];
+                if (nextMsg.role === 'user' && nextMsg.content) {
+                    const userText = String(nextMsg.content).normalize('NFC');
+                    if (AFFIRMATION_REGEX.test(userText)) return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 
 function _formatConversationContents(conversationHistory, newMessage) {
     const contents = [];
