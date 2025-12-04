@@ -24,6 +24,12 @@ export default async function callGeminiAPI(
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
     try {
+        // Check if user has previously granted permission to proceed outside of restricted scope
+        const hasPermission = _hasUserGrantedPermission(conversationHistory);
+        if (isRestrictedMode && hasPermission) {
+            isRestrictedMode = false;
+        }
+
         const contents = _formatConversationContents(conversationHistory, message);
         const isWebSearchTool = (t) => t.functionDeclarations && t.functionDeclarations.some(fd => fd.name === 'getWebSearch');
 
@@ -98,6 +104,31 @@ export async function callSimpleGeminiAPI(message, apiKey) {
         console.error('❌ Simple Gemini API Error:', error.response?.data || error.message);
         throw error;
     }
+}
+
+function _hasUserGrantedPermission(history) {
+    const permissionPhraseEnglish = "outside my Persol expertise";
+    const permissionPhraseFarsi = "از حوزه‌ی کاری من در پرسال خارج است";
+    const affirmations = [
+        'yes', 'yeah', 'sure', 'ok', 'okay', 'please', 'go ahead', 'do it', 'confirm', 'why not',
+        'بله', 'آره', 'لطفا', 'حتما', 'مشکلی نیست', 'انجام بده'
+    ];
+
+    for (let i = 0; i < history.length - 1; i++) {
+        const msg = history[i];
+        if (msg.role === 'assistant' && msg.content) {
+            if (msg.content.includes(permissionPhraseEnglish) || msg.content.includes(permissionPhraseFarsi)) {
+                const nextMsg = history[i + 1];
+                if (nextMsg.role === 'user' && nextMsg.content) {
+                    const userText = nextMsg.content.toLowerCase();
+                    if (affirmations.some(word => userText.includes(word))) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 function _formatConversationContents(conversationHistory, newMessage) {
