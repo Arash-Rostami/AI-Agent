@@ -6,7 +6,7 @@ export const checkRestrictedMode = (req, res, next) => {
     console.log(`🔍 Incoming Referer: '${clientReferer}'`);
 
     req.isRestrictedMode = ALLOWED_ORIGINS.some(origin => clientReferer.startsWith(origin));
-    if (req.isRestrictedMode) console.log('🔒 Restricted Mode: ACTIVE (Tools Disabled)');
+    if (req.isRestrictedMode) console.log('🔒 Restricted Mode: ACTIVE (Tools Restricted)');
 
     next();
 };
