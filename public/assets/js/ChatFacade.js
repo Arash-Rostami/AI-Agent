@@ -338,8 +338,30 @@ export default class ChatFacade {
             });
             const data = await response.json();
             this.addMessage(data.response, 'ai');
+
+            if (data.isBmsMode) {
+                this.setupBmsMode();
+            }
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
+        }
+    }
+
+    setupBmsMode() {
+        if (this.serviceSelect) {
+            this.serviceSelect.style.display = 'none';
+            this.serviceSelect.classList.add('hidden');
+
+            const label = document.querySelector('label[for="service-select"]');
+            if (label) {
+                label.style.display = 'none';
+                label.classList.add('hidden');
+            }
+        }
+        if (this.webSearchBtn) {
+            this.webSearchBtn.style.display = 'none';
+            this.webSearchBtn.classList.add('hidden');
+            this.isWebSearchActive = false;
         }
     }
 }

@@ -13,8 +13,22 @@ export function formatContents(conversationHistory, newMessage) {
     return contents;
 }
 
-export function getAllowedTools(isRestrictedMode, useWebSearch, allTools) {
+export function getAllowedTools(isRestrictedMode, useWebSearch, allTools, isBmsMode = false) {
     const isWebSearchTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'getWebSearch');
+    const isBmsTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'search_bms_database');
+
+    if (isBmsMode) {
+        // In BMS Mode, allow BMS tool. Disable web search as requested.
+        // User said: "remove websearch". Assuming other tools are fine or just BMS.
+        // Usually, restricted environments might want only specific tools.
+        // I'll return standard tools + BMS tool - websearch.
+        // Wait, if I look at standard logic: "useWebSearch ? allTools : allTools.filter(t => !isWebSearchTool(t))"
+        // If isBmsMode, we force websearch off.
+        // But we must ensure BMS tool is present.
+        // Is BMS tool in "allTools"? Yes, I added it.
+        // So we just need to filter out websearch.
+        return allTools.filter(t => !isWebSearchTool(t));
+    }
 
     if (isRestrictedMode) {
         return useWebSearch ? allTools.filter(isWebSearchTool) : undefined;

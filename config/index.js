@@ -21,6 +21,8 @@ export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
 export const SYSTEM_INSTRUCTION_TEXT = fs.readFileSync(
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'documents', 'instructions.txt'), 'utf-8'
 );
+export const AI_SERVICE_SECRET = process.env.AI_SERVICE_SECRET;
+export const BMS_API_URL = process.env.BMS_API_URL || 'https://export.communitasker.io/ai/query';
 
 
 if (!GEMINI_API_URL) {
