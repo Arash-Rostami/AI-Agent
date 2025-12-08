@@ -108,7 +108,6 @@ export default class ChatFacade {
         try {
             const serviceEndpoints = {
                 'groq': '/ask-groq',
-                'openai': '/ask-arvancloud',
                 'openrouter': '/ask-openrouter',
                 'gpt-4o': '/ask-arvan',
                 'deepseek': '/ask-arvan'
