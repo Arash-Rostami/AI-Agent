@@ -2,11 +2,11 @@ import {KeySessionManager} from '../utils/sessionManager.js';
 import {ConversationManager} from '../utils/conversationManager.js';
 
 
-const sessionManager = new KeySessionManager([
-    process.env.GOOGLE_API_KEY,
+export const sessionManager = new KeySessionManager([
     process.env.GOOGLE_API_KEY_ALT,
     process.env.GEMINI_API_KEY,
-    process.env.GEMINI_API_KEY_ALT
+    process.env.GEMINI_API_KEY_ALT,
+    process.env.GEMINI_API_KEY_PREMIUM,
 ]);
 
 export const apiKeyMiddleware = (req, res, next) => {
@@ -29,6 +29,8 @@ export const apiKeyMiddleware = (req, res, next) => {
     req.userId = userId;
     req.userIp = userIp;
     req.conversationHistory = conversationHistory;
+    req.keyIdentifier = keyIdentifier;
+
 
     console.log(`🔑 ID: ${userId || 'standalone'} | IP: ${userIp} | Session: ...${sessionId.slice(-8)} | Key: ...${allocatedKey.slice(-4)}`);
 

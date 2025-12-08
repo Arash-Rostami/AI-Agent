@@ -2,7 +2,7 @@ import express from 'express';
 import {PORT} from './config/index.js';
 
 //Instantiating
-import callGeminiAPI, {callSimpleGeminiAPI} from './services/gemini.js';
+import {callGeminiAPI, callSimpleGeminiAPI} from './services//gemini/index.js';
 import callGrokAPI from './services/grok.js';
 import callOpenRouterAPI from './services/openRouter.js';
 import errorHandler from './middleware/errorHandler.js';

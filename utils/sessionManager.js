@@ -58,4 +58,15 @@ export class KeySessionManager {
         this._save(sessions);
         return newKey;
     }
+
+    updateKeyForIP(ip, newKey) {
+        if (!ip || !newKey) return;
+
+        const sessions = this._load();
+        sessions[ip] = {
+            key: newKey,
+            timestamp: Date.now()
+        };
+        this._save(sessions);
+    }
 }
