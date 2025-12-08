@@ -21,9 +21,10 @@ export const apiKeyMiddleware = (req, res, next) => {
 
     // 3. Determine if this request needs a Gemini Key
     // We only allocate/log a Gemini key if the route is NOT one of the external providers
+    const isArvanCloud = req.path.startsWith('/ask-arvan');
     const isExternalService = req.path.startsWith('/ask-groq') ||
                               req.path.startsWith('/ask-openrouter') ||
-                              req.path.startsWith('/ask-arvan');
+                              isArvanCloud;
 
     let allocatedKey = null;
 
@@ -42,11 +43,25 @@ export const apiKeyMiddleware = (req, res, next) => {
     // req.keyIdentifier is used by Gemini service for key rotation
     req.keyIdentifier = userId || userIp;
 
+    // Safe logging
+    const safeSessionId = (sessionId || '').slice(-8);
+    const safeKey = (allocatedKey || '').slice(-4);
+    const safeUserId = userId || 'standalone';
 
     if (allocatedKey) {
-        console.log(`🔑 ID: ${userId || 'standalone'} | IP: ${userIp} | Session: ...${sessionId.slice(-8)} | Key: ...${allocatedKey.slice(-4)}`);
+        console.log(`🔑 ID: ${safeUserId} | IP: ${userIp} | Session: ...${safeSessionId} | Key: ...${safeKey}`);
     } else {
-        console.log(`🔍 ID: ${userId || 'standalone'} | IP: ${userIp} | Session: ...${sessionId.slice(-8)} | Service: External/Other`);
+        let serviceName = 'External/Other';
+        if (isArvanCloud) {
+             const modelName = req.body && req.body.model ? req.body.model : 'Unknown Model';
+             serviceName = `ArvanCloud (${modelName})`;
+        } else if (req.path.startsWith('/ask-groq')) {
+             serviceName = 'Groq';
+        } else if (req.path.startsWith('/ask-openrouter')) {
+             serviceName = 'OpenRouter';
+        }
+
+        console.log(`🔍 ID: ${safeUserId} | IP: ${userIp} | Session: ...${safeSessionId} | Service: ${serviceName}`);
     }
 
     next();

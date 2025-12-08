@@ -16,11 +16,14 @@ import {checkRestrictedMode} from './middleware/restrictedMode.js';
 const app = express();
 app.use(allowFrameEmbedding);
 app.use(checkRestrictedMode);
-app.use(apiKeyMiddleware);
+
+// Parsing middleware must come before apiKeyMiddleware to access req.body for logging
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(express.text());
+
+app.use(apiKeyMiddleware);
 
 // (async () => {
 //     const reply = await callGrokAPI('Hi — give one-sentence reason why fast LMs matter.');
