@@ -10,7 +10,7 @@ const groq = new Groq({apiKey: GROK_API_KEY});
 export async function getGroqChatCompletion() {
     return groq.chat.completions.create({
         messages: [{role: 'system', content: SYSTEM_INSTRUCTION_TEXT}],
-        model: 'openai/gpt-oss-120b'
+        model: 'llama3-70b-8192'
     });
 }
 
@@ -25,7 +25,7 @@ export default async function callGrokAPI(message, conversationHistory = []) {
     })), {role: 'user', content: message}];
 
     const completion = await groq.chat.completions.create({
-        messages, model: 'openai/gpt-oss-120b',
+        messages, model: 'llama3-70b-8192',
     });
 
     const content = completion?.choices?.[0]?.message?.content;

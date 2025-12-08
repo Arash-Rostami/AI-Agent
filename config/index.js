@@ -13,6 +13,9 @@ export const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 export const GROK_API_KEY = process.env.GROK_API_KEY;
 export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 export const OPENROUTER_API_URL = process.env.OPENROUTER_API_URL;
+export const ARVANCLOUD_API_KEY = process.env.ARVANCLOUD_API_KEY;
+export const ARVANCLOUD_CHATGPT_URL = process.env.ARVANCLOUD_CHATGPT_URL;
+export const ARVANCLOUD_DEEPSEEK_URL = process.env.ARVANCLOUD_DEEPSEEK_URL;
 export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()) : [];
 

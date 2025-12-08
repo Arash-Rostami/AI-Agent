@@ -12,7 +12,8 @@ export default function createRouter(
     callGeminiAPI,
     callGrokAPI = null,
     callOpenRouterAPI = null,
-    callSimpleGeminiAPI = null
+    callSimpleGeminiAPI = null,
+    callArvanCloudAPI = null
 ) {
     const sendIndex = (req, res) => res.sendFile(join(__dirname, 'public', 'index.html'));
 
@@ -81,6 +82,28 @@ export default function createRouter(
             res.json({reply: response});
         } catch (error) {
             console.error('Groq error:', error.message);
+            res.status(500).json({
+                error: 'Sorry, I encountered an error. Please try again.',
+                details: error.message
+            });
+        }
+    });
+
+    router.post('/ask-arvan', async (req, res) => {
+        if (!callArvanCloudAPI) return res.status(501).json({error: 'ArvanCloud service not available'});
+
+        const {message, model} = req.body;
+        if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
+        if (!model) return res.status(400).json({error: 'Model is required'});
+
+        const {sessionId, conversationHistory} = req;
+
+        try {
+            const response = await callArvanCloudAPI(message, conversationHistory, model);
+            appendAndSave(sessionId, conversationHistory, message, response);
+            res.json({reply: response});
+        } catch (error) {
+            console.error('ArvanCloud error:', error.message);
             res.status(500).json({
                 error: 'Sorry, I encountered an error. Please try again.',
                 details: error.message

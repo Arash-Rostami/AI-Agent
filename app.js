@@ -5,6 +5,7 @@ import {PORT} from './config/index.js';
 import {callGeminiAPI, callSimpleGeminiAPI} from './services//gemini/index.js';
 import callGrokAPI from './services/grok.js';
 import callOpenRouterAPI from './services/openRouter.js';
+import callArvanCloudAPI from './services/arvancloud/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import createRouter from './routes/web.js';
 import {apiKeyMiddleware} from './middleware/keySession.js';
@@ -26,7 +27,7 @@ app.use(express.text());
 //     console.log('Grok reply:', reply);
 // })();
 
-app.use('/', createRouter(callGeminiAPI, callGrokAPI, callOpenRouterAPI, callSimpleGeminiAPI));
+app.use('/', createRouter(callGeminiAPI, callGrokAPI, callOpenRouterAPI, callSimpleGeminiAPI, callArvanCloudAPI));
 app.use(errorHandler);
 
 // Start server
