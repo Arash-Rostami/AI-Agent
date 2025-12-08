@@ -66,6 +66,16 @@ export default async function callGeminiAPI(
 
     } catch (error) {
         console.error('❌ Gemini API Error:', error.response?.data || error.message);
+
+        // 429 Resource Exhausted Fallback
+        if (error.response && error.response.status === 429) {
+            const premiumKey = process.env.GEMINI_API_KEY_PREMIUM;
+            if (premiumKey && apiKey !== premiumKey) {
+                console.log('⚠️ Quota exceeded. Retrying with GEMINI_API_KEY_PREMIUM...');
+                return callGeminiAPI(message, conversationHistory, premiumKey, isRestrictedMode, useWebSearch);
+            }
+        }
+
         throw error;
     }
 }
@@ -100,6 +110,16 @@ export async function callSimpleGeminiAPI(message, apiKey) {
 
     } catch (error) {
         console.error('❌ Simple Gemini API Error:', error.response?.data || error.message);
+
+        // 429 Resource Exhausted Fallback
+        if (error.response && error.response.status === 429) {
+            const premiumKey = process.env.GEMINI_API_KEY_PREMIUM;
+            if (premiumKey && apiKey !== premiumKey) {
+                console.log('⚠️ Quota exceeded (Simple API). Retrying with GEMINI_API_KEY_PREMIUM...');
+                return callSimpleGeminiAPI(message, premiumKey);
+            }
+        }
+
         throw error;
     }
 }
