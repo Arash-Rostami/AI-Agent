@@ -12,22 +12,27 @@ export default async function callArvanCloudAPI(message, conversationHistory = [
         throw new Error('Message must be a non-empty string');
     }
 
-    let endpointUrl;
+    let baseUrl;
     let modelId;
 
     if (model === 'GPT-4o-mini-4193n') {
-        endpointUrl = ARVANCLOUD_CHATGPT_URL;
+        baseUrl = ARVANCLOUD_CHATGPT_URL;
         modelId = 'GPT-4o-mini-4193n';
     } else if (model === 'DeepSeek-Chat-V3-0324-mbxyd') {
-        endpointUrl = ARVANCLOUD_DEEPSEEK_URL;
+        baseUrl = ARVANCLOUD_DEEPSEEK_URL;
         modelId = 'DeepSeek-Chat-V3-0324-mbxyd';
     } else {
         throw new Error('Invalid model selected for ArvanCloud service');
     }
 
-    if (!endpointUrl) {
+    if (!baseUrl) {
         throw new Error(`Endpoint URL for model ${model} is not configured.`);
     }
+
+    // Append /chat/completions if not present, assuming baseUrl ends in /v1 or similar
+    const endpointUrl = baseUrl.endsWith('/chat/completions')
+        ? baseUrl
+        : `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
 
     const messages = [
         {role: 'system', content: SYSTEM_INSTRUCTION_TEXT},
