@@ -1,19 +1,16 @@
 import Groq from 'groq-sdk';
-import {GROK_API_KEY, SYSTEM_INSTRUCTION_TEXT} from '../config/index.js';
+import {GROK_API_KEY, SYSTEM_INSTRUCTION_TEXT} from '../../config/index.js';
 
 if (!GROK_API_KEY) console.warn('GROK_API_KEY is not set. Set it in .env or your environment.');
 
-
 const groq = new Groq({apiKey: GROK_API_KEY});
-
 
 export async function getGroqChatCompletion() {
     return groq.chat.completions.create({
         messages: [{role: 'system', content: SYSTEM_INSTRUCTION_TEXT}],
-        model: 'openai/gpt-oss-120b'
+        model: 'arvancloud/gpt-oss-120b'
     });
 }
-
 
 export default async function callGrokAPI(message, conversationHistory = []) {
     if (!message || typeof message !== 'string') {
@@ -25,7 +22,7 @@ export default async function callGrokAPI(message, conversationHistory = []) {
     })), {role: 'user', content: message}];
 
     const completion = await groq.chat.completions.create({
-        messages, model: 'openai/gpt-oss-120b',
+        messages, model: 'arvancloud/gpt-oss-120b',
     });
 
     const content = completion?.choices?.[0]?.message?.content;

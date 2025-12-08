@@ -106,14 +106,24 @@ export default class ChatFacade {
         this.setTyping(true);
 
         try {
-            let endpoint = '/ask';
             const serviceEndpoints = {
                 'groq': '/ask-groq',
-                'openai': '/ask-openai',
-                'openrouter': '/ask-openrouter'
+                'openai': '/ask-arvancloud',
+                'openrouter': '/ask-openrouter',
+                'gpt-4o': '/ask-arvan',
+                'deepseek': '/ask-arvan'
+            };
+            const modelMap = {
+                'gpt-4o': 'GPT-4o-mini-4193n',
+                'deepseek': 'DeepSeek-Chat-V3-0324-mbxyd',
             };
 
-            endpoint = serviceEndpoints[selectedService] || endpoint;
+            let endpoint = serviceEndpoints[selectedService] ?? '/ask';
+            let requestBody = {
+                message,
+                useWebSearch,
+                ...(modelMap[selectedService] && { model: modelMap[selectedService] }),
+            };
 
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -122,7 +132,7 @@ export default class ChatFacade {
                     'X-User-Id': this.userId,
                     'X-Frame-Referer': document.referrer,
                 },
-                body: JSON.stringify({message, useWebSearch})
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) throw new Error('Server error');

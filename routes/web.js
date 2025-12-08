@@ -12,7 +12,8 @@ export default function createRouter(
     callGeminiAPI,
     callGrokAPI = null,
     callOpenRouterAPI = null,
-    callSimpleGeminiAPI = null
+    callSimpleGeminiAPI = null,
+    callArvanCloudAPI = null
 ) {
     const sendIndex = (req, res) => res.sendFile(join(__dirname, 'public', 'index.html'));
 
@@ -37,7 +38,7 @@ export default function createRouter(
             : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way.';
 
         try {
-            const { text: greeting } = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier);
+            const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier);
             appendAndSave(sessionId, conversationHistory, null, greeting);
             res.json({response: greeting});
         } catch (error) {
@@ -55,7 +56,10 @@ export default function createRouter(
         const {isRestrictedMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier} = req;
 
         try {
-            const { text: responseText, sources } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier);
+            const {
+                text: responseText,
+                sources
+            } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier);
             appendAndSave(sessionId, conversationHistory, message, responseText);
             res.json({reply: responseText, sources: sources});
         } catch (error) {
@@ -109,6 +113,28 @@ export default function createRouter(
         }
     });
 
+    router.post('/ask-arvan', async (req, res) => {
+        if (!callArvanCloudAPI) return res.status(501).json({error: 'ArvanCloud service not available'});
+
+        const {message, model} = req.body;
+        if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
+        if (!model) return res.status(400).json({error: 'Model is required'});
+
+        const {sessionId, conversationHistory} = req;
+
+        try {
+            const response = await callArvanCloudAPI(message, conversationHistory, model);
+            appendAndSave(sessionId, conversationHistory, message, response);
+            res.json({reply: response});
+        } catch (error) {
+            console.error('ArvanCloud error:', error.message);
+            res.status(500).json({
+                error: 'Sorry, I encountered an error. Please try again.',
+                details: error.message
+            });
+        }
+    });
+
     router.post('/clear-chat', (req, res) => {
         const {sessionId} = req;
         clearConversationHistory(sessionId);
@@ -117,7 +143,7 @@ export default function createRouter(
 
     router.get('/test', async (req, res) => {
         try {
-            const { text: testResponse } = await callGeminiAPI(
+            const {text: testResponse} = await callGeminiAPI(
                 'Say "Connection test successful!" if you can receive this message.',
                 [],
                 req.geminiApiKey,

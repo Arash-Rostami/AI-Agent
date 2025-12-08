@@ -3,8 +3,9 @@ import {PORT} from './config/index.js';
 
 //Instantiating
 import {callGeminiAPI, callSimpleGeminiAPI} from './services//gemini/index.js';
-import callGrokAPI from './services/grok.js';
-import callOpenRouterAPI from './services/openRouter.js';
+import callGrokAPI from './services/groq/index.js';
+import callOpenRouterAPI from './services/openrouter/index.js';
+import callArvanCloudAPI from './services/arvancloud/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import createRouter from './routes/web.js';
 import {apiKeyMiddleware} from './middleware/keySession.js';
@@ -13,20 +14,23 @@ import {checkRestrictedMode} from './middleware/restrictedMode.js';
 
 // Middleware
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+app.use(express.text());
 app.use(allowFrameEmbedding);
 app.use(checkRestrictedMode);
 app.use(apiKeyMiddleware);
 app.use(express.static('public'));
-app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-app.use(express.text());
 
-// (async () => {
-//     const reply = await callGrokAPI('Hi — give one-sentence reason why fast LMs matter.');
-//     console.log('Grok reply:', reply);
-// })();
 
-app.use('/', createRouter(callGeminiAPI, callGrokAPI, callOpenRouterAPI, callSimpleGeminiAPI));
+
+app.use('/', createRouter(
+    callGeminiAPI,
+    callGrokAPI,
+    callOpenRouterAPI,
+    callSimpleGeminiAPI,
+    callArvanCloudAPI
+));
 app.use(errorHandler);
 
 // Start server

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {OPENROUTER_API_KEY, OPENROUTER_API_URL, SITE_NAME, SITE_URL, SYSTEM_INSTRUCTION_TEXT} from '../config/index.js';
+import {OPENROUTER_API_KEY, OPENROUTER_API_URL, SITE_NAME, SITE_URL, SYSTEM_INSTRUCTION_TEXT} from '../../config/index.js';
 
 
 export default async function callOpenRouterAPI(message, conversationHistory = []) {
