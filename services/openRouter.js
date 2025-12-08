@@ -1,16 +1,9 @@
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
-import {fileURLToPath} from 'url';
-import {OPENROUTER_API_KEY, OPENROUTER_API_URL, SITE_NAME, SITE_URL} from '../config/index.js';
+import {OPENROUTER_API_KEY, OPENROUTER_API_URL, SITE_NAME, SITE_URL, SYSTEM_INSTRUCTION_TEXT} from '../config/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const instructionPath = path.resolve(__dirname, '..', 'documents', 'instructions.txt');
-const SYSTEM_INSTRUCTION_TEXT = fs.readFileSync(instructionPath, 'utf-8');
 
 export default async function callOpenRouterAPI(message, conversationHistory = []) {
-    if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY is missing");
+    if (!OPENROUTER_API_KEY) throw new Error("OPEN_ROUTER_API_KEY is missing");
 
     try {
         const formattedHistory = conversationHistory.map(msg => ({

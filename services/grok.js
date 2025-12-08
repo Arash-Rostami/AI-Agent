@@ -1,18 +1,10 @@
 import Groq from 'groq-sdk';
-import fs from 'fs';
-import path from 'path';
-import {fileURLToPath} from 'url';
-import {GROK_API_KEY} from '../config/index.js';
+import {GROK_API_KEY, SYSTEM_INSTRUCTION_TEXT} from '../config/index.js';
 
 if (!GROK_API_KEY) console.warn('GROK_API_KEY is not set. Set it in .env or your environment.');
 
 
 const groq = new Groq({apiKey: GROK_API_KEY});
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const instructionPath = path.resolve(__dirname, '..', 'documents', 'instructions.txt');
-const SYSTEM_INSTRUCTION_TEXT = fs.readFileSync(instructionPath, 'utf-8');
 
 
 export async function getGroqChatCompletion() {
