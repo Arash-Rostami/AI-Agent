@@ -5,6 +5,7 @@ import {fileURLToPath} from 'url';
 import {GEMINI_API_URL} from "../config/index.js";
 import {allToolDefinitions, availableTools} from "../tools/toolDefinitions.js";
 import {AFFIRMATION_REGEX} from '../utils/affirmationMemoryManager.js';
+import {sessionManager} from '../middleware/keySession.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,7 +22,8 @@ export default async function callGeminiAPI(
     conversationHistory = [],
     apiKey,
     isRestrictedMode = false,
-    useWebSearch = false
+    useWebSearch = false,
+    keyIdentifier = null
 ) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
@@ -62,26 +64,15 @@ export default async function callGeminiAPI(
         );
 
         const candidate = response.data.candidates?.[0];
-        return await _handleGeminiResponse(candidate, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch);
+        return await _handleGeminiResponse(candidate, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier);
 
     } catch (error) {
-        console.error('❌ Gemini API Error:', error.response?.data || error.message);
-
-        // 429 Resource Exhausted Fallback
-        if (error.response && error.response.status === 429) {
-            const premiumKey = process.env.GEMINI_API_KEY_PREMIUM;
-            if (premiumKey && apiKey !== premiumKey) {
-                console.log('⚠️ Quota exceeded. Retrying with GEMINI_API_KEY_PREMIUM...');
-                return callGeminiAPI(message, conversationHistory, premiumKey, isRestrictedMode, useWebSearch);
-            }
-        }
-
-        throw error;
+        return _handleApiError(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, callGeminiAPI);
     }
 }
 
 
-export async function callSimpleGeminiAPI(message, apiKey) {
+export async function callSimpleGeminiAPI(message, apiKey, keyIdentifier = null) {
     if (!apiKey) throw new Error("API Key is missing");
 
     try {
@@ -109,20 +100,36 @@ export async function callSimpleGeminiAPI(message, apiKey) {
         return candidate.content.parts[0].text;
 
     } catch (error) {
-        console.error('❌ Simple Gemini API Error:', error.response?.data || error.message);
-
-        // 429 Resource Exhausted Fallback
-        if (error.response && error.response.status === 429) {
-            const premiumKey = process.env.GEMINI_API_KEY_PREMIUM;
-            if (premiumKey && apiKey !== premiumKey) {
-                console.log('⚠️ Quota exceeded (Simple API). Retrying with GEMINI_API_KEY_PREMIUM...');
-                return callSimpleGeminiAPI(message, premiumKey);
-            }
-        }
-
-        throw error;
+        return _handleApiError(error, message, null, apiKey, null, null, keyIdentifier, callSimpleGeminiAPI);
     }
 }
+
+// DRY: Centralized Error Handling for API Calls
+async function _handleApiError(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, retryFunction) {
+    console.error(`❌ Gemini API Error (${retryFunction.name}):`, error.response?.data || error.message);
+
+    // 429 Resource Exhausted Fallback
+    if (error.response && error.response.status === 429) {
+        const premiumKey = process.env.GEMINI_API_KEY_PREMIUM;
+        if (premiumKey && apiKey !== premiumKey) {
+            console.log(`⚠️ Quota exceeded. Retrying with GEMINI_API_KEY_PREMIUM for user ${keyIdentifier || 'unknown'}...`);
+
+            // Update session so subsequent requests use premium key
+            if (keyIdentifier) {
+                sessionManager.updateKeyForIP(keyIdentifier, premiumKey);
+            }
+
+            // Retry
+            if (retryFunction.name === 'callSimpleGeminiAPI') {
+                 return retryFunction(message, premiumKey, keyIdentifier);
+            } else {
+                 return retryFunction(message, conversationHistory, premiumKey, isRestrictedMode, useWebSearch, keyIdentifier);
+            }
+        }
+    }
+    throw error;
+}
+
 
 function _hasUserGrantedPermission(history) {
     const permissionPhraseEnglish = "outside my Persol expertise";
@@ -190,7 +197,8 @@ async function _handleGeminiResponse(
     currentConversationHistory,
     apiKey,
     isRestrictedMode,
-    useWebSearch = false
+    useWebSearch = false,
+    keyIdentifier = null
 ) {
     if (!candidate || !candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
         throw new Error('No valid content received from Gemini API.');
@@ -244,7 +252,7 @@ async function _handleGeminiResponse(
                 {role: 'tool_response', name: toolName, content: toolResult}
             ];
 
-            const nextResponse = await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode, useWebSearch);
+            const nextResponse = await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier);
 
             return {
                 text: nextResponse.text,

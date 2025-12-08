@@ -31,13 +31,13 @@ export default function createRouter(
     router.get('', sendIndex);
 
     router.get('/initial-prompt', async (req, res) => {
-        const {isRestrictedMode, geminiApiKey, sessionId, conversationHistory} = req;
+        const {isRestrictedMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier} = req;
         const prompt = isRestrictedMode
             ? 'سلام! لطفاً خودتان را به عنوان یک دستیار هوش مصنوعی مفید به زبان فارسی و به صورت دوستانه و مختصر معرفی کنید.'
             : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way.';
 
         try {
-            const { text: greeting } = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode);
+            const { text: greeting } = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier);
             appendAndSave(sessionId, conversationHistory, null, greeting);
             res.json({response: greeting});
         } catch (error) {
@@ -52,10 +52,10 @@ export default function createRouter(
         const {message, useWebSearch} = req.body;
         if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
-        const {isRestrictedMode, geminiApiKey, sessionId, conversationHistory} = req;
+        const {isRestrictedMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier} = req;
 
         try {
-            const { text: responseText, sources } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch);
+            const { text: responseText, sources } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier);
             appendAndSave(sessionId, conversationHistory, message, responseText);
             res.json({reply: responseText, sources: sources});
         } catch (error) {
@@ -120,7 +120,10 @@ export default function createRouter(
             const { text: testResponse } = await callGeminiAPI(
                 'Say "Connection test successful!" if you can receive this message.',
                 [],
-                req.geminiApiKey
+                req.geminiApiKey,
+                false,
+                false,
+                req.keyIdentifier
             );
             res.json({
                 status: 'success',
@@ -165,7 +168,7 @@ export default function createRouter(
         }
 
         try {
-            const response = await callSimpleGeminiAPI(finalMessage, req.geminiApiKey);
+            const response = await callSimpleGeminiAPI(finalMessage, req.geminiApiKey, req.keyIdentifier);
             res.json({response});
         } catch (error) {
             console.error('Simple API Error:', error.message);
