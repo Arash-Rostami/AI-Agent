@@ -3,10 +3,10 @@ import {ConversationManager} from '../utils/conversationManager.js';
 
 
 const sessionManager = new KeySessionManager([
-    process.env.GOOGLE_API_KEY,
     process.env.GOOGLE_API_KEY_ALT,
     process.env.GEMINI_API_KEY,
-    process.env.GEMINI_API_KEY_ALT
+    process.env.GEMINI_API_KEY_ALT,
+    process.env.GEMINI_API_KEY_PREMIUM,
 ]);
 
 export const apiKeyMiddleware = (req, res, next) => {
