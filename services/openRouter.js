@@ -20,7 +20,7 @@ export default async function callOpenRouterAPI(message, conversationHistory = [
         const response = await axios.post(
             OPENROUTER_API_URL,
             {
-                model: 'x-ai/grok-4.1-fast',
+                model: 'google/gemini-2.0-flash-exp:free', // Using a reliable free model as default, or 'meta-llama/llama-3-8b-instruct:free'
                 messages: messages
             },
             {
