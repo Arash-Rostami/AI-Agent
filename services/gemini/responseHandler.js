@@ -27,10 +27,10 @@ async function handleToolCall(functionCall, originalMessage, currentConversation
 
     // In restricted mode, we block most tools unless:
     // 1. It is 'getWebSearch' AND useWebSearch is true.
-    // 2. OR it is 'search_bms_database' AND isBmsMode is true.
+    // 2. OR it is 'searchBmsDatabase' AND isBmsMode is true.
 
     if (isRestrictedMode) {
-        const isBmsTool = toolName === 'search_bms_database';
+        const isBmsTool = toolName === 'searchBmsDatabase';
         if (isBmsTool && isBmsMode) {
             // Allow BMS tool
         } else if (useWebSearch && toolName === 'getWebSearch') {
@@ -54,7 +54,7 @@ async function handleToolCall(functionCall, originalMessage, currentConversation
             if (toolResult?.sources) sources = toolResult.sources;
         } else if (toolName === 'getBusinessInfo') {
             toolResult = await availableTools[toolName]();
-        } else if (toolName === 'search_bms_database') {
+        } else if (toolName === 'searchBmsDatabase') {
              toolResult = await availableTools[toolName](toolArgs.query, toolArgs.entity_type);
         } else {
             toolResult = await availableTools[toolName](toolArgs);

@@ -22,5 +22,5 @@ export const availableTools = {
     getCurrentWeather: getCurrentWeather,
     getBusinessInfo: getBusinessInfo,
     getWebSearch: getWebSearch,
-    search_bms_database: searchBmsDatabase
+    searchBmsDatabase: searchBmsDatabase
 };

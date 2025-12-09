@@ -15,7 +15,7 @@ export function formatContents(conversationHistory, newMessage) {
 
 export function getAllowedTools(isRestrictedMode, useWebSearch, allTools, isBmsMode = false) {
     const isWebSearchTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'getWebSearch');
-    const isBmsTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'search_bms_database');
+    const isBmsTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'searchBmsDatabase');
 
     if (isBmsMode) {
         // In BMS Mode, allow BMS tool. Disable web search as requested.

@@ -1,7 +1,7 @@
 export const bmsToolDefinition = {
     functionDeclarations: [
         {
-            name: "search_bms_database",
+            name: "searchBmsDatabase",
             description: "Searches the database for commercial or financial records. Uses intent detection to target specific tables for higher accuracy.",
             parameters: {
                 type: "object",
