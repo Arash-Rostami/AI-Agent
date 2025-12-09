@@ -13,8 +13,13 @@ export function formatContents(conversationHistory, newMessage) {
     return contents;
 }
 
-export function getAllowedTools(isRestrictedMode, useWebSearch, allTools) {
+export function getAllowedTools(isRestrictedMode, useWebSearch, allTools, isBmsMode = false) {
     const isWebSearchTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'getWebSearch');
+    const isBmsTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'searchBmsDatabase');
+
+    if (isBmsMode) {
+        return allTools.filter(t => !isWebSearchTool(t));
+    }
 
     if (isRestrictedMode) {
         return useWebSearch ? allTools.filter(isWebSearchTool) : undefined;

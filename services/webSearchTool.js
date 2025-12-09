@@ -3,7 +3,6 @@ import {search} from "@navetacandra/ddg";
 export async function getWebSearch(query) {
     if (!query) throw new Error('Search key is required.');
 
-
     try {
         console.log(`🔍 Searching the web for: "${query}"`);
         const searchResponse = await search({query: query}, "web");

@@ -8,7 +8,7 @@ const groq = new Groq({apiKey: GROK_API_KEY});
 export async function getGroqChatCompletion() {
     return groq.chat.completions.create({
         messages: [{role: 'system', content: SYSTEM_INSTRUCTION_TEXT}],
-        model: 'arvancloud/gpt-oss-120b'
+        model: 'qwen/qwen3-32b'
     });
 }
 
@@ -22,7 +22,7 @@ export default async function callGrokAPI(message, conversationHistory = []) {
     })), {role: 'user', content: message}];
 
     const completion = await groq.chat.completions.create({
-        messages, model: 'arvancloud/gpt-oss-120b',
+        messages, model: 'qwen/qwen3-32b',
     });
 
     const content = completion?.choices?.[0]?.message?.content;

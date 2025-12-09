@@ -333,6 +333,7 @@ body {
 
 .message-content {
     max-width: 70%;
+    width: fit-content !important;
     padding: 1.125rem 1.375rem;
     border-radius: 18px;
     font-size: 0.95rem;

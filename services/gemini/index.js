@@ -1,19 +1,27 @@
 import axios from "axios";
-import {GEMINI_API_URL, SYSTEM_INSTRUCTION_TEXT} from "../../config/index.js";
+import {CX_BMS_INSTRUCTION, GEMINI_API_URL, SYSTEM_INSTRUCTION_TEXT} from "../../config/index.js";
 import {allToolDefinitions} from "../../tools/toolDefinitions.js";
 import * as formatter from './formatter.js';
 import * as responseHandler from './responseHandler.js';
 import * as errorHandler from './errorHandler.js';
 import * as permissions from './permissions.js';
 
-export async function callGeminiAPI(message, conversationHistory = [], apiKey, isRestrictedMode = false, useWebSearch = false, keyIdentifier = null) {
+export async function callGeminiAPI(
+    message,
+    conversationHistory = [],
+    apiKey,
+    isRestrictedMode = false,
+    useWebSearch = false,
+    keyIdentifier = null,
+    isBmsMode = false
+) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
     try {
         if (isRestrictedMode && permissions.hasUserGranted(conversationHistory)) isRestrictedMode = false;
 
         const contents = formatter.formatContents(conversationHistory, message);
-        const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions);
+        const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode);
 
         const requestBody = {
             contents,
@@ -21,9 +29,9 @@ export async function callGeminiAPI(message, conversationHistory = [], apiKey, i
             tool_config: allowedTools ? {function_calling_config: {mode: "AUTO"}} : undefined,
             systemInstruction: {
                 parts: [{
-                    text: isRestrictedMode && !useWebSearch
+                    text: isRestrictedMode && !useWebSearch && !isBmsMode
                         ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
-                        : SYSTEM_INSTRUCTION_TEXT
+                        : (isBmsMode ? CX_BMS_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT)
                 }]
             }
         };

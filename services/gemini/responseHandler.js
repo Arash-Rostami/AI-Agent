@@ -1,25 +1,37 @@
 import {availableTools} from '../../tools/toolDefinitions.js';
 import {callGeminiAPI} from './index.js';
 
-export async function handle(candidate, originalMessage, currentConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier) {
-    if (!candidate?.content?.parts?.[0]) {
-        throw new Error('No valid content received from Gemini API.');
-    }
+export async function handle(
+    candidate,
+    originalMessage,
+    currentConversationHistory,
+    apiKey,
+    isRestrictedMode,
+    useWebSearch,
+    keyIdentifier,
+    isBmsMode = false
+) {
+    if (!candidate?.content?.parts?.[0]) throw new Error('No valid content received from Gemini API.');
 
     const firstPart = candidate.content.parts[0];
-
     if (firstPart.functionCall) {
-        return await handleToolCall(firstPart.functionCall, originalMessage, currentConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier);
+        return await handleToolCall(firstPart.functionCall, originalMessage, currentConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
     }
-
-    if (firstPart.text) {
-        return {text: firstPart.text, sources: []};
-    }
+    if (firstPart.text) return {text: firstPart.text, sources: []};
 
     throw new Error('Unexpected part type in Gemini response.');
 }
 
-async function handleToolCall(functionCall, originalMessage, currentConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier) {
+async function handleToolCall(
+    functionCall,
+    originalMessage,
+    currentConversationHistory,
+    apiKey,
+    isRestrictedMode,
+    useWebSearch,
+    keyIdentifier,
+    isBmsMode = false
+) {
     const {name: toolName, args: toolArgs} = functionCall;
     let sources = [];
 
@@ -28,6 +40,15 @@ async function handleToolCall(functionCall, originalMessage, currentConversation
     if (isRestrictedMode && (!useWebSearch || toolName !== 'getWebSearch')) {
         console.log(`🚫 Blocked tool call in restricted mode. isRestrictedMode=${isRestrictedMode}, useWebSearch=${useWebSearch}, toolName=${toolName}`);
         return {text: "I apologize, but I cannot perform external actions in this mode.", sources: []};
+    }
+
+    if (isRestrictedMode) {
+        const allowed = (toolName === 'searchBmsDatabase' && isBmsMode) || (toolName === 'getWebSearch' && useWebSearch);
+
+        if (!allowed) {
+            console.log(`🚫 Blocked tool call in restricted mode. isRestrictedMode=${isRestrictedMode}, useWebSearch=${useWebSearch}, toolName=${toolName}, isBmsMode=${isBmsMode}`);
+            return {text: "I apologize, but I cannot perform external actions in this mode.", sources: []};
+        }
     }
 
     if (!availableTools[toolName]) {
@@ -43,6 +64,8 @@ async function handleToolCall(functionCall, originalMessage, currentConversation
             if (toolResult?.sources) sources = toolResult.sources;
         } else if (toolName === 'getBusinessInfo') {
             toolResult = await availableTools[toolName]();
+        } else if (toolName === 'searchBmsDatabase') {
+            toolResult = await availableTools[toolName](toolArgs.query, toolArgs.entity_type);
         } else {
             toolResult = await availableTools[toolName](toolArgs);
         }
@@ -60,7 +83,7 @@ async function handleToolCall(functionCall, originalMessage, currentConversation
         {role: 'tool_response', name: toolName, content: toolResult}
     ];
 
-    const nextResponse = await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier);
+    const nextResponse = await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
 
     return {
         text: nextResponse.text,
