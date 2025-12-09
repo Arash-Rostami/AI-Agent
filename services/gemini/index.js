@@ -1,17 +1,10 @@
 import axios from "axios";
-import fs from 'fs';
-import path from 'path';
-import {fileURLToPath} from 'url';
-import {GEMINI_API_URL, SYSTEM_INSTRUCTION_TEXT} from "../../config/index.js";
+import {CX_BMS_INSTRUCTION, GEMINI_API_URL, SYSTEM_INSTRUCTION_TEXT} from "../../config/index.js";
 import {allToolDefinitions} from "../../tools/toolDefinitions.js";
 import * as formatter from './formatter.js';
 import * as responseHandler from './responseHandler.js';
 import * as errorHandler from './errorHandler.js';
 import * as permissions from './permissions.js';
-
-const PERSOL_BS_INSTRUCTION = fs.readFileSync(
-    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'documents', 'persolbs.txt'), 'utf-8'
-);
 
 export async function callGeminiAPI(message, conversationHistory = [], apiKey, isRestrictedMode = false, useWebSearch = false, keyIdentifier = null, isBmsMode = false) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
@@ -22,11 +15,6 @@ export async function callGeminiAPI(message, conversationHistory = [], apiKey, i
         const contents = formatter.formatContents(conversationHistory, message);
         const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode);
 
-        let systemInstructionText = SYSTEM_INSTRUCTION_TEXT;
-        if (isBmsMode) {
-            systemInstructionText += "\n\n" + PERSOL_BS_INSTRUCTION;
-        }
-
         const requestBody = {
             contents,
             tools: allowedTools,
@@ -35,7 +23,7 @@ export async function callGeminiAPI(message, conversationHistory = [], apiKey, i
                 parts: [{
                     text: isRestrictedMode && !useWebSearch && !isBmsMode
                         ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
-                        : systemInstructionText
+                        : (isBmsMode ? SYSTEM_INSTRUCTION_TEXT + "\n\n" + CX_BMS_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT)
                 }]
             }
         };
@@ -45,9 +33,9 @@ export async function callGeminiAPI(message, conversationHistory = [], apiKey, i
             timeout: 60000
         });
 
-        return await responseHandler.handle(response.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier);
+        return await responseHandler.handle(response.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
     } catch (error) {
-        return errorHandler.handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, callGeminiAPI);
+        return errorHandler.handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, callGeminiAPI, isBmsMode);
     }
 }
 

@@ -1,6 +1,6 @@
 import {sessionManager} from '../../middleware/keySession.js';
 
-export async function handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, retryFunction) {
+export async function handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, retryFunction, isBmsMode = false) {
     console.error(`❌ Gemini API Error (${retryFunction.name}):`, error.response?.data || error.message);
 
     if (error.response?.status === 429) {
@@ -12,7 +12,7 @@ export async function handle(error, message, conversationHistory, apiKey, isRest
 
             return retryFunction.name === 'callSimpleGeminiAPI'
                 ? retryFunction(message, premiumKey, keyIdentifier)
-                : retryFunction(message, conversationHistory, premiumKey, isRestrictedMode, useWebSearch, keyIdentifier);
+                : retryFunction(message, conversationHistory, premiumKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
         }
     }
     throw error;
