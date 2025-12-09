@@ -32,8 +32,15 @@ export async function searchBmsDatabase(query, entity_type) {
     } catch (error) {
         console.error("BMS Database Search Error:", error.message);
         if (error.response) {
+            console.error("BMS Error Details:", {
+                status: error.response.status,
+                statusText: error.response.statusText,
+                headers: error.response.headers,
+                data: error.response.data
+            });
             // Return the error from the backend if available
-            return { error: error.response.data?.message || "Error from BMS Service" };
+            const backendMsg = error.response.data?.message || error.response.data?.error || JSON.stringify(error.response.data);
+            return { error: backendMsg || `Error ${error.response.status} from BMS Service` };
         }
         return { error: "Failed to connect to BMS Service." };
     }
