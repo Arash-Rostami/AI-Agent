@@ -25,7 +25,7 @@ export const CX_BMS_INSTRUCTION = fs.readFileSync(
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'documents', 'persolbs.txt'), 'utf-8'
 );
 export const AI_SERVICE_SECRET = process.env.AI_SERVICE_SECRET;
-export const BMS_API_URL = process.env.BMS_API_URL || 'https://export.communitasker.io/ai/query';
+export const BMS_API_URL = process.env.BMS_API_URL || 'https://export.communitasker.io/api/ai/query';
 
 
 if (!GEMINI_API_URL) {
