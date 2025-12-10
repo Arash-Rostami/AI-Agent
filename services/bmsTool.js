@@ -11,6 +11,8 @@ export async function searchBmsDatabase(query, entity_type) {
         const response = await axios.post(BMS_API_URL, payload, {
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'User-Agent': 'Arash-AI-Service/1.0',
                 'X-AI-SECRET': AI_SERVICE_SECRET
             },
             timeout: 15000

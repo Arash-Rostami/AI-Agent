@@ -37,11 +37,6 @@ async function handleToolCall(
 
     console.log(`🤖 Gemini requested to call tool: ${toolName} with arguments:`, toolArgs);
 
-    if (isRestrictedMode && (!useWebSearch || toolName !== 'getWebSearch')) {
-        console.log(`🚫 Blocked tool call in restricted mode. isRestrictedMode=${isRestrictedMode}, useWebSearch=${useWebSearch}, toolName=${toolName}`);
-        return {text: "I apologize, but I cannot perform external actions in this mode.", sources: []};
-    }
-
     if (isRestrictedMode) {
         const allowed = (toolName === 'searchBmsDatabase' && isBmsMode) || (toolName === 'getWebSearch' && useWebSearch);
 
