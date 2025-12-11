@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>AI Assistant - Arash Rostami</title>
-    <link rel="stylesheet" href="./assets/css/fontAwesome.css"></link>
-    <link rel="stylesheet" href="./assets/css/myStyles.css"></link>
+    <link rel="stylesheet" href="./assets/css/fontAwesome.css"/>
+    <link rel="stylesheet" href="./assets/css/chatStyleSheet.css"/>
+    <meta name="description" content="Login to AI Assistant — secure access to the assistant dashboard." />
+    <meta name="robots" content="noindex,nofollow,noarchive,nosnippet" />
+    <meta name="googlebot" content="noindex,nofollow" />
+    <meta name="referrer" content="no-referrer-when-downgrade" />
 </head>
 <body>
 <div class="container">
@@ -20,43 +24,56 @@
                 <span id="status-text">Online</span>
             </div>
         </div>
+
         <div class="header-right">
             <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
                 <i class="fas fa-sun"></i>
             </button>
+
+            <button class="logout-btn" id="logout-btn" title="Log Out">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
     </header>
+
     <div class="chat-container">
         <div class="messages" id="messages">
             <div class="welcome-message">
-                <h2>Welcome to AI Assistant
+                <h2>
+                    Welcome to AI Assistant
                     <span class="spin-icon"> ֎ </span>
                 </h2>
-                <p>⚡ Express JS | 👩‍💻 Arash R. </p>
+                <p>⚡ Express JS | 👩‍💻 Arash R.</p>
             </div>
         </div>
+
         <div class="input-container">
             <form class="input-form" id="chat-form">
                 <div class="input-wrapper">
-                        <textarea
-                                class="message-input"
-                                id="message-input"
-                                placeholder="Type your message..."
-                                rows="1"
-                                autocomplete="off"
-                        ></textarea>
+                    <label for="message-input"></label>
+                    <textarea
+                            class="message-input"
+                            id="message-input"
+                            placeholder="Type your message..."
+                            rows="1"
+                            autocomplete="off"
+                    ></textarea>
+
                     <button type="submit" class="send-button" id="send-button">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
+
                 <button type="button" class="clear-button" id="clear-button">
                     <i class="fas fa-trash"></i> Clear
                 </button>
             </form>
+
             <div class="service-selector">
                 <label for="service-select">
                     <small>AI Model: </small>
                 </label>
+
                 <select id="service-select">
                     <option value="gemini" selected>Gemini</option>
                     <option value="gpt-4o">GPT-4o</option>
@@ -64,18 +81,29 @@
                     <option value="deepseek">DeepSeek</option>
                     <option value="groq">Qwen</option>
                 </select>
-                <button type="button" id="web-search-btn" class="web-search-btn" title="Toggle Web Search">
+
+                <button
+                        type="button"
+                        id="web-search-btn"
+                        class="web-search-btn"
+                        title="Toggle Web Search"
+                >
                     <i class="fas fa-globe"></i> <small>Web Search</small>
                 </button>
             </div>
         </div>
     </div>
 </div>
+
 <script type="module">
     import ChatFacade from './assets/js/ChatFacade.js';
+    import LogoutHandler from './assets/js/LogoutHandler.js';
+    import ThemeToggle from './assets/js/ThemeToggler.js';
 
     document.addEventListener('DOMContentLoaded', () => {
-        new ChatFacade();
+        // new ChatFacade();
+        new LogoutHandler('logout-btn');
+        new ThemeToggle('theme-toggle');
     });
 </script>
 </body>

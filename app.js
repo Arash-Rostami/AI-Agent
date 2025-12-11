@@ -1,5 +1,5 @@
 import express from 'express';
-import {PORT} from './config/index.js';
+import {startServer} from './utils/serverManager.js';
 
 //Instantiating
 import {callGeminiAPI, callSimpleGeminiAPI} from './services//gemini/index.js';
@@ -11,18 +11,21 @@ import createRouter from './routes/web.js';
 import {apiKeyMiddleware} from './middleware/keySession.js';
 import {allowFrameEmbedding} from './middleware/frameGuard.js';
 import {checkRestrictedMode} from './middleware/restrictedMode.js';
+import {guardChatRoutes} from './middleware/routeGaurd.js';
+import cookieParser from 'cookie-parser';
+import authRoutes from './routes/auth.js';
 
 // Middleware
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(express.text());
+app.use(cookieParser());
 app.use(allowFrameEmbedding);
 app.use(checkRestrictedMode);
 app.use(apiKeyMiddleware);
+app.use(guardChatRoutes);
 app.use(express.static('public'));
-
-
 
 app.use('/', createRouter(
     callGeminiAPI,
@@ -31,9 +34,9 @@ app.use('/', createRouter(
     callSimpleGeminiAPI,
     callArvanCloudAPI
 ));
+app.use('/auth', authRoutes);
+
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`\n 📱 Server running successfully on http://localhost:${PORT}\n 🛑 Press Ctrl+C/Cmd+C to stop the server\n`);
-});
+await startServer(app);

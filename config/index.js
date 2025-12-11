@@ -7,8 +7,8 @@ dotenv.config();
 export const PORT = process.env.PORT || 3000;
 export const SITE_URL = process.env.SITE_URL || 'https://arash-ai.chbk.app/';
 export const BMS_API_URL = process.env.BMS_API_URL || 'https://export.communitasker.io/ai/query';
-
 export const SITE_NAME = process.env.SITE_NAME || 'AI Assistant';
+export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const GEMINI_API_KEY = process.env.GEMINI_API_KEY_PREMIUM;
 export const GEMINI_API_URL = process.env.GEMINI_API_URL;
 export const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
@@ -18,8 +18,9 @@ export const OPENROUTER_API_URL = process.env.OPENROUTER_API_URL;
 export const ARVANCLOUD_API_KEY = process.env.ARVANCLOUD_API_KEY;
 export const ARVANCLOUD_CHATGPT_URL = process.env.ARVANCLOUD_CHATGPT_URL;
 export const ARVANCLOUD_DEEPSEEK_URL = process.env.ARVANCLOUD_DEEPSEEK_URL;
-
 export const AI_SERVICE_SECRET = process.env.AI_SERVICE_SECRET;
+export const MONGO_URI = process.env.MONGO_URI;
+export const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key_change_me';
 
 export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()) : [];

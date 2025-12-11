@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Login - AI Assistant</title>
+    <link rel="stylesheet" href="./assets/css/fontAwesome.css"/>
+    <link rel="stylesheet" href="./assets/css/loginStyleSheet.css"/>
+    <meta name="description" content="Login to AI Assistant — secure access to the assistant dashboard."/>
+    <meta name="robots" content="noindex,nofollow,noarchive,nosnippet"/>
+    <meta name="googlebot" content="noindex,nofollow"/>
+    <meta name="referrer" content="no-referrer-when-downgrade"/>
+</head>
+
+<body>
+<div class="container">
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-robot"></i>
+            AI Assistant
+        </div>
+
+        <h2>Welcome Back</h2>
+
+        <div id="error-msg" class="error-message"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        autocomplete="username"
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        autocomplete="current-password"
+                />
+            </div>
+
+            <button type="submit" class="login-button">
+                <span>Login</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+            <i class="fas fa-sun"></i>
+        </button>
+    </div>
+</div>
+
+<script type="module">
+    import LoginHandler from './assets/js/LoginHandler.js';
+    import ThemeToggle from './assets/js/ThemeToggler.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        new LoginHandler('login-form');
+        new ThemeToggle('theme-toggle');
+    });
+</script>
+</body>
+</html>

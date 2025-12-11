@@ -9,6 +9,7 @@ export default class ChatFacade {
         this.statusText = document.getElementById('status-text');
         this.serviceSelect = document.getElementById('service-select');
         this.webSearchBtn = document.getElementById('web-search-btn');
+        this.logoutBtn = document.getElementById('logout-btn');
 
 
         this.isTyping = false;
@@ -40,9 +41,7 @@ export default class ChatFacade {
 
     toggleWebSearch() {
         this.isWebSearchActive = !this.isWebSearchActive;
-        (this.isWebSearchActive)
-            ? this.webSearchBtn.classList.add('active')
-            : this.webSearchBtn.classList.remove('active');
+        (this.isWebSearchActive) ? this.webSearchBtn.classList.add('active') : this.webSearchBtn.classList.remove('active');
     }
 
     handleServiceChange() {
@@ -107,31 +106,21 @@ export default class ChatFacade {
 
         try {
             const serviceEndpoints = {
-                'groq': '/ask-groq',
-                'openrouter': '/ask-openrouter',
-                'gpt-4o': '/ask-arvan',
-                'deepseek': '/ask-arvan'
+                'groq': '/ask-groq', 'openrouter': '/ask-openrouter', 'gpt-4o': '/ask-arvan', 'deepseek': '/ask-arvan'
             };
             const modelMap = {
-                'gpt-4o': 'GPT-4o-mini-4193n',
-                'deepseek': 'DeepSeek-Chat-V3-0324-mbxyd',
+                'gpt-4o': 'GPT-4o-mini-4193n', 'deepseek': 'DeepSeek-Chat-V3-0324-mbxyd',
             };
 
             let endpoint = serviceEndpoints[selectedService] ?? '/ask';
             let requestBody = {
-                message,
-                useWebSearch,
-                ...(modelMap[selectedService] && {model: modelMap[selectedService]}),
+                message, useWebSearch, ...(modelMap[selectedService] && {model: modelMap[selectedService]}),
             };
 
             const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-User-Id': this.userId,
-                    'X-Frame-Referer': document.referrer,
-                },
-                body: JSON.stringify(requestBody)
+                method: 'POST', headers: {
+                    'Content-Type': 'application/json', 'X-User-Id': this.userId, 'X-Frame-Referer': document.referrer,
+                }, body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) throw new Error('Server error');
@@ -183,13 +172,11 @@ export default class ChatFacade {
         if (sources && sources.length > 0) {
             const sourcesEl = document.createElement('div');
             sourcesEl.className = 'message-sources';
-            sourcesEl.innerHTML = '<h4>🔗 Sources:</h4>' + sources.map(source =>
-                `<div class="source-item">
+            sourcesEl.innerHTML = '<h4>🔗 Sources:</h4>' + sources.map(source => `<div class="source-item">
                     <a href="${source.url}" target="_blank" rel="noopener noreferrer" title="${source.snippet || ''}">
                     <i>${source.title || source.url}</i>                      
                     </a>
-                </div>`
-            ).join('');
+                </div>`).join('');
             contentWrapper.appendChild(sourcesEl);
         }
 
@@ -298,8 +285,7 @@ export default class ChatFacade {
     async clearChat() {
         try {
             await fetch('/clear-chat', {
-                method: 'POST',
-                headers: {
+                method: 'POST', headers: {
                     'X-User-Id': this.userId
                 }
             });
@@ -332,33 +318,37 @@ export default class ChatFacade {
         try {
             const response = await fetch('/initial-prompt', {
                 headers: {
-                    'X-User-Id': this.userId,
-                    'X-Frame-Referer': document.referrer
+                    'X-User-Id': this.userId, 'X-Frame-Referer': document.referrer
                 }
             });
             const data = await response.json();
             this.addMessage(data.response, 'ai');
 
-            if (data.isBmsMode) this.setupBmsMode();
+            this.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode);
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
         }
     }
 
-    setupBmsMode() {
-        if (this.serviceSelect) {
-            this.serviceSelect.closest('label').classList.add('hidden');
-            this.serviceSelect.classList.add('hidden');
-            const serviceSelectorContainer = this.serviceSelect.parentElement;
-            if (serviceSelectorContainer.classList.contains('service-selector')) {
-                this.serviceSelect.style.display = 'none';
-                const label = document.querySelector('label[for="service-select"]');
-                if (label) label.style.display = 'none';
+    handleRestrictedUI(isRestrictedMode, isBmsMode) {
+        if (isRestrictedMode || isBmsMode) {
+            if (this.serviceSelect) {
+                this.serviceSelect.closest('label').classList.add('hidden');
+                this.serviceSelect.classList.add('hidden');
+                const serviceSelectorContainer = this.serviceSelect.parentElement;
+                if (serviceSelectorContainer.classList.contains('service-selector')) {
+                    this.serviceSelect.style.display = 'none';
+                    const label = document.querySelector('label[for="service-select"]');
+                    if (label) label.style.display = 'none';
+                }
             }
-        }
-        if (this.webSearchBtn) {
-            this.webSearchBtn.classList.add('hidden');
-            this.isWebSearchActive = false;
+            if (this.webSearchBtn) {
+                this.webSearchBtn.classList.add('hidden');
+                this.isWebSearchActive = false;
+            }
+            if (this.logoutBtn) {
+                this.logoutBtn.style.display = 'none';
+            }
         }
     }
 }
