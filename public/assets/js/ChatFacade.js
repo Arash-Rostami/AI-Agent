@@ -340,28 +340,35 @@ export default class ChatFacade {
             const data = await response.json();
             this.addMessage(data.response, 'ai');
 
-            if (data.isBmsMode) this.setupBmsMode();
+            // Handle restricted modes
+            this.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode);
+
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
         }
     }
 
-    setupBmsMode() {
-        if (this.serviceSelect) {
-            this.serviceSelect.closest('label').classList.add('hidden');
-            this.serviceSelect.classList.add('hidden');
-            const serviceSelectorContainer = this.serviceSelect.parentElement;
-            if (serviceSelectorContainer.classList.contains('service-selector')) {
-                this.serviceSelect.style.display = 'none';
-                const label = document.querySelector('label[for="service-select"]');
-                if (label) label.style.display = 'none';
+    handleRestrictedUI(isRestrictedMode, isBmsMode) {
+        // If BMS mode (specific subset of restricted), hide everything
+        if (isBmsMode) {
+             if (this.serviceSelect) {
+                this.serviceSelect.closest('label').classList.add('hidden');
+                this.serviceSelect.classList.add('hidden');
+                const serviceSelectorContainer = this.serviceSelect.parentElement;
+                if (serviceSelectorContainer.classList.contains('service-selector')) {
+                    this.serviceSelect.style.display = 'none';
+                    const label = document.querySelector('label[for="service-select"]');
+                    if (label) label.style.display = 'none';
+                }
+            }
+            if (this.webSearchBtn) {
+                this.webSearchBtn.classList.add('hidden');
+                this.isWebSearchActive = false;
             }
         }
-        if (this.webSearchBtn) {
-            this.webSearchBtn.classList.add('hidden');
-            this.isWebSearchActive = false;
-        }
-        if (this.logoutBtn) {
+
+        // If either Restricted OR BMS mode, hide logout button
+        if ((isRestrictedMode || isBmsMode) && this.logoutBtn) {
             this.logoutBtn.style.display = 'none';
         }
     }
