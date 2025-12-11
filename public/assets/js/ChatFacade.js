@@ -349,8 +349,9 @@ export default class ChatFacade {
     }
 
     handleRestrictedUI(isRestrictedMode, isBmsMode) {
-        // If BMS mode (specific subset of restricted), hide everything
-        if (isBmsMode) {
+        // Hide UI elements if in Restricted Mode OR BMS Mode
+        // This covers any allowed iframe usage
+        if (isRestrictedMode || isBmsMode) {
              if (this.serviceSelect) {
                 this.serviceSelect.closest('label').classList.add('hidden');
                 this.serviceSelect.classList.add('hidden');
@@ -365,11 +366,9 @@ export default class ChatFacade {
                 this.webSearchBtn.classList.add('hidden');
                 this.isWebSearchActive = false;
             }
-        }
-
-        // If either Restricted OR BMS mode, hide logout button
-        if ((isRestrictedMode || isBmsMode) && this.logoutBtn) {
-            this.logoutBtn.style.display = 'none';
+            if (this.logoutBtn) {
+                this.logoutBtn.style.display = 'none';
+            }
         }
     }
 }
