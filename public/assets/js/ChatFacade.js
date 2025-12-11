@@ -9,6 +9,7 @@ export default class ChatFacade {
         this.statusText = document.getElementById('status-text');
         this.serviceSelect = document.getElementById('service-select');
         this.webSearchBtn = document.getElementById('web-search-btn');
+        this.logoutBtn = document.getElementById('logout-btn');
 
 
         this.isTyping = false;
@@ -359,6 +360,9 @@ export default class ChatFacade {
         if (this.webSearchBtn) {
             this.webSearchBtn.classList.add('hidden');
             this.isWebSearchActive = false;
+        }
+        if (this.logoutBtn) {
+            this.logoutBtn.style.display = 'none';
         }
     }
 }
