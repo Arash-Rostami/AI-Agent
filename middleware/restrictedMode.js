@@ -6,8 +6,15 @@ export const checkRestrictedMode = (req, res, next) => {
     let isBms = clientReferer.includes('export.communitasker.io');
 
     if (isRestricted) {
-        res.cookie('restricted_mode', 'true', {httpOnly: true, sameSite: 'None', secure: true});
-        if (isBms) res.cookie('bms_mode', 'true', {httpOnly: true, sameSite: 'None', secure: true});
+        const cookieOpts = {httpOnly: true, sameSite: 'None', secure: true};
+        res.cookie('restricted_mode', 'true', cookieOpts);
+        // Readable by frontend to hide UI immediately
+        res.cookie('restricted_ui', 'true', {sameSite: 'None', secure: true, httpOnly: false});
+
+        if (isBms) {
+            res.cookie('bms_mode', 'true', cookieOpts);
+            res.cookie('bms_ui', 'true', {sameSite: 'None', secure: true, httpOnly: false});
+        }
     } else {
         isRestricted = req.cookies?.restricted_mode === 'true';
         isBms = req.cookies?.bms_mode === 'true';

@@ -24,10 +24,25 @@ export default class ChatFacade {
     }
 
     init() {
+        this.checkRestrictedCookie(); // Instant UI check
         this.setupEventListeners();
         this.setupTheme();
         void this.loadInitialGreeting();
         this.setupTextareaAutoResize();
+    }
+
+    checkRestrictedCookie() {
+        const getCookie = (name) => {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        };
+
+        const isRestricted = getCookie('restricted_ui') === 'true';
+        const isBms = getCookie('bms_ui') === 'true';
+
+        if (isRestricted || isBms) {
+            this.handleRestrictedUI(isRestricted, isBms);
+        }
     }
 
     setupEventListeners() {
