@@ -24,6 +24,9 @@
             <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
                 <i class="fas fa-sun"></i>
             </button>
+            <button class="logout-btn" id="logout-btn" title="Log Out">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
     </header>
     <div class="chat-container">
@@ -73,9 +76,11 @@
 </div>
 <script type="module">
     import ChatFacade from './assets/js/ChatFacade.js';
+    import LogoutHandler from './assets/js/modules/LogoutHandler.js';
 
     document.addEventListener('DOMContentLoaded', () => {
         new ChatFacade();
+        new LogoutHandler('logout-btn');
     });
 </script>
 </body>
