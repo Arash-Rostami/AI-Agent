@@ -2,11 +2,27 @@ import express from 'express';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {clearConversationHistory, saveConversationHistory} from '../middleware/keySession.js';
+import {syncToDatabase} from '../utils/interactionLogManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const router = express.Router();
+
+const appendAndSave = (sessionId, conversationHistory, userMsg, assistantMsg) => {
+    const updated = [
+        ...conversationHistory,
+        ...(userMsg ? [{role: 'user', content: userMsg}] : []),
+        ...(assistantMsg ? [{role: 'assistant', content: assistantMsg}] : [])
+    ];
+    saveConversationHistory(sessionId, updated);
+    return updated;
+};
+
+const validateMessage = (msg) => msg && typeof msg === 'string';
+
+const syncToDB = (sessionId, userId, history) =>
+    syncToDatabase(sessionId, userId, history).catch(err => console.error('DB sync failed:', err.message));
 
 export default function createRouter(
     callGeminiAPI,
@@ -15,32 +31,19 @@ export default function createRouter(
     callSimpleGeminiAPI = null,
     callArvanCloudAPI = null
 ) {
-    const sendIndex = (req, res) => res.sendFile(join(__dirname, 'public', 'index.html'));
-
-    const appendAndSave = (sessionId, conversationHistory, userMsg, assistantMsg) => {
-        const updated = [
-            ...conversationHistory,
-            ...(userMsg ? [{role: 'user', content: userMsg}] : []),
-            ...(assistantMsg ? [{role: 'assistant', content: assistantMsg}] : [])
-        ];
-        saveConversationHistory(sessionId, updated);
-        return updated;
-    };
-
-    const validateMessage = (msg) => msg && typeof msg === 'string';
-
-    router.get('', sendIndex);
+    router.get('', (req, res) => res.sendFile(join(__dirname, 'public', 'index.html')));
 
     router.get('/initial-prompt', async (req, res) => {
-        const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier} = req;
+        const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
         const prompt = isRestrictedMode && !isBmsMode
             ? 'سلام! لطفاً خودتان را به عنوان یک دستیار هوش مصنوعی مفید به زبان فارسی و به صورت دوستانه و مختصر معرفی کنید.'
             : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way.';
 
         try {
             const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode);
-            appendAndSave(sessionId, conversationHistory, null, greeting);
+            const updated = appendAndSave(sessionId, conversationHistory, null, greeting);
             res.json({response: greeting, isBmsMode, isRestrictedMode});
+            syncToDB(sessionId, userId, updated);
         } catch (error) {
             const fallback = isRestrictedMode && !isBmsMode
                 ? 'سلام! من دستیار هوش مصنوعی شما هستم. چطور می‌توانم امروز به شما کمک کنم؟'
@@ -53,91 +56,50 @@ export default function createRouter(
         const {message, useWebSearch} = req.body;
         if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
-        const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier} = req;
+        const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
 
         try {
             const {
                 text: responseText,
                 sources
             } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
-            appendAndSave(sessionId, conversationHistory, message, responseText);
-            res.json({reply: responseText, sources: sources});
+            const updated = appendAndSave(sessionId, conversationHistory, message, responseText);
+            res.json({reply: responseText, sources});
+            syncToDB(sessionId, userId, updated);
         } catch (error) {
             console.error('Chat error:', error.message);
-            res.status(500).json({
-                error: 'Sorry, I encountered an error. Please try again.',
-                details: error.message
-            });
+            res.status(500).json({error: 'Sorry, I encountered an error. Please try again.', details: error.message});
         }
     });
 
-    router.post('/ask-groq', async (req, res) => {
-        if (!callGrokAPI) return res.status(501).json({error: 'Groq service not available'});
-
-        const {message} = req.body;
-        if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
-
-        const {sessionId, conversationHistory} = req;
-
-        try {
-            const response = await callGrokAPI(message, conversationHistory);
-            appendAndSave(sessionId, conversationHistory, message, response);
-            res.json({reply: response});
-        } catch (error) {
-            console.error('Groq error:', error.message);
-            res.status(500).json({
-                error: 'Sorry, I encountered an error. Please try again.',
-                details: error.message
-            });
-        }
-    });
-
-    router.post('/ask-openrouter', async (req, res) => {
-        if (!callOpenRouterAPI) return res.status(501).json({error: 'OpenRouter Grok service not available'});
-
-        const {message} = req.body;
-        if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
-
-        const {sessionId, conversationHistory} = req;
-
-        try {
-            const response = await callOpenRouterAPI(message, conversationHistory);
-            appendAndSave(sessionId, conversationHistory, message, response);
-            res.json({reply: response});
-        } catch (error) {
-            console.error('OpenRouter Grok error:', error.message);
-            res.status(500).json({
-                error: 'Sorry, I encountered an error. Please try again.',
-                details: error.message
-            });
-        }
-    });
-
-    router.post('/ask-arvan', async (req, res) => {
-        if (!callArvanCloudAPI) return res.status(501).json({error: 'ArvanCloud service not available'});
+    const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
+        if (!apiCall) return res.status(501).json({error: `${apiName} service not available`});
 
         const {message, model} = req.body;
         if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
-        if (!model) return res.status(400).json({error: 'Model is required'});
+        if (apiName === 'ArvanCloud' && !model) return res.status(400).json({error: 'Model is required'});
 
-        const {sessionId, conversationHistory} = req;
+        const {sessionId, conversationHistory, userId} = req;
 
         try {
-            const response = await callArvanCloudAPI(message, conversationHistory, model);
-            appendAndSave(sessionId, conversationHistory, message, response);
+            const response = apiName === 'ArvanCloud'
+                ? await apiCall(message, conversationHistory, model)
+                : await apiCall(message, conversationHistory);
+            const updated = appendAndSave(sessionId, conversationHistory, message, response);
             res.json({reply: response});
+            syncToDB(sessionId, userId, updated);
         } catch (error) {
-            console.error('ArvanCloud error:', error.message);
-            res.status(500).json({
-                error: 'Sorry, I encountered an error. Please try again.',
-                details: error.message
-            });
+            console.error(`${apiName} error:`, error.message);
+            res.status(500).json({error: 'Sorry, I encountered an error. Please try again.', details: error.message});
         }
-    });
+    };
+
+    router.post('/ask-groq', handleAPIEndpoint(callGrokAPI, 'Groq'));
+    router.post('/ask-openrouter', handleAPIEndpoint(callOpenRouterAPI, 'OpenRouter'));
+    router.post('/ask-arvan', handleAPIEndpoint(callArvanCloudAPI, 'ArvanCloud'));
 
     router.post('/clear-chat', (req, res) => {
-        const {sessionId} = req;
-        clearConversationHistory(sessionId);
+        clearConversationHistory(req.sessionId);
         res.json({success: true});
     });
 
@@ -145,17 +107,9 @@ export default function createRouter(
         try {
             const {text: testResponse} = await callGeminiAPI(
                 'Say "Connection test successful!" if you can receive this message.',
-                [],
-                req.geminiApiKey,
-                false,
-                false,
-                req.keyIdentifier
+                [], req.geminiApiKey, false, false, req.keyIdentifier
             );
-            res.json({
-                status: 'success',
-                message: 'API connection working!',
-                response: testResponse
-            });
+            res.json({status: 'success', message: 'API connection working!', response: testResponse});
         } catch (error) {
             res.status(500).json({
                 status: 'error',
@@ -171,10 +125,7 @@ export default function createRouter(
             res.json({reply});
         } catch (error) {
             console.error('Grok error:', error.message || error);
-            res.status(500).json({
-                error: 'Grok API error',
-                details: error.message || String(error)
-            });
+            res.status(500).json({error: 'Grok API error', details: error.message || String(error)});
         }
     });
 
@@ -182,15 +133,11 @@ export default function createRouter(
         if (!callSimpleGeminiAPI) return res.status(501).json({error: 'Simple API service not configured'});
 
         const finalMessage = req.body
-            ? (typeof req.body === 'string'
-                ? req.body
-                : (req.body.message ?? JSON.stringify(req.body)))
+            ? (typeof req.body === 'string' ? req.body : (req.body.message ?? JSON.stringify(req.body)))
             : '';
 
-        if (!finalMessage || typeof finalMessage !== 'string' || finalMessage.trim().length === 0) {
-            return res.status(400).json({
-                error: 'Empty or invalid content. Please send a body with your request (JSON, Text, or Form).'
-            });
+        if (!finalMessage || typeof finalMessage !== 'string' || !finalMessage.trim()) {
+            return res.status(400).json({error: 'Empty or invalid content. Please send a body with your request (JSON, Text, or Form).'});
         }
 
         try {
@@ -198,10 +145,7 @@ export default function createRouter(
             res.json({response});
         } catch (error) {
             console.error('Simple API Error:', error.message);
-            res.status(500).json({
-                error: 'Processing failed',
-                details: error.message
-            });
+            res.status(500).json({error: 'Processing failed', details: error.message});
         }
     });
 

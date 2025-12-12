@@ -6,7 +6,7 @@ import {fileURLToPath} from 'url';
 dotenv.config();
 export const PORT = process.env.PORT || 3000;
 export const SITE_URL = process.env.SITE_URL || 'https://arash-ai.chbk.app/';
-export const BMS_API_URL = process.env.BMS_API_URL || 'https://export.communitasker.io/ai/query';
+export const BMS_API_URL = process.env.BMS_API_URL;
 export const SITE_NAME = process.env.SITE_NAME || 'AI Assistant';
 export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const GEMINI_API_KEY = process.env.GEMINI_API_KEY_PREMIUM;
