@@ -2,7 +2,8 @@ import express from 'express';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {clearConversationHistory, saveConversationHistory} from '../middleware/keySession.js';
-import {syncToDatabase} from '../utils/dbManager.js';
+import {syncToDatabase} from '../utils/dbConversationManager.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,8 +42,8 @@ export default function createRouter(
         try {
             const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode);
             const updated = appendAndSave(sessionId, conversationHistory, null, greeting);
-            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({response: greeting, isBmsMode, isRestrictedMode});
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('DB sync failed:', err.message));
         } catch (error) {
             const fallback = isRestrictedMode && !isBmsMode
                 ? 'سلام! من دستیار هوش مصنوعی شما هستم. چطور می‌توانم امروز به شما کمک کنم؟'
@@ -63,8 +64,8 @@ export default function createRouter(
                 sources
             } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
             const updated = appendAndSave(sessionId, conversationHistory, message, responseText);
-            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({reply: responseText, sources: sources});
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('DB sync failed:', err.message));
         } catch (error) {
             console.error('Chat error:', error.message);
             res.status(500).json({
@@ -85,8 +86,8 @@ export default function createRouter(
         try {
             const response = await callGrokAPI(message, conversationHistory);
             const updated = appendAndSave(sessionId, conversationHistory, message, response);
-            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({reply: response});
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('DB sync failed:', err.message));
         } catch (error) {
             console.error('Groq error:', error.message);
             res.status(500).json({
@@ -107,8 +108,8 @@ export default function createRouter(
         try {
             const response = await callOpenRouterAPI(message, conversationHistory);
             const updated = appendAndSave(sessionId, conversationHistory, message, response);
-            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({reply: response});
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('DB sync failed:', err.message));
         } catch (error) {
             console.error('OpenRouter Grok error:', error.message);
             res.status(500).json({
@@ -130,8 +131,8 @@ export default function createRouter(
         try {
             const response = await callArvanCloudAPI(message, conversationHistory, model);
             const updated = appendAndSave(sessionId, conversationHistory, message, response);
-            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({reply: response});
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('DB sync failed:', err.message));
         } catch (error) {
             console.error('ArvanCloud error:', error.message);
             res.status(500).json({
