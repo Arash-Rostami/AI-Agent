@@ -2,7 +2,7 @@ import express from 'express';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {clearConversationHistory, saveConversationHistory} from '../middleware/keySession.js';
-import {syncToDatabase} from '../services/dbConversationService.js';
+import {syncToDatabase} from '../utils/dbManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,9 +25,6 @@ export default function createRouter(
             ...(assistantMsg ? [{role: 'assistant', content: assistantMsg}] : [])
         ];
         saveConversationHistory(sessionId, updated);
-        // Background sync to DB (userId comes from closure scope or we might need to pass it)
-        // Since we are inside createRouter, we don't have req here, but we call this from routes which have req.
-        // We will refactor this slightly or just pass req to appendAndSave.
         return updated;
     };
 
@@ -44,7 +41,7 @@ export default function createRouter(
         try {
             const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode);
             const updated = appendAndSave(sessionId, conversationHistory, null, greeting);
-            syncToDatabase(sessionId, userId, updated);
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({response: greeting, isBmsMode, isRestrictedMode});
         } catch (error) {
             const fallback = isRestrictedMode && !isBmsMode
@@ -66,7 +63,7 @@ export default function createRouter(
                 sources
             } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
             const updated = appendAndSave(sessionId, conversationHistory, message, responseText);
-            syncToDatabase(sessionId, userId, updated);
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({reply: responseText, sources: sources});
         } catch (error) {
             console.error('Chat error:', error.message);
@@ -88,7 +85,7 @@ export default function createRouter(
         try {
             const response = await callGrokAPI(message, conversationHistory);
             const updated = appendAndSave(sessionId, conversationHistory, message, response);
-            syncToDatabase(sessionId, userId, updated);
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({reply: response});
         } catch (error) {
             console.error('Groq error:', error.message);
@@ -110,7 +107,7 @@ export default function createRouter(
         try {
             const response = await callOpenRouterAPI(message, conversationHistory);
             const updated = appendAndSave(sessionId, conversationHistory, message, response);
-            syncToDatabase(sessionId, userId, updated);
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({reply: response});
         } catch (error) {
             console.error('OpenRouter Grok error:', error.message);
@@ -133,7 +130,7 @@ export default function createRouter(
         try {
             const response = await callArvanCloudAPI(message, conversationHistory, model);
             const updated = appendAndSave(sessionId, conversationHistory, message, response);
-            syncToDatabase(sessionId, userId, updated);
+            syncToDatabase(sessionId, userId, updated).catch(err => console.error('Background sync failed:', err.message));
             res.json({reply: response});
         } catch (error) {
             console.error('ArvanCloud error:', error.message);
