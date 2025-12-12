@@ -5,12 +5,10 @@ export default class ChatFacade {
         this.sendButton = document.getElementById('send-button');
         this.clearButton = document.getElementById('clear-button');
         this.chatForm = document.getElementById('chat-form');
-        this.themeToggle = document.getElementById('theme-toggle');
         this.statusText = document.getElementById('status-text');
         this.serviceSelect = document.getElementById('service-select');
         this.webSearchBtn = document.getElementById('web-search-btn');
         this.logoutBtn = document.getElementById('logout-btn');
-
 
         this.isTyping = false;
         this.userId = this.getUserId();
@@ -25,7 +23,6 @@ export default class ChatFacade {
 
     init() {
         this.setupEventListeners();
-        this.setupTheme();
         void this.loadInitialGreeting();
         this.setupTextareaAutoResize();
     }
@@ -33,7 +30,6 @@ export default class ChatFacade {
     setupEventListeners() {
         this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
         this.clearButton.addEventListener('click', () => this.clearChat());
-        this.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
         this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
@@ -53,25 +49,6 @@ export default class ChatFacade {
             this.webSearchBtn.classList.add('hidden');
             if (this.isWebSearchActive) this.toggleWebSearch();
         }
-    }
-
-    setupTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        this.updateThemeIcon(savedTheme);
-    }
-
-    toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        this.updateThemeIcon(newTheme);
-    }
-
-    updateThemeIcon(theme) {
-        const icon = this.themeToggle.querySelector('i');
-        icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
     }
 
     setupTextareaAutoResize() {
