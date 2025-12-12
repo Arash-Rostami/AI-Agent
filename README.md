@@ -1,133 +1,117 @@
-# 🤖 AI Agent — Your Smart Assistant Starter Kit
+# 🤖 Enterprise AI Assistant
 
-A minimal, full-stack Node.js agent powered by Google's Gemini API. Includes chat history, dynamic routing, error handling, and tool integration patterns — built for devs who want to go beyond "Hello, world" with real AI workflows.
+> **Intelligent, Secure, and Connected.**
+> A production-ready AI agent designed for enterprise integration, featuring real-time web intelligence, deep business system connectivity, and military-grade security protocols.
 
-## 📖 Introduction
+## 🧠 Core Capabilities
 
-This AI Agent Service is a specialized, intelligent assistant designed to provide accurate, context-aware support for users. It acts as a central brain that can be integrated into various platforms (like web chats or internal portals) to answer questions, perform tasks, and retrieve real-time information.
+### 1. Advanced Cognitive Engine
+Built to understand context, nuance, and intent.
+*   **Bilingual Fluency:** Native-grade understanding of **English** and **Farsi**.
+*   **Deep Context:** Remembers conversation history to provide coherent, multi-turn assistance.
+*   **Adaptive Reasoning:** Automatically selects the best underlying model logic to handle complex queries, from creative writing to analytical reasoning.
 
-## 🚀 Key Capabilities
+### 2. Live Web Intelligence
+Breaking the knowledge cutoff.
+*   **Real-Time Search:** Accesses live web data for up-to-the-minute answers on news, markets, and events.
+*   **Verified Citations:** Every claim is backed by clickable source links, ensuring trust and traceability.
+*   **Smart Synthesis:** Reads multiple sources to construct a comprehensive answer rather than just listing links.
 
-### 1. Intelligent Conversation
-*   **Natural Language Understanding:** Capable of understanding and responding to complex queries in both **Farsi** and **English**.
-*   **Context Retention:** Remembers previous parts of the conversation to maintain a natural, flowing dialogue without asking for repetition.
-*   **Multi-Model Intelligence:** Powered by advanced AI models (Google Gemini Pro - Latest, ChatGPT, Grok) to ensure high-quality, human-like interactions.
+### 3. Enterprise Integrations
+More than just a chatbot—it's a business tool.
+*   **BMS Connector:** Securely queries your **Business Management System (BMS)** to retrieve real-time data on contracts, shipments, and payments.
+*   **Corporate Knowledge Base:** Ingests and references internal policy documents (e.g., Persol Services) to answer employee queries with 100% accuracy.
+*   **Tool Ecosystem:** Includes built-in utilities for **Weather** forecasting and **Time/Date** awareness.
 
-### 2. Real-Time Web Search
-*   **Live Information:** Unlike standard static AIs, this agent can browse the web to find the absolute latest news, facts, and data.
-*   **Citations:** When answering with web data, it provides sources, ensuring transparency and trust.
-*   **Selective Activation:** Users can toggle this feature on or off depending on their needs.
-
-### 3. Integrated Tools
-*   **Weather Updates:** Instantly checks current weather conditions for any location worldwide.
-*   **Business Knowledge:** Has direct access to specific business documents (Persol services and policies) to answer company-related questions accurately.
-
-### 4. Secure & Embedded Mode (New Update)
-*   **Restricted Mode:** When embedded in third-party sites (via iframe), the agent automatically activates a secure mode based on the `Referer` header.
-*   **Safety First:** In this mode, sensitive tools (like business document access) are **disabled** by default to prevent misuse.
-*   **Selective Web Search:** Users or embedding applications can explicitly enable **Web Search** while remaining in Restricted Mode. This allows for safe, up-to-date information retrieval without exposing other sensitive internal tools.
-
-## 🎯 Use Cases
-
-*   **Customer Support:** Answering FAQs about company services and policies 24/7.
-*   **Personal Assistant:** Helping users find quick facts, weather updates, or news summaries.
-*   **Internal Knowledge Base:** Assisting employees by retrieving document-based information instantly.
+### 4. Secure & Embeddable Architecture
+Designed for safe deployment in public or private environments.
+*   **Restricted Mode:** Automatically locks down sensitive tools (like BMS access) when embedded in external websites (via iframe), ensuring data safety.
+*   **Granular Permissions:** Web Search can be selectively enabled even in restricted environments while keeping internal data locked.
+*   **Session Guard:** Uses IP-based session binding and persistent user states to prevent unauthorized access.
 
 ---
 
-## ⚙️ Setup and Configuration
+## 🛠 Technical Architecture
 
-To get this AI Agent up and running on your local machine, you'll need to set up a few environment variables for API keys and configuration.
-
-### 1. Environment Variables (`.env` file)
-
-This project relies on environment variables to manage sensitive API keys and other settings. You'll need to create a new file named `.env` in the **root** of your project (the same directory where `package.json` and `app.js` are located).
-
-Populate your `.env` file with the following:
-
-
-````markdown
-GOOGLE_API_KEY=YOUR_GEMINI_API_KEY_HERE
-GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
-WEATHER_API_KEY=YOUR_WEATHER_API_KEY_HERE
-PORT=3000
-````
-
+*   **Runtime:** Node.js (v18+)
+*   **Database:** MongoDB (Persistent Sessions & User Auth)
+*   **Security:** JWT Authentication, IP-based Session Binding, API Key Rotation.
+*   **Resilience:** Multi-provider fallback system ensuring high availability.
 
 ---
 
-🚨 **Important:** Remember to replace the placeholder values (`YOUR_GEMINI_API_KEY_HERE`, `YOUR_WEATHER_API_KEY_HERE`) with your actual API keys.
+## 🚀 Getting Started
 
-#### 🔑 How to Get Your API Keys:
+### Prerequisites
+*   Node.js (v18 or higher)
+*   MongoDB Instance (Local or Atlas)
 
-* **`GOOGLE_API_KEY` (for Gemini API):**
-
-    1. Go to [Google AI Studio](https://ai.google.dev/studio).
-
-    2. Sign in with your Google Account.
-
-    3. In the left sidebar, click **Get API key**.
-
-    4. Click **Create API key**.
-
-    5. Copy the generated key and paste it into your `.env` file.
-
-  > **Security Note:** This key is essential for authenticating with the Gemini API. Keep it secure and **never** commit your `.env` file to public repositories.
-
-* **`WEATHER_API_KEY` (for Weather Tool):**
-
-    1. Sign up for a free account at [OpenWeatherMap](https://openweathermap.org/).
-    2. After confirming your email, find your API key on your [API keys page](https://home.openweathermap.org/api_keys).
-    3. Copy that key into your `.env` file.
-
-* **`GEMINI_API_URL`:**
-
-    * Specifies the default endpoint for the Gemini 2.0 Flash model. You usually won’t need to change this.
-
-* **`PORT`:**
-
-    * Defines the port number for your local server (e.g., `http://localhost:3000`). Change if `3000` is in use.
-
----
-
-### 2. Installation
-
-Once your `.env` file is set up, install dependencies:
+### 1. Installation
 
 ```bash
+# Clone the repository
+git clone <your-repo-url>
+cd <your-repo-name>
+
+# Install dependencies
 npm install
-# or
-yarn install
+```
+
+### 2. Configuration
+Create a `.env` file in the root directory. You can copy the structure below:
+
+```env
+# --- Server Config ---
+PORT=3000
+NODE_ENV=development
+MONGO_URI=mongodb://localhost:27017/ai_agent
+JWT_SECRET=your_super_secret_jwt_key
+SITE_URL=https://your-domain.com
+
+# --- AI Model Keys (Primary & Fallbacks) ---
+# The system automatically rotates keys for better reliability
+GEMINI_API_KEY_PREMIUM=your_google_gemini_key
+GROK_API_KEY=your_groq_key
+OPENROUTER_API_KEY=your_openrouter_key
+ARVANCLOUD_API_KEY=your_arvancloud_key
+
+# --- Service URLs (Defaults usually work) ---
+GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+
+# --- Tool Integrations ---
+WEATHER_API_KEY=your_openweathermap_key
+AI_SERVICE_SECRET=your_bms_backend_secret
+BMS_API_URL=https://export.communitasker.io/ai/query
+```
+
+### 3. Database & User Setup
+The system uses MongoDB for user authentication. You must create an initial user to log in.
+Use the built-in utility script:
+
+```bash
+# Syntax: node utils/userManager.js <username> <password>
+node utils/userManager.js admin securePassword123
+```
+
+### 4. Running the Service
+
+```bash
+# Development Mode (Auto-restart with Nodemon)
+npm run auto
+
+# Production Mode
+npm start
 ```
 
 ---
 
-### 3. Running the Project
+## 🛡️ Security Features
 
-We use `nodemon` for automatic restarts on code changes.
+*   **Iframe Protection:** The `frameGuard` middleware validates `Referer` headers to prevent unauthorized embedding.
+*   **Key Rotation:** The `KeySessionManager` automatically rotates API keys (Gemini, Groq, etc.) to handle rate limits and ensure uptime.
+*   **Sanitized Inputs:** All inputs are validated against injection attacks before processing.
+*   **Access Control:** Strict separation between "Public" tools (Web Search, Weather) and "Private" tools (BMS, Internal Docs).
 
-1. **Install `nodemon` globally (if you haven’t):**
+---
 
-   ```bash
-   npm install -g nodemon
-   # or
-   yarn global add nodemon
-   ```
-
-   *Alternatively*, as a dev dependency:
-
-   ```bash
-   npm install --save-dev nodemon
-   # or
-   yarn add nodemon -D
-   ```
-
-2. **Start the AI Agent:**
-
-   ```bash
-   nodemon app.js
-   ```
-
-🚀 The server should now be running—any changes you save will auto-restart the service.
-
-Good luck, and happy coding! 😉
+*Built for sophisticated enterprise workflows.*
