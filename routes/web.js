@@ -40,12 +40,12 @@ export default function createRouter(
         try {
             const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode);
             appendAndSave(sessionId, conversationHistory, null, greeting);
-            res.json({response: greeting, isBmsMode});
+            res.json({response: greeting, isBmsMode, isRestrictedMode});
         } catch (error) {
             const fallback = isRestrictedMode && !isBmsMode
                 ? 'سلام! من دستیار هوش مصنوعی شما هستم. چطور می‌توانم امروز به شما کمک کنم؟'
                 : 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?';
-            res.json({response: fallback, isBmsMode});
+            res.json({response: fallback, isBmsMode, isRestrictedMode});
         }
     });
 

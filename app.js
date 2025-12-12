@@ -1,6 +1,7 @@
 import express from 'express';
 import {startServer} from './utils/serverManager.js';
 
+
 //Instantiating
 import {callGeminiAPI, callSimpleGeminiAPI} from './services//gemini/index.js';
 import callGrokAPI from './services/groq/index.js';
@@ -11,7 +12,7 @@ import createRouter from './routes/web.js';
 import {apiKeyMiddleware} from './middleware/keySession.js';
 import {allowFrameEmbedding} from './middleware/frameGuard.js';
 import {checkRestrictedMode} from './middleware/restrictedMode.js';
-import {guardChatRoutes} from './middleware/routeGaurd.js';
+// import {guardChatRoutes} from './middleware/routeGaurd.js';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.js';
 
@@ -24,7 +25,7 @@ app.use(cookieParser());
 app.use(allowFrameEmbedding);
 app.use(checkRestrictedMode);
 app.use(apiKeyMiddleware);
-app.use(guardChatRoutes);
+// app.use(guardChatRoutes);
 app.use(express.static('public'));
 
 app.use('/', createRouter(
@@ -34,7 +35,7 @@ app.use('/', createRouter(
     callSimpleGeminiAPI,
     callArvanCloudAPI
 ));
-app.use('/auth', authRoutes);
+// app.use('/auth', authRoutes);
 
 app.use(errorHandler);
 

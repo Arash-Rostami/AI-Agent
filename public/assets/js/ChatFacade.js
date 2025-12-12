@@ -331,24 +331,18 @@ export default class ChatFacade {
     }
 
     handleRestrictedUI(isRestrictedMode, isBmsMode) {
-        if (isRestrictedMode || isBmsMode) {
-            if (this.serviceSelect) {
-                this.serviceSelect.closest('label').classList.add('hidden');
-                this.serviceSelect.classList.add('hidden');
-                const serviceSelectorContainer = this.serviceSelect.parentElement;
-                if (serviceSelectorContainer.classList.contains('service-selector')) {
-                    this.serviceSelect.style.display = 'none';
-                    const label = document.querySelector('label[for="service-select"]');
-                    if (label) label.style.display = 'none';
-                }
-            }
-            if (this.webSearchBtn) {
-                this.webSearchBtn.classList.add('hidden');
-                this.isWebSearchActive = false;
-            }
-            if (this.logoutBtn) {
-                this.logoutBtn.style.display = 'none';
-            }
+        if (isBmsMode) {
+            if (this.serviceSelect) this.serviceSelect.style.display = 'none';
+
+            const label = document.querySelector('label[for="service-select"]');
+            if (label) label.style.display = 'none';
+
+            if (this.webSearchBtn) this.webSearchBtn.style.display = 'none';
+            this.isWebSearchActive = false;
+        }
+
+        if (isBmsMode || isRestrictedMode) {
+            if (this.logoutBtn) this.logoutBtn.style.display = 'none';
         }
     }
 }
