@@ -2,6 +2,7 @@ import express from 'express';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {clearConversationHistory, saveConversationHistory} from '../middleware/keySession.js';
+import {syncToDatabase} from '../services/dbConversationService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,6 +25,9 @@ export default function createRouter(
             ...(assistantMsg ? [{role: 'assistant', content: assistantMsg}] : [])
         ];
         saveConversationHistory(sessionId, updated);
+        // Background sync to DB (userId comes from closure scope or we might need to pass it)
+        // Since we are inside createRouter, we don't have req here, but we call this from routes which have req.
+        // We will refactor this slightly or just pass req to appendAndSave.
         return updated;
     };
 
@@ -32,14 +36,15 @@ export default function createRouter(
     router.get('', sendIndex);
 
     router.get('/initial-prompt', async (req, res) => {
-        const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier} = req;
+        const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
         const prompt = isRestrictedMode && !isBmsMode
             ? 'سلام! لطفاً خودتان را به عنوان یک دستیار هوش مصنوعی مفید به زبان فارسی و به صورت دوستانه و مختصر معرفی کنید.'
             : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way.';
 
         try {
             const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode);
-            appendAndSave(sessionId, conversationHistory, null, greeting);
+            const updated = appendAndSave(sessionId, conversationHistory, null, greeting);
+            syncToDatabase(sessionId, userId, updated);
             res.json({response: greeting, isBmsMode, isRestrictedMode});
         } catch (error) {
             const fallback = isRestrictedMode && !isBmsMode
@@ -53,14 +58,15 @@ export default function createRouter(
         const {message, useWebSearch} = req.body;
         if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
-        const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier} = req;
+        const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
 
         try {
             const {
                 text: responseText,
                 sources
             } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
-            appendAndSave(sessionId, conversationHistory, message, responseText);
+            const updated = appendAndSave(sessionId, conversationHistory, message, responseText);
+            syncToDatabase(sessionId, userId, updated);
             res.json({reply: responseText, sources: sources});
         } catch (error) {
             console.error('Chat error:', error.message);
@@ -77,11 +83,12 @@ export default function createRouter(
         const {message} = req.body;
         if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
-        const {sessionId, conversationHistory} = req;
+        const {sessionId, conversationHistory, userId} = req;
 
         try {
             const response = await callGrokAPI(message, conversationHistory);
-            appendAndSave(sessionId, conversationHistory, message, response);
+            const updated = appendAndSave(sessionId, conversationHistory, message, response);
+            syncToDatabase(sessionId, userId, updated);
             res.json({reply: response});
         } catch (error) {
             console.error('Groq error:', error.message);
@@ -98,11 +105,12 @@ export default function createRouter(
         const {message} = req.body;
         if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
-        const {sessionId, conversationHistory} = req;
+        const {sessionId, conversationHistory, userId} = req;
 
         try {
             const response = await callOpenRouterAPI(message, conversationHistory);
-            appendAndSave(sessionId, conversationHistory, message, response);
+            const updated = appendAndSave(sessionId, conversationHistory, message, response);
+            syncToDatabase(sessionId, userId, updated);
             res.json({reply: response});
         } catch (error) {
             console.error('OpenRouter Grok error:', error.message);
@@ -120,11 +128,12 @@ export default function createRouter(
         if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
         if (!model) return res.status(400).json({error: 'Model is required'});
 
-        const {sessionId, conversationHistory} = req;
+        const {sessionId, conversationHistory, userId} = req;
 
         try {
             const response = await callArvanCloudAPI(message, conversationHistory, model);
-            appendAndSave(sessionId, conversationHistory, message, response);
+            const updated = appendAndSave(sessionId, conversationHistory, message, response);
+            syncToDatabase(sessionId, userId, updated);
             res.json({reply: response});
         } catch (error) {
             console.error('ArvanCloud error:', error.message);
