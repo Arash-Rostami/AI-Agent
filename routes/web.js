@@ -3,6 +3,7 @@ import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {clearConversationHistory, saveConversationHistory} from '../middleware/keySession.js';
 import {syncToDatabase} from '../utils/interactionLogManager.js';
+import { syncDocuments, searchVectors } from '../controllers/vectorController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,6 +25,19 @@ const validateMessage = (msg) => msg && typeof msg === 'string';
 const syncToDB = (sessionId, userId, history) =>
     syncToDatabase(sessionId, userId, history).catch(err => console.error('DB sync failed:', err.message));
 
+const enrichPromptWithContext = async (message) => {
+    try {
+        const results = await searchVectors(message);
+        if (!results || results.length === 0) return message;
+
+        const context = results.map(r => r.text).join('\n\n---\n\n');
+        return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+    } catch (error) {
+        console.error('Context enrichment failed:', error);
+        return message;
+    }
+};
+
 export default function createRouter(
     callGeminiAPI,
     callGrokAPI = null,
@@ -32,6 +46,16 @@ export default function createRouter(
     callArvanCloudAPI = null
 ) {
     router.get('', (req, res) => res.sendFile(join(__dirname, 'public', 'index.html')));
+
+    router.post('/api/vector/sync', async (req, res) => {
+        try {
+            const result = await syncDocuments();
+            res.json({ success: true, message: 'Vector database synced successfully', data: result });
+        } catch (error) {
+            console.error('Vector sync error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
 
     router.get('/initial-prompt', async (req, res) => {
         const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
@@ -59,10 +83,23 @@ export default function createRouter(
         const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
 
         try {
+            // Note: For Gemini, we might want to inject context differently or rely on its own tools,
+            // but for uniformity with this request, we modify the message.
+            // However, modifying the 'message' directly affects what is saved to history as the 'user' message.
+            // Ideally, we send the augmented prompt to the AI, but save the original user message to history.
+            // But callGeminiAPI uses the 'message' arg as the last user prompt.
+            // To keep history clean, we might need to adjust callGeminiAPI or just accept the augmented prompt is hidden logic.
+            // Given the requirement "vectorize all my instructions... check timestamp... update db",
+            // I will augment the prompt sent to the API.
+
+            const augmentedMessage = await enrichPromptWithContext(message);
+
             const {
                 text: responseText,
                 sources
-            } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
+            } = await callGeminiAPI(augmentedMessage, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
+
+            // Save original message to history, not the massive augmented one
             const updated = appendAndSave(sessionId, conversationHistory, message, responseText);
             res.json({reply: responseText, sources});
             syncToDB(sessionId, userId, updated);
@@ -82,9 +119,12 @@ export default function createRouter(
         const {sessionId, conversationHistory, userId} = req;
 
         try {
+            const augmentedMessage = await enrichPromptWithContext(message);
+
             const response = apiName === 'ArvanCloud'
-                ? await apiCall(message, conversationHistory, model)
-                : await apiCall(message, conversationHistory);
+                ? await apiCall(augmentedMessage, conversationHistory, model)
+                : await apiCall(augmentedMessage, conversationHistory);
+
             const updated = appendAndSave(sessionId, conversationHistory, message, response);
             res.json({reply: response});
             syncToDB(sessionId, userId, updated);
