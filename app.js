@@ -1,5 +1,6 @@
 import express from 'express';
 import {startServer} from './utils/serverManager.js';
+import { initializeVectors } from './controllers/vectorController.js';
 
 
 //Instantiating
@@ -41,3 +42,4 @@ app.use(errorHandler);
 
 // Start server
 await startServer(app);
+await initializeVectors();
