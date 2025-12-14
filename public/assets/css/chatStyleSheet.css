@@ -11,6 +11,7 @@
     --surface-color: #718096;
     --text-color: #1e293b;
     --text-secondary: #64748b;
+    --text-label: #475569;
     --border-color: #e2e8f0;
     --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
@@ -31,6 +32,7 @@
     --surface-color: #1e293b;
     --text-color: #f1f5f9;
     --text-secondary: #94a3b8;
+    --text-label: #cbd5e1;
     --border-color: #334155;
     --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
@@ -144,6 +146,7 @@ body {
     background: rgba(255, 255, 255, 0.5);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: var(--shadow-lg);
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
 }
@@ -207,9 +210,10 @@ body {
     padding: 0.625rem 0.75rem;
     border-radius: 12px;
     cursor: pointer;
+    box-shadow: var(--shadow-lg);
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     backdrop-filter: blur(10px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
 }
 
 [data-theme="dark"] .theme-toggle,
@@ -572,7 +576,7 @@ body {
     font-weight: 600;
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     backdrop-filter: blur(10px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-lg);
 }
 
 [data-theme="dark"] .clear-button {
@@ -685,7 +689,7 @@ body {
 }
 
 .service-selector label {
-    color: var(--text-secondary);
+    color: var(--text-label);
     font-weight: 600;
     font-size: 0.875rem;
 }
@@ -700,8 +704,8 @@ body {
     font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     outline: none;
+    box-shadow: var(--shadow-lg);
 }
 
 .service-selector select:hover {
@@ -725,7 +729,7 @@ body {
     font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-lg);
     outline: none;
 }
 
@@ -930,13 +934,14 @@ body {
     .clear-button {
         padding: 0.875rem 1.25rem;
         font-size: 0.8125rem;
+        box-shadow: var(--shadow-lg);
     }
 
     .header-right {
         gap: 0.5rem;
     }
 
-    .theme-toggle {
+    .theme-toggle, .logout-btn {
         padding: 0.5rem 0.625rem;
     }
 
