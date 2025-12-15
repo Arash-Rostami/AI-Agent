@@ -30,6 +30,10 @@
                 <i class="fas fa-sun"></i>
             </button>
 
+            <button class="logout-btn" id="sync-btn" title="Sync Knowledge Base" style="display: none; margin-right: 10px;">
+                <i class="fas fa-sync"></i>
+            </button>
+
             <button class="logout-btn" id="logout-btn" title="Log out">
                 <i class="fas fa-sign-out-alt"></i>
             </button>
@@ -99,11 +103,13 @@
     import ChatFacade from './assets/js/ChatFacade.js';
     import LogoutHandler from './assets/js/LogoutHandler.js';
     import ThemeToggle from './assets/js/ThemeToggler.js';
+    import SyncHandler from './assets/js/SyncHandler.js';
 
     document.addEventListener('DOMContentLoaded', () => {
         // new ChatFacade();
         new LogoutHandler('logout-btn');
         new ThemeToggle('theme-toggle');
+        new SyncHandler('sync-btn');
     });
 </script>
 </body>
