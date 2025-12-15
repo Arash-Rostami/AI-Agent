@@ -1,4 +1,6 @@
 import express from 'express';
+import {dirname, join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {startServer} from './utils/serverManager.js';
 import {initializeVectors} from './utils/vectorManager.js';
 
@@ -18,6 +20,8 @@ import {guardChatRoutes} from './middleware/routeGaurd.js';
 import cookieParser from 'cookie-parser';
 import {logAccess} from './middleware/accessLogger.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Middleware
 const app = express();
@@ -32,6 +36,7 @@ app.use(logAccess);
 
 app.use(guardChatRoutes);
 app.use(express.static('public'));
+app.use('/assets/js/lib/html2pdf.bundle.min.js', express.static(join(__dirname, 'node_modules/html2pdf.js/dist/html2pdf.bundle.min.js')));
 
 app.use('/', createRouter(
     callGeminiAPI,

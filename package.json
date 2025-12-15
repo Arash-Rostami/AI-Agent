@@ -25,6 +25,7 @@
     "express": "^5.2.1",
     "g": "^2.0.1",
     "groq-sdk": "^0.32.0",
+    "html2pdf.js": "^0.12.1",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
