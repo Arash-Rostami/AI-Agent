@@ -5,6 +5,7 @@ import {clearConversationHistory, saveConversationHistory} from '../middleware/k
 import {syncToDatabase} from '../utils/interactionLogManager.js';
 import {searchVectors, syncDocuments} from '../utils/vectorManager.js';
 import InteractionLog from '../models/InteractionLog.js';
+import {ConversationManager} from '../utils/conversationManager.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -116,10 +117,18 @@ export default function createRouter(
     });
 
     router.get('/initial-prompt', async (req, res) => {
-        const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
+        let {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
         const prompt = isRestrictedMode && !isBmsMode
             ? 'سلام! لطفاً خودتان را به عنوان یک دستیار هوش مصنوعی مفید به زبان فارسی و به صورت دوستانه و مختصر معرفی کنید.'
             : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way.';
+
+        // If the user doesn't have a cookie (likely iframe/restricted mode),
+        // enforce a session reset here to prevent appending to old history on page reload.
+        if (!req.cookies?.session_id && userId) {
+            sessionId = ConversationManager.getOrCreateSessionId(userId, req.userIp);
+            ConversationManager.mapUserToSession(userId, sessionId);
+            conversationHistory = []; // Reset local history for the new session
+        }
 
         try {
             const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode);
