@@ -18,8 +18,12 @@ export const apiKeyMiddleware = (req, res, next) => {
     req.geminiApiKey = isExternalService ? null : sessionManager.getKeyForIP(req.keyIdentifier)
 
     let sessionId = req.cookies?.session_id;
-    if (isRootGet || !sessionId) sessionId = ConversationManager.getOrCreateSessionId(req.userId, req.userIp);
 
+    if (!sessionId && !isRootGet && req.userId) sessionId = ConversationManager.getActiveSession(req.userId);
+    if (isRootGet || !sessionId) {
+        sessionId = ConversationManager.getOrCreateSessionId(req.userId, req.userIp);
+        ConversationManager.mapUserToSession(req.userId, sessionId);
+    }
     if (isRootGet) {
         res.cookie('session_id', sessionId, {
             httpOnly: true,

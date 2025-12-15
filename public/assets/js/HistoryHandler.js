@@ -10,6 +10,7 @@ export default class HistoryHandler {
         this.messagesContainer = document.getElementById('history-messages');
         this.backBtn = document.getElementById('back-to-list-btn');
         this.pdfBtn = document.getElementById('pdf-btn');
+        this.printBtn = document.getElementById('print-btn');
 
         this.formatter = new MessageFormatter();
         this.init();
@@ -23,10 +24,58 @@ export default class HistoryHandler {
         this.backBtn.addEventListener('click', () => this.showList());
 
         if (this.pdfBtn) this.pdfBtn.addEventListener('click', () => this.exportToPDF());
+        if (this.printBtn) this.printBtn.addEventListener('click', () => this.printHistory());
 
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.closeHistory();
         });
+    }
+
+    printHistory() {
+        const printWindow = window.open('', '_blank');
+        const preview = this.getPreviewFromDOM() || this.currentSessionId || 'Export';
+        const title = `Chat History - ${preview}`;
+        const content = this.messagesContainer.innerHTML;
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>${title}</title>
+                <style>
+                    body { font-family: system-ui, sans-serif; padding: 20px; line-height: 1.6; }
+                    .message { margin-bottom: 20px; display: flex; }
+                    .message.user { flex-direction: row-reverse; }
+                    .message-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color, #007bff); color: white; display: flex; align-items: center; justify-content: center; margin: 0 10px; flex-shrink: 0; }
+                    .message-wrapper { max-width: 80%; }
+                    .message-content { padding: 12px 16px; border-radius: 18px; background: #f0f0f0; }
+                    .message.ai .message-content { background: #e3f2fd; }
+                    .message.user .message-content { background: #007bff; color: white; }
+                    .rtl { direction: rtl; text-align: right; }
+                    @media print {
+                        body { padding: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h2>${title}</h2>
+                <div class="messages">${content}</div>
+            </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }
+
+    getPreviewFromDOM() {
+        const firstUser = this.messagesContainer.querySelector('.message.user .message-content');
+        if (!firstUser) return '';
+        const text = firstUser.textContent.trim();
+        return text.substring(0, 50) + (text.length > 50 ? '...' : '');
     }
 
     async openHistory() {
@@ -207,10 +256,12 @@ export default class HistoryHandler {
         if (!element) return;
 
         await this.ensureHtml2Pdf();
+        const preview = this.getPreviewFromDOM() || this.currentSessionId || 'export';
+        const safeFilename = preview.replace(/\W+/g, '_').toLowerCase();
 
         const opt = {
             margin: [10, 10, 10, 10],
-            filename: `chat-history-${this.currentSessionId || 'export'}.pdf`,
+            filename: `chat-history-${safeFilename}.pdf`,
             image: {type: 'jpeg', quality: 0.98},
             html2canvas: {scale: 2, useCORS: true, logging: false},
             jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'}
