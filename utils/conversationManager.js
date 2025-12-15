@@ -4,8 +4,7 @@ const conversationStore = new Map();
 
 export class ConversationManager {
     static getOrCreateSessionId(userId, ip) {
-        const identifier = userId || ip || 'anonymous';
-        return crypto.createHash('sha256').update(`session_${identifier}`).digest('hex');
+        return crypto.randomUUID();
     }
 
     static getHistory(sessionId) {

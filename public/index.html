@@ -34,11 +34,35 @@
                 <i class="fas fa-sync"></i>
             </button>
 
+            <button class="history-btn" id="history-btn" title="Chat History">
+                <i class="fas fa-history"></i>
+            </button>
+
             <button class="logout-btn" id="logout-btn" title="Log out">
                 <i class="fas fa-sign-out-alt"></i>
             </button>
         </div>
     </header>
+    <div id="history-modal" class="history-modal hidden">
+        <div class="history-modal-content">
+            <div class="history-header">
+                <h3><i class="fas fa-history"></i> Chat History</h3>
+                <button id="close-history-btn" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="history-body">
+                <div id="history-list" class="history-list">
+                    <!-- List items will be injected here -->
+                    <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+                </div>
+                <div id="history-details" class="history-details hidden">
+                    <button id="back-to-list-btn" class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
+                    <div id="history-messages" class="history-messages">
+                        <!-- Chat messages will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="chat-container">
         <div class="messages" id="messages">
@@ -104,9 +128,11 @@
     import LogoutHandler from './assets/js/LogoutHandler.js';
     import ThemeToggle from './assets/js/ThemeToggler.js';
     import SyncHandler from "./assets/js/SyncHandler.js";
+    import HistoryHandler from "./assets/js/HistoryHandler.js";
 
     document.addEventListener('DOMContentLoaded', () => {
         new ChatFacade();
+        new HistoryHandler();
         new LogoutHandler('logout-btn');
         new ThemeToggle('theme-toggle');
         new SyncHandler('sync-btn');

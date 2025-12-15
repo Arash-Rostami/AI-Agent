@@ -19,7 +19,18 @@ export const apiKeyMiddleware = (req, res, next) => {
     // Session ID for conversation history
     const isExternalService = ['/ask-groq', '/ask-openrouter', '/ask-arvan'].some(p => req.path.startsWith(p));
     const allocatedKey = isExternalService ? null : sessionManager.getKeyForIP(keyIdentifier);
-    const sessionId = ConversationManager.getOrCreateSessionId(userId, userIp);
+    // const sessionId = ConversationManager.getOrCreateSessionId(userId, userIp);
+    let sessionId = req.cookies?.session_id;
+    const isRootGet = req.path === '/' && req.method === 'GET';
+    if (isRootGet || !sessionId) sessionId = ConversationManager.getOrCreateSessionId(userId, userIp);
+
+    if (isRootGet) {
+        res.cookie('session_id', sessionId, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000,
+            sameSite: 'strict'
+        });
+    }
     const conversationHistory = ConversationManager.getHistory(sessionId);
 
 

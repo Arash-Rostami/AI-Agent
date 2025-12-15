@@ -1,3 +1,5 @@
+import MessageFormatter from './MessageFormatter.js';
+
 export default class ChatFacade {
     constructor() {
         this.messages = document.getElementById('messages');
@@ -12,6 +14,7 @@ export default class ChatFacade {
 
         this.isTyping = false;
         this.userId = this.getUserId();
+        this.formatter = new MessageFormatter();
 
         this.init();
     }
@@ -37,18 +40,13 @@ export default class ChatFacade {
 
     toggleWebSearch() {
         this.isWebSearchActive = !this.isWebSearchActive;
-        (this.isWebSearchActive) ? this.webSearchBtn.classList.add('active') : this.webSearchBtn.classList.remove('active');
+        this.webSearchBtn.classList.toggle('active', this.isWebSearchActive);
     }
 
     handleServiceChange() {
-        const selectedService = this.serviceSelect.value;
-
-        if (selectedService === 'gemini') {
-            this.webSearchBtn.classList.remove('hidden');
-        } else {
-            this.webSearchBtn.classList.add('hidden');
-            if (this.isWebSearchActive) this.toggleWebSearch();
-        }
+        const isGemini = this.serviceSelect.value === 'gemini';
+        this.webSearchBtn.classList.toggle('hidden', !isGemini);
+        if (!isGemini && this.isWebSearchActive) this.toggleWebSearch();
     }
 
     setupTextareaAutoResize() {
@@ -61,9 +59,7 @@ export default class ChatFacade {
     handleKeydown(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            (async () => {
-                await this.handleSubmit(e);
-            })();
+            void this.handleSubmit(e);
         }
     }
 
@@ -72,7 +68,6 @@ export default class ChatFacade {
         const message = this.messageInput.value.trim();
         const selectedService = this.serviceSelect.value;
         const useWebSearch = this.isWebSearchActive;
-
 
         if (!message || this.isTyping) return;
 
@@ -83,21 +78,28 @@ export default class ChatFacade {
 
         try {
             const serviceEndpoints = {
-                'groq': '/ask-groq', 'openrouter': '/ask-openrouter', 'gpt-4o': '/ask-arvan', 'deepseek': '/ask-arvan'
+                'groq': '/ask-groq', 'openrouter': '/ask-openrouter',
+                'gpt-4o': '/ask-arvan', 'deepseek': '/ask-arvan'
             };
             const modelMap = {
-                'gpt-4o': 'GPT-4o-mini-4193n', 'deepseek': 'DeepSeek-Chat-V3-0324-mbxyd',
+                'gpt-4o': 'GPT-4o-mini-4193n',
+                'deepseek': 'DeepSeek-Chat-V3-0324-mbxyd'
             };
 
-            let endpoint = serviceEndpoints[selectedService] ?? '/ask';
-            let requestBody = {
-                message, useWebSearch, ...(modelMap[selectedService] && {model: modelMap[selectedService]}),
+            const endpoint = serviceEndpoints[selectedService] ?? '/ask';
+            const requestBody = {
+                message, useWebSearch,
+                ...(modelMap[selectedService] && {model: modelMap[selectedService]})
             };
 
             const response = await fetch(endpoint, {
-                method: 'POST', headers: {
-                    'Content-Type': 'application/json', 'X-User-Id': this.userId, 'X-Frame-Referer': document.referrer,
-                }, body: JSON.stringify(requestBody)
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Id': this.userId,
+                    'X-Frame-Referer': document.referrer
+                },
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) throw new Error('Server error');
@@ -105,7 +107,6 @@ export default class ChatFacade {
             const data = await response.json();
             this.setTyping(false);
             this.addMessage(data.reply, 'ai', false, data.sources);
-
             this.updateStatus('Online', 'success');
         } catch (error) {
             this.setTyping(false);
@@ -118,7 +119,6 @@ export default class ChatFacade {
     addMessage(content, sender, isError = false, sources = []) {
         const welcomeMessage = this.messages.querySelector('.welcome-message');
         if (welcomeMessage) welcomeMessage.remove();
-
 
         const messageEl = document.createElement('div');
         messageEl.className = `message ${sender}`;
@@ -134,10 +134,24 @@ export default class ChatFacade {
         contentEl.className = 'message-content';
 
         if (sender === 'ai') {
-            const direction = this.detectLanguageDirection(content);
+            const direction = this.formatter.detectLanguageDirection(content);
             contentEl.dir = direction;
             contentEl.classList.add(direction);
-            contentEl.innerHTML = this.formatMarkdown(content);
+            contentEl.innerHTML = this.formatter.format(content);
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+            copyBtn.title = 'Copy message';
+
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(content).then(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => copyBtn.innerHTML = '<i class="fas fa-copy"></i>', 2000);
+                });
+            });
+
+            contentEl.appendChild(copyBtn);
         } else {
             contentEl.textContent = content;
         }
@@ -146,12 +160,13 @@ export default class ChatFacade {
 
         contentWrapper.appendChild(contentEl);
 
-        if (sources && sources.length > 0) {
+        if (sources?.length) {
             const sourcesEl = document.createElement('div');
             sourcesEl.className = 'message-sources';
-            sourcesEl.innerHTML = '<h4>🔗 Sources:</h4>' + sources.map(source => `<div class="source-item">
+            sourcesEl.innerHTML = '<h4>🔗 Sources:</h4>' + sources.map(source => `
+                <div class="source-item">
                     <a href="${source.url}" target="_blank" rel="noopener noreferrer" title="${source.snippet || ''}">
-                    <i>${source.title || source.url}</i>                      
+                        <i>${source.title || source.url}</i>
                     </a>
                 </div>`).join('');
             contentWrapper.appendChild(sourcesEl);
@@ -159,132 +174,58 @@ export default class ChatFacade {
 
         messageEl.appendChild(avatar);
         messageEl.appendChild(contentWrapper);
-
         this.messages.appendChild(messageEl);
         this.scrollToBottom();
-    }
-
-    detectLanguageDirection(text) {
-        const rtlRegex = /[\u0600-\u06FF]/;
-        return rtlRegex.test(text) ? 'rtl' : 'ltr';
-    }
-
-    formatMarkdown(text) {
-        let html = ` ${text} `.trim();
-
-        html = html.replace(/```(?:\w+)?\n([\s\S]+?)\n```/g, (match, code) => {
-            const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return `<pre><code>${escapedCode}</code></pre>`;
-        });
-
-        const lines = html.split('\n');
-        let inList = null; // Can be 'ul' or 'ol'
-        const processedLines = [];
-
-        for (const line of lines) {
-            const ulMatch = line.match(/^[\*\-]\s(.*)/);
-            const olMatch = line.match(/^\d+\.\s(.*)/);
-
-            if (ulMatch) {
-                if (inList !== 'ul') {
-                    if (inList) processedLines.push(`</${inList}>`);
-                    processedLines.push('<ul>');
-                    inList = 'ul';
-                }
-                processedLines.push(`<li>${ulMatch[1]}</li>`);
-            } else if (olMatch) {
-                if (inList !== 'ol') {
-                    if (inList) processedLines.push(`</${inList}>`);
-                    processedLines.push('<ol>');
-                    inList = 'ol';
-                }
-                processedLines.push(`<li>${olMatch[1]}</li>`);
-            } else {
-                if (inList) {
-                    processedLines.push(`</${inList}>`);
-                    inList = null;
-                }
-                processedLines.push(line);
-            }
-        }
-        if (inList) {
-            processedLines.push(`</${inList}>`);
-        }
-        html = processedLines.join('\n');
-
-        html = html.replace(/^###\s(.+)/gm, '<h3>$1</h3>');
-        html = html.replace(/^##\s(.+)/gm, '<h2>$1</h2>');
-        html = html.replace(/^#\s(.+)/gm, '<h1>$1</h1>');
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
-
-        return html.split('\n\n').map(paragraph => {
-            if (paragraph.startsWith('<') && paragraph.endsWith('>')) {
-                return paragraph;
-            }
-            return paragraph ? `<p>${paragraph.replace(/\n/g, '<br>')}</p>` : '';
-        }).join('');
     }
 
     setTyping(isTyping) {
         this.isTyping = isTyping;
         this.sendButton.disabled = isTyping;
 
-        let typingIndicator = this.messages.querySelector('.typing-indicator');
+        const typingIndicator = this.messages.querySelector('.typing-indicator');
 
-        if (isTyping) {
-            if (!typingIndicator) {
-                const typingEl = document.createElement('div');
-                typingEl.className = 'message ai';
-                typingEl.innerHTML = `
-                            <div class="message-avatar">
-                                <i class="fas fa-robot"></i>
-                            </div>
-                            <div class="typing-indicator">
-                                <div class="typing-dots">
-                                    <div class="typing-dot"></div>
-                                    <div class="typing-dot"></div>
-                                    <div class="typing-dot"></div>
-                                </div>
-                            </div>
-                        `;
-                this.messages.appendChild(typingEl);
-                this.scrollToBottom();
-            }
-        } else {
-            if (typingIndicator) {
-                typingIndicator.closest('.message').remove();
-            }
+        if (isTyping && !typingIndicator) {
+            const typingEl = document.createElement('div');
+            typingEl.className = 'message ai';
+            typingEl.innerHTML = `
+                <div class="message-avatar"><i class="fas fa-robot"></i></div>
+                <div class="typing-indicator">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            this.messages.appendChild(typingEl);
+            this.scrollToBottom();
+        } else if (!isTyping && typingIndicator) {
+            typingIndicator.closest('.message').remove();
         }
     }
 
     async clearChat() {
         try {
             await fetch('/clear-chat', {
-                method: 'POST', headers: {
-                    'X-User-Id': this.userId
-                }
+                method: 'POST',
+                headers: {'X-User-Id': this.userId}
             });
         } catch (error) {
             console.error('Clear chat error:', error);
         }
 
         this.messages.innerHTML = `
-                    <div class="welcome-message">
-                        <h2>Welcome to AI Assistant 
-                          <span class="spin-icon"> ֎ </span>
-                        </h2>
-                        <p>⚡ Express JS | 👩‍💻  Arash R. </p>
-                    </div>
-                `;
+            <div class="welcome-message">
+                <h2>Welcome to AI Assistant <span class="spin-icon"> ֎ </span></h2>
+                <p>⚡ Express JS | 👩‍💻  Arash R. </p>
+            </div>
+        `;
         this.updateStatus('Online', 'success');
     }
 
     updateStatus(text, type) {
         this.statusText.textContent = text;
-        const dot = document.querySelector('.status-dot');
-        dot.style.background = type === 'error' ? '#dc2626' : '#10b981';
+        document.querySelector('.status-dot').style.background = type === 'error' ? '#dc2626' : '#10b981';
     }
 
     scrollToBottom() {
@@ -295,12 +236,12 @@ export default class ChatFacade {
         try {
             const response = await fetch('/initial-prompt', {
                 headers: {
-                    'X-User-Id': this.userId, 'X-Frame-Referer': document.referrer
+                    'X-User-Id': this.userId,
+                    'X-Frame-Referer': document.referrer
                 }
             });
             const data = await response.json();
             this.addMessage(data.response, 'ai');
-
             this.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode);
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
@@ -310,10 +251,8 @@ export default class ChatFacade {
     handleRestrictedUI(isRestrictedMode, isBmsMode) {
         if (isBmsMode) {
             if (this.serviceSelect) this.serviceSelect.style.display = 'none';
-
             const label = document.querySelector('label[for="service-select"]');
             if (label) label.style.display = 'none';
-
             if (this.webSearchBtn) this.webSearchBtn.style.display = 'none';
             this.isWebSearchActive = false;
         }
