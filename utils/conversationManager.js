@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 
 const conversationStore = new Map();
+const userSessionMap = new Map();
 
 export class ConversationManager {
     static getOrCreateSessionId(userId, ip) {
@@ -21,5 +22,15 @@ export class ConversationManager {
 
     static getAllSessions() {
         return conversationStore.size;
+    }
+
+    static getActiveSession(userId) {
+        return userSessionMap.get(userId);
+    }
+
+    static mapUserToSession(userId, sessionId) {
+        if (userId) {
+            userSessionMap.set(userId, sessionId);
+        }
     }
 }

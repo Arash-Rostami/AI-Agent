@@ -18,7 +18,17 @@ export const apiKeyMiddleware = (req, res, next) => {
     req.geminiApiKey = isExternalService ? null : sessionManager.getKeyForIP(req.keyIdentifier)
 
     let sessionId = req.cookies?.session_id;
-    if (isRootGet || !sessionId) sessionId = ConversationManager.getOrCreateSessionId(req.userId, req.userIp);
+
+    // Try to recover session from backend map if missing and not a root refresh
+    if (!sessionId && !isRootGet && req.userId) {
+        sessionId = ConversationManager.getActiveSession(req.userId);
+    }
+
+    if (isRootGet || !sessionId) {
+        sessionId = ConversationManager.getOrCreateSessionId(req.userId, req.userIp);
+        // Map the new session to the user
+        ConversationManager.mapUserToSession(req.userId, sessionId);
+    }
 
     if (isRootGet) {
         res.cookie('session_id', sessionId, {
