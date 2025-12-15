@@ -175,7 +175,10 @@ export default class HistoryHandler {
             const contentEl = document.createElement('div');
             contentEl.className = 'message-content';
 
-            const text = msg.parts && msg.parts[0] ? msg.parts[0].text : '';
+            // Check if parts array exists and has text
+            const text = (msg.parts && msg.parts.length > 0 && msg.parts[0].text)
+                ? msg.parts[0].text
+                : '';
 
             // Use the MessageFormatter here
             contentEl.innerHTML = this.formatter.format(text);
@@ -210,8 +213,10 @@ export default class HistoryHandler {
 
     exportToPDF() {
         const element = this.messagesContainer;
-        if (!element || !window.html2pdf) {
-            alert('PDF generation library not loaded.');
+        if (!element) return;
+
+        if (!window.html2pdf) {
+            alert('PDF generation library not loaded. Please try refreshing the page.');
             return;
         }
 
@@ -219,7 +224,7 @@ export default class HistoryHandler {
             margin:       [10, 10, 10, 10],
             filename:     `chat-history-${this.currentSessionId || 'export'}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
@@ -228,6 +233,10 @@ export default class HistoryHandler {
 
         html2pdf().set(opt).from(element).save().then(() => {
             element.classList.remove('pdf-mode');
+        }).catch(err => {
+            console.error('PDF Export Error:', err);
+            element.classList.remove('pdf-mode');
+            alert('Failed to generate PDF.');
         });
     }
 }
