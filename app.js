@@ -1,5 +1,6 @@
 import express from 'express';
 import {startServer} from './utils/serverManager.js';
+import {initializeVectors} from './utils/vectorManager.js';
 
 
 //Instantiating
@@ -14,7 +15,6 @@ import {allowFrameEmbedding} from './middleware/frameGuard.js';
 import {checkRestrictedMode} from './middleware/restrictedMode.js';
 // import {guardChatRoutes} from './middleware/routeGaurd.js';
 import cookieParser from 'cookie-parser';
-import authRoutes from './routes/auth.js';
 
 // Middleware
 const app = express();
@@ -41,3 +41,4 @@ app.use(errorHandler);
 
 // Start server
 await startServer(app);
+await initializeVectors();

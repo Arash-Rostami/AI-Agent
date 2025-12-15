@@ -3,6 +3,8 @@ import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {clearConversationHistory, saveConversationHistory} from '../middleware/keySession.js';
 import {syncToDatabase} from '../utils/interactionLogManager.js';
+import {searchVectors, syncDocuments} from '../utils/vectorManager.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,6 +26,19 @@ const validateMessage = (msg) => msg && typeof msg === 'string';
 const syncToDB = (sessionId, userId, history) =>
     syncToDatabase(sessionId, userId, history).catch(err => console.error('DB sync failed:', err.message));
 
+const enrichPromptWithContext = async (message) => {
+    try {
+        const results = await searchVectors(message);
+        if (!results || results.length === 0) return message;
+
+        const context = results.map(r => r.text).join('\n\n---\n\n');
+        return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+    } catch (error) {
+        console.error('Context enrichment failed:', error);
+        return message;
+    }
+};
+
 export default function createRouter(
     callGeminiAPI,
     callGrokAPI = null,
@@ -32,6 +47,16 @@ export default function createRouter(
     callArvanCloudAPI = null
 ) {
     router.get('', (req, res) => res.sendFile(join(__dirname, 'public', 'index.html')));
+
+    router.post('/api/vector/sync', async (req, res) => {
+        try {
+            const result = await syncDocuments();
+            res.json({success: true, message: 'Vector database synced successfully', data: result});
+        } catch (error) {
+            console.error('Vector sync error:', error);
+            res.status(500).json({success: false, error: error.message});
+        }
+    });
 
     router.get('/initial-prompt', async (req, res) => {
         const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
@@ -59,10 +84,11 @@ export default function createRouter(
         const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
 
         try {
+            const augmentedMessage = await enrichPromptWithContext(message);
             const {
                 text: responseText,
                 sources
-            } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
+            } = await callGeminiAPI(augmentedMessage, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
             const updated = appendAndSave(sessionId, conversationHistory, message, responseText);
             res.json({reply: responseText, sources});
             syncToDB(sessionId, userId, updated);
@@ -82,9 +108,11 @@ export default function createRouter(
         const {sessionId, conversationHistory, userId} = req;
 
         try {
+            const augmentedMessage = await enrichPromptWithContext(message);
+
             const response = apiName === 'ArvanCloud'
-                ? await apiCall(message, conversationHistory, model)
-                : await apiCall(message, conversationHistory);
+                ? await apiCall(augmentedMessage, conversationHistory, model)
+                : await apiCall(augmentedMessage, conversationHistory);
             const updated = appendAndSave(sessionId, conversationHistory, message, response);
             res.json({reply: response});
             syncToDB(sessionId, userId, updated);

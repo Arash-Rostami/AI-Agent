@@ -1,7 +1,9 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import {generateToken} from '../utils/authManager.js';
-import {NODE_ENV} from '../config/index.js';
+import {JWT_SECRET, NODE_ENV} from '../config/index.js';
+
 
 const router = express.Router();
 
@@ -42,6 +44,23 @@ router.post('/logout', (req, res) => {
         expires: new Date(0)
     });
     res.status(200).json({message: 'Logged out'});
+});
+
+router.get('/admin', async (req, res) => {
+    try {
+        const token = req.cookies.jwt;
+        if (!token) return res.json({username: null, canSync: false});
+
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await User.findById(decoded.id).select('username');
+
+        if (!user) return res.json({username: null, canSync: false});
+
+        const canSync = ['arash', 'siamak', 'ata'].includes(user.username.toLowerCase());
+        res.json({username: user.username, canSync});
+    } catch (error) {
+        res.json({username: null, canSync: false});
+    }
 });
 
 export default router;

@@ -203,7 +203,7 @@ body {
     gap: 1rem;
 }
 
-.theme-toggle, .logout-btn {
+.theme-toggle, .logout-btn, .sync-btn {
     background: rgba(255, 255, 255, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: var(--text-color);
@@ -217,12 +217,15 @@ body {
 }
 
 [data-theme="dark"] .theme-toggle,
+[data-theme="dark"] .sync-btn,
 [data-theme="dark"] .logout-btn {
     background: rgba(30, 41, 59, 0.6);
     border-color: rgba(51, 65, 85, 0.5);
 }
 
-.theme-toggle:hover, .logout-btn:hover {
+.theme-toggle:hover,
+.sync-btn:hover,
+.logout-btn:hover {
     background: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
@@ -230,8 +233,15 @@ body {
     box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
 }
 
-.theme-toggle:active, .logout-btn:active {
+.theme-toggle:active,
+.sync-btn:active,
+.logout-btn:active {
     transform: translateY(0) rotate(0deg);
+}
+
+.sync-btn {
+    display: none;
+    margin-right: 10px;
 }
 
 .chat-container {
@@ -941,7 +951,7 @@ body {
         gap: 0.5rem;
     }
 
-    .theme-toggle, .logout-btn {
+    .theme-toggle, .logout-btn, .sync-btn {
         padding: 0.5rem 0.625rem;
     }
 
