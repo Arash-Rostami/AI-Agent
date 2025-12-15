@@ -1,9 +1,12 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {clearConversationHistory, saveConversationHistory} from '../middleware/keySession.js';
 import {syncToDatabase} from '../utils/interactionLogManager.js';
 import { syncDocuments, searchVectors } from '../controllers/vectorController.js';
+import { JWT_SECRET } from '../config/index.js';
+import User from '../models/User.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -49,6 +52,17 @@ export default function createRouter(
 
     router.post('/api/vector/sync', async (req, res) => {
         try {
+            // Security check
+            const token = req.cookies.jwt;
+            if (!token) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+            const decoded = jwt.verify(token, JWT_SECRET);
+            const user = await User.findById(decoded.id);
+
+            if (!user || !['arash', 'siamak', 'ata'].includes(user.username.toLowerCase())) {
+                return res.status(403).json({ success: false, error: 'Forbidden' });
+            }
+
             const result = await syncDocuments();
             res.json({ success: true, message: 'Vector database synced successfully', data: result });
         } catch (error) {

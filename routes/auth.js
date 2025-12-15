@@ -1,9 +1,27 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import {generateToken} from '../utils/authManager.js';
-import {NODE_ENV} from '../config/index.js';
+import {NODE_ENV, JWT_SECRET} from '../config/index.js';
 
 const router = express.Router();
+
+router.get('/me', async (req, res) => {
+    try {
+        const token = req.cookies.jwt;
+        if (!token) return res.json({username: null, canSync: false});
+
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await User.findById(decoded.id).select('username'); // minimal query
+
+        if (!user) return res.json({username: null, canSync: false});
+
+        const canSync = ['arash', 'siamak', 'ata'].includes(user.username.toLowerCase());
+        res.json({username: user.username, canSync});
+    } catch (error) {
+        res.json({username: null, canSync: false});
+    }
+});
 
 router.post('/login', async (req, res) => {
     const {username, password} = req.body;

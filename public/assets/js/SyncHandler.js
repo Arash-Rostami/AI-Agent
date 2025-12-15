@@ -7,24 +7,22 @@ export default class SyncHandler {
     }
 
     init() {
-        // Simple logic to show button for specific users if needed,
-        // or just show it for everyone as per user request "make this button available"
-        // Since we don't have easy frontend access to user ID without decoding token,
-        // and user asked to make it available, we will unhide it.
-        // Ideally, we would decode the JWT here to check for 'arash', 'siamak', 'ata'.
-
-        // For now, I will assume we should just show it or check a cookie if possible.
-        // Let's check if the 'user' cookie exists or if we can infer logged in state.
-        // But for this request, "make this button available" implies visibility.
-
         this.checkVisibility();
         this.button.addEventListener('click', () => this.handleSync());
     }
 
-    checkVisibility() {
-        // Attempt to read the 'user' cookie set by the server, if any.
-        // Or simply show it.
-        this.button.style.display = 'inline-block';
+    async checkVisibility() {
+        try {
+            const response = await fetch('/auth/me');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.canSync) {
+                    this.button.style.display = 'inline-block';
+                }
+            }
+        } catch (e) {
+            // Ignore auth check errors, keep button hidden
+        }
     }
 
     async handleSync() {

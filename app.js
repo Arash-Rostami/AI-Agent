@@ -36,7 +36,7 @@ app.use('/', createRouter(
     callSimpleGeminiAPI,
     callArvanCloudAPI
 ));
-// app.use('/auth', authRoutes);
+app.use('/auth', authRoutes);
 
 app.use(errorHandler);
 
