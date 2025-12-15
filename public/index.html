@@ -10,6 +10,7 @@
     <meta name="robots" content="noindex,nofollow,noarchive,nosnippet"/>
     <meta name="googlebot" content="noindex,nofollow"/>
     <meta name="referrer" content="no-referrer-when-downgrade"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -55,7 +56,10 @@
                     <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
                 </div>
                 <div id="history-details" class="history-details hidden">
-                    <button id="back-to-list-btn" class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
+                    <div class="history-details-header">
+                        <button id="back-to-list-btn" class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
+                        <button id="pdf-btn" class="pdf-btn"><i class="fas fa-file-pdf"></i> PDF</button>
+                    </div>
                     <div id="history-messages" class="history-messages">
                         <!-- Chat messages will be injected here -->
                     </div>

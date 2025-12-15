@@ -1,3 +1,5 @@
+import MessageFormatter from './MessageFormatter.js';
+
 export default class HistoryHandler {
     constructor() {
         this.historyBtn = document.getElementById('history-btn');
@@ -7,7 +9,9 @@ export default class HistoryHandler {
         this.detailsContainer = document.getElementById('history-details');
         this.messagesContainer = document.getElementById('history-messages');
         this.backBtn = document.getElementById('back-to-list-btn');
+        this.pdfBtn = document.getElementById('pdf-btn');
 
+        this.formatter = new MessageFormatter();
         this.init();
     }
 
@@ -18,7 +22,11 @@ export default class HistoryHandler {
         this.closeBtn.addEventListener('click', () => this.closeHistory());
         this.backBtn.addEventListener('click', () => this.showList());
 
-        // Close on click outside
+        if (this.pdfBtn) {
+            this.pdfBtn.addEventListener('click', () => this.exportToPDF());
+        }
+
+        // Close on click outside (only if clicking the overlay, not the sidebar content)
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.closeHistory();
         });
@@ -48,7 +56,10 @@ export default class HistoryHandler {
 
     showDetails() {
         this.detailsContainer.classList.remove('hidden');
-        setTimeout(() => this.detailsContainer.classList.add('active'), 10);
+        // Small delay to allow display:flex to apply before transition
+        requestAnimationFrame(() => {
+            this.detailsContainer.classList.add('active');
+        });
     }
 
     async loadHistoryList() {
@@ -125,6 +136,7 @@ export default class HistoryHandler {
     }
 
     async loadSessionDetails(sessionId) {
+        this.currentSessionId = sessionId; // Store for PDF export name
         this.showDetails();
         this.messagesContainer.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading chat...</div>';
 
@@ -164,7 +176,9 @@ export default class HistoryHandler {
             contentEl.className = 'message-content';
 
             const text = msg.parts && msg.parts[0] ? msg.parts[0].text : '';
-            contentEl.innerHTML = this.formatText(text);
+
+            // Use the MessageFormatter here
+            contentEl.innerHTML = this.formatter.format(text);
 
             if (msg.role === 'model' || msg.role === 'assistant') {
                 // Check for RTL
@@ -181,19 +195,6 @@ export default class HistoryHandler {
         });
     }
 
-    formatText(text) {
-        if (!text) return '';
-        let html = text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\n/g, '<br>');
-
-        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-
-        return html;
-    }
-
     escapeHtml(text) {
         if (!text) return '';
         return text
@@ -205,5 +206,28 @@ export default class HistoryHandler {
     getUserId() {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('user');
+    }
+
+    exportToPDF() {
+        const element = this.messagesContainer;
+        if (!element || !window.html2pdf) {
+            alert('PDF generation library not loaded.');
+            return;
+        }
+
+        const opt = {
+            margin:       [10, 10, 10, 10],
+            filename:     `chat-history-${this.currentSessionId || 'export'}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Add a class to handle specific PDF styling if needed
+        element.classList.add('pdf-mode');
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            element.classList.remove('pdf-mode');
+        });
     }
 }
