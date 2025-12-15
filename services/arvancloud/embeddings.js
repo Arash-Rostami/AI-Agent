@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { ARVANCLOUD_API_KEY } from '../../config/index.js';
 
-const EMBEDDING_URL = 'https://arvancloudai.ir/gateway/models/Embedding-3-Large/_46PfhWjuDK4JjXl31gyVB26N1UHw2zPOR1Oj_tFlypDN0dnWQQ4WgjV06yfiFcnwo1uyn_UT3FlzOMnqH1PWEMZHbrfpow8o1Jo4IAWlTuLr8PnaB9w-kVScsuX9vOYcQ-v7trIgkeBIKC2y1bYorNXRbIM2Cau4iJAosjqsNb46gBAbkrD9aJIxhxUevWwiOqK_eE5biRpZ8H_l8Mrwmp_rSxMEHT0mYKD-VuNyvC2xRLtTVBfNi9MINP6oXRXsTE1gY0d000/v1/embeddings';
+// Base ID stripped of the endpoint path
+const BASE_URL_ID = 'https://arvancloudai.ir/gateway/models/Embedding-3-Large/_46PfhWjuDK4JjXl31gyVB26N1UHw2zPOR1Oj_tFlypDN0dnWQQ4WgjV06yfiFcnwo1uyn_UT3FlzOMnqH1PWEMZHbrfpow8o1Jo4IAWlTuLr8PnaB9w-kVScsuX9vOYcQ-v7trIgkeBIKC2y1bYorNXRbIM2Cau4iJAosjqsNb46gBAbkrD9aJIxhxUevWwiOqK_eE5biRpZ8H_l8Mrwmp_rSxMEHT0mYKD-VuNyvC2xRLtTVBfNi9MINP6oXRXsTE1gY0d000';
+
+const EMBEDDING_URL = `${BASE_URL_ID}/v1/embeddings`;
 const MODEL_NAME = 'Embedding-3-Large-nxekt';
 
 export async function getEmbeddings(text) {
@@ -16,13 +19,15 @@ export async function getEmbeddings(text) {
         const response = await axios.post(
             EMBEDDING_URL,
             {
-                input: sanitizedText,
+                // Some providers require input to be an array for 'input' field
+                input: [sanitizedText],
                 model: MODEL_NAME
             },
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${ARVANCLOUD_API_KEY}`
+                    // User documentation specifies 'apikey' prefix, not 'Bearer'
+                    'Authorization': `apikey ${ARVANCLOUD_API_KEY}`
                 }
             }
         );
