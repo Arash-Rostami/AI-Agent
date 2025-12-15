@@ -1,3 +1,5 @@
+import MessageFormatter from './MessageFormatter.js';
+
 export default class HistoryHandler {
     constructor() {
         this.historyBtn = document.getElementById('history-btn');
@@ -7,7 +9,9 @@ export default class HistoryHandler {
         this.detailsContainer = document.getElementById('history-details');
         this.messagesContainer = document.getElementById('history-messages');
         this.backBtn = document.getElementById('back-to-list-btn');
+        this.pdfBtn = document.getElementById('pdf-btn');
 
+        this.formatter = new MessageFormatter();
         this.init();
     }
 
@@ -18,7 +22,8 @@ export default class HistoryHandler {
         this.closeBtn.addEventListener('click', () => this.closeHistory());
         this.backBtn.addEventListener('click', () => this.showList());
 
-        // Close on click outside
+        if (this.pdfBtn) this.pdfBtn.addEventListener('click', () => this.exportToPDF());
+
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.closeHistory();
         });
@@ -48,7 +53,9 @@ export default class HistoryHandler {
 
     showDetails() {
         this.detailsContainer.classList.remove('hidden');
-        setTimeout(() => this.detailsContainer.classList.add('active'), 10);
+        requestAnimationFrame(() => {
+            this.detailsContainer.classList.add('active');
+        });
     }
 
     async loadHistoryList() {
@@ -115,8 +122,7 @@ export default class HistoryHandler {
         history.forEach(item => {
             const date = new Date(item.createdAt).toDateString();
             let label = date;
-            if (date === today) label = 'Today';
-            else if (date === yesterday) label = 'Yesterday';
+            if (date === today) label = 'Today'; else if (date === yesterday) label = 'Yesterday';
 
             if (!groups[label]) groups[label] = [];
             groups[label].push(item);
@@ -125,6 +131,7 @@ export default class HistoryHandler {
     }
 
     async loadSessionDetails(sessionId) {
+        this.currentSessionId = sessionId;
         this.showDetails();
         this.messagesContainer.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading chat...</div>';
 
@@ -164,7 +171,7 @@ export default class HistoryHandler {
             contentEl.className = 'message-content';
 
             const text = msg.parts && msg.parts[0] ? msg.parts[0].text : '';
-            contentEl.innerHTML = this.formatText(text);
+            contentEl.innerHTML = this.formatter.format(text);
 
             if (msg.role === 'model' || msg.role === 'assistant') {
                 // Check for RTL
@@ -181,18 +188,6 @@ export default class HistoryHandler {
         });
     }
 
-    formatText(text) {
-        if (!text) return '';
-        let html = text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\n/g, '<br>');
-
-        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-
-        return html;
-    }
 
     escapeHtml(text) {
         if (!text) return '';
@@ -205,5 +200,44 @@ export default class HistoryHandler {
     getUserId() {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('user');
+    }
+
+    async exportToPDF() {
+        const element = this.messagesContainer;
+        if (!element) return;
+
+        await this.ensureHtml2Pdf();
+
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: `chat-history-${this.currentSessionId || 'export'}.pdf`,
+            image: {type: 'jpeg', quality: 0.98},
+            html2canvas: {scale: 2, useCORS: true, logging: false},
+            jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'}
+        };
+
+        element.classList.add('pdf-mode');
+
+        window.html2pdf().set(opt).from(element).save().finally(() => {
+            element.classList.remove('pdf-mode');
+        });
+    }
+
+    ensureHtml2Pdf() {
+        if (this._html2pdfPromise) return this._html2pdfPromise;
+
+        this._html2pdfPromise = new Promise((resolve, reject) => {
+            if (window.html2pdf) return resolve(window.html2pdf);
+
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            s.async = true;
+            s.onload = () => resolve(window.html2pdf);
+            s.onerror = reject;
+
+            document.head.appendChild(s);
+        });
+
+        return this._html2pdfPromise;
     }
 }

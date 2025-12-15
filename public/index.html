@@ -51,76 +51,76 @@
             </div>
             <div class="history-body">
                 <div id="history-list" class="history-list">
-                    <!-- List items will be injected here -->
                     <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
                 </div>
                 <div id="history-details" class="history-details hidden">
+                    <div class="history-details-header">
                     <button id="back-to-list-btn" class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
-                    <div id="history-messages" class="history-messages">
-                        <!-- Chat messages will be injected here -->
-                    </div>
+                    <button id="pdf-btn" class="pdf-btn"><i class="fas fa-file-pdf"></i> PDF</button>
                 </div>
+                <div id="history-messages" class="history-messages"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="chat-container">
-        <div class="messages" id="messages">
-            <div class="welcome-message">
-                <h2>
-                    Welcome to AI Assistant
-                    <span class="spin-icon"> ֎ </span>
-                </h2>
-                <p>⚡ Express JS | 👩‍💻 Arash R.</p>
-            </div>
-        </div>
-
-        <div class="input-container">
-            <form class="input-form" id="chat-form">
-                <div class="input-wrapper">
-                    <label for="message-input"></label>
-                    <textarea
-                            class="message-input"
-                            id="message-input"
-                            placeholder="Type your message..."
-                            rows="1"
-                            autocomplete="off"
-                    ></textarea>
-
-                    <button type="submit" class="send-button" id="send-button">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-
-                <button type="button" class="clear-button" id="clear-button">
-                    <i class="fas fa-trash"></i> Clear
-                </button>
-            </form>
-
-            <div class="service-selector">
-                <label for="service-select">
-                    <small>AI Model: </small>
-                </label>
-
-                <select id="service-select">
-                    <option value="gemini" selected>Gemini</option>
-                    <option value="gpt-4o">GPT-4o</option>
-                    <option value="openrouter">Grok</option>
-                    <option value="deepseek">DeepSeek</option>
-                    <option value="groq">Qwen</option>
-                </select>
-
-                <button
-                        type="button"
-                        id="web-search-btn"
-                        class="web-search-btn"
-                        title="Toggle Web Search"
-                >
-                    <i class="fas fa-globe"></i> <small>Web Search</small>
-                </button>
-            </div>
+<div class="chat-container">
+    <div class="messages" id="messages">
+        <div class="welcome-message">
+            <h2>
+                Welcome to AI Assistant
+                <span class="spin-icon"> ֎ </span>
+            </h2>
+            <p>⚡ Express JS | 👩‍💻 Arash R.</p>
         </div>
     </div>
+
+    <div class="input-container">
+        <form class="input-form" id="chat-form">
+            <div class="input-wrapper">
+                <label for="message-input"></label>
+                <textarea
+                        class="message-input"
+                        id="message-input"
+                        placeholder="Type your message..."
+                        rows="1"
+                        autocomplete="off"
+                ></textarea>
+
+                <button type="submit" class="send-button" id="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+
+            <button type="button" class="clear-button" id="clear-button">
+                <i class="fas fa-trash"></i> Clear
+            </button>
+        </form>
+
+        <div class="service-selector">
+            <label for="service-select">
+                <small>AI Model: </small>
+            </label>
+
+            <select id="service-select">
+                <option value="gemini" selected>Gemini</option>
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="openrouter">Grok</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="groq">Qwen</option>
+            </select>
+
+            <button
+                    type="button"
+                    id="web-search-btn"
+                    class="web-search-btn"
+                    title="Toggle Web Search"
+            >
+                <i class="fas fa-globe"></i> <small>Web Search</small>
+            </button>
+        </div>
+    </div>
+</div>
 </div>
 
 <script type="module">

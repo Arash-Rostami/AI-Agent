@@ -11,6 +11,7 @@ import callArvanCloudAPI from './services/arvancloud/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
 import createRouter from './routes/web.js';
+import {identityMiddleware} from './middleware/userIdentity.js';
 import {apiKeyMiddleware} from './middleware/keySession.js';
 import {allowFrameEmbedding} from './middleware/frameGuard.js';
 import {checkRestrictedMode} from './middleware/restrictedMode.js';
@@ -27,10 +28,11 @@ app.use(express.text());
 app.use(cookieParser());
 app.use(allowFrameEmbedding);
 app.use(checkRestrictedMode);
+app.use(identityMiddleware);
 app.use(apiKeyMiddleware);
 app.use(logAccess);
-
 app.use(guardChatRoutes);
+
 app.use(express.static('public'));
 
 app.use('/', createRouter(
@@ -43,7 +45,6 @@ app.use('/', createRouter(
 app.use('/auth', authRoutes);
 
 app.use(errorHandler);
-
 // Start server
 await startServer(app);
 await initializeVectors();

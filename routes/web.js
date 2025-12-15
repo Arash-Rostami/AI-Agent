@@ -58,19 +58,30 @@ export default function createRouter(
                 .sort({createdAt: -1})
                 .select('sessionId createdAt messages');
 
-            const history = logs.map(log => {
-                const firstUserMsg = log.messages.find(m => m.role === 'user');
-                const preview = firstUserMsg ? firstUserMsg.parts[0].text : 'No user message';
-                const truncatedPreview = preview.length > 50 ? preview.substring(0, 50) + '...' : preview;
+            const validLogs = [];
+            const idsToDelete = [];
 
-                return {
-                    sessionId: log.sessionId,
-                    createdAt: log.createdAt,
-                    preview: truncatedPreview
-                };
-            });
+            for (const log of logs) {
+                const userMsg = log.messages.find(m => m.role === 'user');
+                if (userMsg) {
+                    validLogs.push({
+                        sessionId: log.sessionId,
+                        createdAt: log.createdAt,
+                        preview: userMsg.parts[0].text.length > 50
+                            ? userMsg.parts[0].text.substring(0, 50) + '...'
+                            : userMsg.parts[0].text
+                    });
+                } else {
+                    idsToDelete.push(log._id);
+                }
+            }
 
-            res.json({history});
+            if (idsToDelete.length > 0) {
+                InteractionLog.deleteMany({ _id: { $in: idsToDelete } })
+                    .catch(e => console.error('Cleanup error:', e));
+            }
+
+            res.json({history: validLogs});
         } catch (error) {
             console.error('Fetch history error:', error);
             res.status(500).json({error: 'Failed to fetch history'});

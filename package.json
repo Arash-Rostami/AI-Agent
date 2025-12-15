@@ -1,7 +1,7 @@
 {
   "name": "ai",
   "type": "module",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
@@ -18,15 +18,15 @@
   "dependencies": {
     "-": "^0.0.1",
     "@navetacandra/ddg": "^0.0.8",
-    "axios": "^1.9.0",
+    "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "config": "^3.3.12",
     "cookie-parser": "^1.4.7",
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "g": "^2.0.1",
     "groq-sdk": "^0.32.0",
     "joi": "^17.13.3",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
     "uuid": "^11.1.0"
   },
