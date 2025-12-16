@@ -1,4 +1,4 @@
-export function formatContents(conversationHistory, newMessage) {
+export function formatContents(conversationHistory, newMessage, fileData = null) {
     const contents = conversationHistory.map(msg => {
         if (msg.role === 'tool_response') {
             return {role: 'function', parts: [{functionResponse: {name: msg.name, response: msg.content}}]};
@@ -9,7 +9,12 @@ export function formatContents(conversationHistory, newMessage) {
         return {role: msg.role === 'assistant' ? 'model' : 'user', parts: [{text: msg.content}]};
     });
 
-    contents.push({role: 'user', parts: [{text: newMessage}]});
+    const parts = [{text: newMessage}];
+    if (fileData) {
+        parts.push({inlineData: {mimeType: fileData.mimeType, data: fileData.data}});
+    }
+
+    contents.push({role: 'user', parts});
     return contents;
 }
 

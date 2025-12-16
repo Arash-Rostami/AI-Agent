@@ -12,8 +12,14 @@ export default class ChatFacade {
         this.serviceSelect = document.getElementById('service-select');
         this.webSearchBtn = document.getElementById('web-search-btn');
         this.logoutBtn = document.getElementById('logout-btn');
+        this.attachmentBtn = document.getElementById('attachment-btn');
+        this.fileInput = document.getElementById('file-input');
+        this.filePreviewContainer = document.getElementById('file-preview-container');
+        this.fileNameSpan = document.getElementById('file-name');
+        this.removeFileBtn = document.getElementById('remove-file-btn');
 
         this.isTyping = false;
+        this.selectedFile = null;
         this.userId = this.getUserId();
         this.formatter = new MessageFormatter();
 
@@ -37,6 +43,10 @@ export default class ChatFacade {
         this.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
         this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
+
+        this.attachmentBtn.addEventListener('click', () => this.fileInput.click());
+        this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        this.removeFileBtn.addEventListener('click', () => this.clearFileSelection());
     }
 
     toggleWebSearch() {
@@ -45,9 +55,30 @@ export default class ChatFacade {
     }
 
     handleServiceChange() {
-        const isGemini = this.serviceSelect.value === 'gemini';
+        const service = this.serviceSelect.value;
+        const isGemini = service === 'gemini';
         this.webSearchBtn.classList.toggle('hidden', !isGemini);
         if (!isGemini && this.isWebSearchActive) this.toggleWebSearch();
+
+        // Support attachments only for Gemini and GPT-4o
+        const supportsAttachments = ['gemini', 'gpt-4o'].includes(service);
+        this.attachmentBtn.style.display = supportsAttachments ? 'inline-block' : 'none';
+        if (!supportsAttachments) this.clearFileSelection();
+    }
+
+    handleFileSelect(e) {
+        if (e.target.files && e.target.files[0]) {
+            this.selectedFile = e.target.files[0];
+            this.fileNameSpan.textContent = this.selectedFile.name;
+            this.filePreviewContainer.classList.remove('hidden');
+        }
+    }
+
+    clearFileSelection() {
+        this.selectedFile = null;
+        this.fileInput.value = '';
+        this.filePreviewContainer.classList.add('hidden');
+        this.fileNameSpan.textContent = '';
     }
 
     setupTextareaAutoResize() {
@@ -72,7 +103,7 @@ export default class ChatFacade {
 
         if (!message || this.isTyping) return;
 
-        this.addMessage(message, 'user');
+        this.addMessage(message, 'user', false, [], this.selectedFile ? this.selectedFile.name : null);
         this.messageInput.value = '';
         this.messageInput.style.height = 'auto';
         this.setTyping(true);
@@ -88,19 +119,37 @@ export default class ChatFacade {
             };
 
             const endpoint = serviceEndpoints[selectedService] ?? '/ask';
-            const requestBody = {
-                message, useWebSearch,
-                ...(modelMap[selectedService] && {model: modelMap[selectedService]})
+
+            let body;
+            const headers = {
+                'X-User-Id': this.userId,
+                'X-Frame-Referer': document.referrer
             };
+
+            if (this.selectedFile) {
+                const formData = new FormData();
+                formData.append('message', message);
+                formData.append('useWebSearch', useWebSearch);
+                if (modelMap[selectedService]) {
+                    formData.append('model', modelMap[selectedService]);
+                }
+                formData.append('file', this.selectedFile);
+                body = formData;
+                // Don't set Content-Type for FormData, browser sets it with boundary
+            } else {
+                body = JSON.stringify({
+                    message, useWebSearch,
+                    ...(modelMap[selectedService] && {model: modelMap[selectedService]})
+                });
+                headers['Content-Type'] = 'application/json';
+            }
+
+            this.clearFileSelection();
 
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-User-Id': this.userId,
-                    'X-Frame-Referer': document.referrer
-                },
-                body: JSON.stringify(requestBody)
+                headers,
+                body
             });
 
             if (!response.ok) throw new Error('Server error');
@@ -117,7 +166,7 @@ export default class ChatFacade {
         }
     }
 
-    addMessage(content, sender, isError = false, sources = []) {
+    addMessage(content, sender, isError = false, sources = [], fileName = null) {
         const welcomeMessage = this.messages.querySelector('.welcome-message');
         if (welcomeMessage) {
             welcomeMessage.remove();
@@ -158,6 +207,22 @@ export default class ChatFacade {
             contentEl.appendChild(copyBtn);
         } else {
             contentEl.textContent = content;
+            if (fileName) {
+                const fileTag = document.createElement('div');
+                fileTag.className = 'message-attachment-tag';
+
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-paperclip';
+                fileTag.appendChild(icon);
+
+                const text = document.createTextNode(` ${fileName}`);
+                fileTag.appendChild(text);
+
+                fileTag.style.fontSize = '0.8em';
+                fileTag.style.marginTop = '5px';
+                fileTag.style.opacity = '0.8';
+                contentEl.appendChild(fileTag);
+            }
         }
 
         if (isError) contentEl.style.color = '#dc2626';

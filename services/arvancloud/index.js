@@ -7,7 +7,7 @@ import {
 
 if (!ARVANCLOUD_API_KEY) console.warn('ARVANCLOUD_API_KEY is not set.');
 
-export default async function callArvanCloudAPI(message, conversationHistory = [], model) {
+export default async function callArvanCloudAPI(message, conversationHistory = [], model, fileData = null) {
     if (!message || typeof message !== 'string') throw new Error('Message must be a non-empty string');
 
     const MODELS = {
@@ -23,13 +23,22 @@ export default async function callArvanCloudAPI(message, conversationHistory = [
 
     if (!endpointUrl) throw new Error(`Endpoint URL for model ${model} is not configured.`);
 
+    let lastMessageContent = message;
+    // Check if model supports vision (contains "gpt" or "4o") and fileData is present
+    if (fileData && (modelId.toLowerCase().includes('gpt') || modelId.toLowerCase().includes('4o'))) {
+        lastMessageContent = [
+            {type: "text", text: message},
+            {type: "image_url", image_url: {url: fileData}}
+        ];
+    }
+
     const messages = [
         {role: 'system', content: SYSTEM_INSTRUCTION_TEXT},
         ...conversationHistory.map(m => ({
             role: m.role === 'assistant' ? 'assistant' : 'user',
             content: m.content
         })),
-        {role: 'user', content: message}
+        {role: 'user', content: lastMessageContent}
     ];
 
     try {
