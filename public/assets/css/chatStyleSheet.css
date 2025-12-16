@@ -374,6 +374,7 @@ body {
     resize: none;
     outline: none;
     transition: var(--transition);
+    overflow-y: hidden;
 }
 
 .message-input:focus {

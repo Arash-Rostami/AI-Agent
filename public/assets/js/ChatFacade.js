@@ -99,7 +99,15 @@ export default class ChatFacade {
     setupTextareaAutoResize() {
         this.messageInput.addEventListener('input', () => {
             this.messageInput.style.height = 'auto';
-            this.messageInput.style.height = this.messageInput.scrollHeight + 'px';
+            const newHeight = this.messageInput.scrollHeight;
+            this.messageInput.style.height = newHeight + 'px';
+
+            // Only show scrollbar if content exceeds max-height (160px from CSS)
+            if (newHeight >= 160) {
+                this.messageInput.style.overflowY = 'auto';
+            } else {
+                this.messageInput.style.overflowY = 'hidden';
+            }
         });
     }
 
