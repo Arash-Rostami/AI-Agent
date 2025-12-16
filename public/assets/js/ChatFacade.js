@@ -85,6 +85,24 @@ export default class ChatFacade {
         if (e.target.files && e.target.files[0]) {
             this.selectedFile = e.target.files[0];
             this.fileNameSpan.textContent = this.selectedFile.name;
+
+            // Clear previous thumbnail if any
+            const existingImg = this.filePreviewContainer.querySelector('img');
+            if (existingImg) existingImg.remove();
+
+            if (this.selectedFile.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.maxHeight = '30px';
+                    img.style.borderRadius = '4px';
+                    img.style.marginRight = '8px';
+                    this.filePreviewContainer.insertBefore(img, this.fileNameSpan);
+                };
+                reader.readAsDataURL(this.selectedFile);
+            }
+
             this.filePreviewContainer.classList.remove('hidden');
         }
     }
@@ -94,6 +112,8 @@ export default class ChatFacade {
         this.fileInput.value = '';
         this.filePreviewContainer.classList.add('hidden');
         this.fileNameSpan.textContent = '';
+        const existingImg = this.filePreviewContainer.querySelector('img');
+        if (existingImg) existingImg.remove();
     }
 
     setupTextareaAutoResize() {
