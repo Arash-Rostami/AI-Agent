@@ -47,6 +47,21 @@ export default class ChatFacade {
         this.attachmentBtn.addEventListener('click', () => this.fileInput.click());
         this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
         this.removeFileBtn.addEventListener('click', () => this.clearFileSelection());
+
+        // Fade effect for attachment button
+        this.messageInput.addEventListener('input', () => this.handleInputFade());
+        this.messageInput.addEventListener('focus', () => this.handleInputFade());
+        this.messageInput.addEventListener('blur', () => {
+            this.attachmentBtn.classList.remove('fade-out');
+        });
+    }
+
+    handleInputFade() {
+        if (this.messageInput.value.trim().length > 0) {
+            this.attachmentBtn.classList.add('fade-out');
+        } else {
+            this.attachmentBtn.classList.remove('fade-out');
+        }
     }
 
     toggleWebSearch() {
