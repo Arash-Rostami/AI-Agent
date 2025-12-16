@@ -85,6 +85,12 @@
             <form class="input-form" id="chat-form">
                 <div class="input-wrapper">
                     <label for="message-input"></label>
+
+                    <button type="button" class="attachment-btn" id="attachment-btn" title="Attach file">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <input type="file" id="file-input" hidden accept="image/*,application/pdf">
+
                     <textarea
                             class="message-input"
                             id="message-input"
@@ -96,6 +102,11 @@
                     <button type="submit" class="send-button" id="send-button">
                         <i class="fas fa-paper-plane"></i>
                     </button>
+                </div>
+
+                <div id="file-preview-container" class="file-preview hidden">
+                    <span id="file-name"></span>
+                    <button type="button" id="remove-file-btn" class="remove-file-btn"><i class="fas fa-times"></i></button>
                 </div>
 
                 <button type="button" class="clear-button" id="clear-button">
