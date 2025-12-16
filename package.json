@@ -1,7 +1,7 @@
 {
   "name": "ai",
   "type": "module",
-  "version": "1.0.10",
+  "version": "1.0.12",
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
@@ -28,6 +28,7 @@
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
+    "multer": "^2.0.2",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

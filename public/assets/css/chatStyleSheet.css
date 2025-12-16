@@ -364,7 +364,7 @@ body {
     width: 100%;
     min-height: 56px;
     max-height: 160px;
-    padding: 16px 56px 16px 24px;
+    padding: 16px 56px 16px 56px;
     border-radius: 28px;
     border: 1px solid var(--border-color);
     background: var(--input-bg);
@@ -374,6 +374,7 @@ body {
     resize: none;
     outline: none;
     transition: var(--transition);
+    overflow-y: hidden;
 }
 
 .message-input:focus {
@@ -402,6 +403,7 @@ body {
     justify-content: center;
     transition: var(--transition);
     box-shadow: var(--shadow-lg);
+    z-index: 2;
 }
 
 [data-theme="dark"] .send-button {
@@ -410,6 +412,97 @@ body {
 
 .send-button:hover {
     transform: scale(1.05);
+}
+
+.attachment-btn {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    z-index: 2;
+    font-size: 1.2rem;
+}
+
+.attachment-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+[data-theme="dark"] .attachment-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.attachment-btn.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+}
+
+.file-preview {
+    position: absolute;
+    bottom: calc(100% + 15px);
+    left: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    animation: slideUpFade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    max-width: calc(100% - 48px);
+    backdrop-filter: blur(8px);
+}
+
+.file-preview span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    font-weight: 500;
+}
+
+.remove-file-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+
+.remove-file-btn:hover {
+    color: var(--error-color);
+    background: rgba(179, 38, 30, 0.1);
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .clear-button {

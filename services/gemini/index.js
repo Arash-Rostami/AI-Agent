@@ -13,14 +13,15 @@ export async function callGeminiAPI(
     isRestrictedMode = false,
     useWebSearch = false,
     keyIdentifier = null,
-    isBmsMode = false
+    isBmsMode = false,
+    fileData = null
 ) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
     try {
         if (isRestrictedMode && permissions.hasUserGranted(conversationHistory)) isRestrictedMode = false;
 
-        const contents = formatter.formatContents(conversationHistory, message);
+        const contents = formatter.formatContents(conversationHistory, message, fileData);
         const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode);
 
         const requestBody = {
@@ -43,7 +44,7 @@ export async function callGeminiAPI(
 
         return await responseHandler.handle(response.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
     } catch (error) {
-        return errorHandler.handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, callGeminiAPI, isBmsMode);
+        return errorHandler.handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, (msg, hist, key, restricted, search, id, bms) => callGeminiAPI(msg, hist, key, restricted, search, id, bms, fileData), isBmsMode);
     }
 }
 

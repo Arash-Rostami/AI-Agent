@@ -1,4 +1,5 @@
 import express from 'express';
+import multer from 'multer';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {clearConversationHistory, saveConversationHistory} from '../middleware/keySession.js';
@@ -8,11 +9,12 @@ import InteractionLog from '../models/InteractionLog.js';
 import {ConversationManager} from '../utils/conversationManager.js';
 
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const router = express.Router();
+const upload = multer({storage: multer.memoryStorage()});
+
 
 const appendAndSave = (sessionId, conversationHistory, userMsg, assistantMsg) => {
     const updated = [
@@ -79,7 +81,7 @@ export default function createRouter(
             }
 
             if (idsToDelete.length > 0) {
-                InteractionLog.deleteMany({ _id: { $in: idsToDelete } })
+                InteractionLog.deleteMany({_id: {$in: idsToDelete}})
                     .catch(e => console.error('Cleanup error:', e));
             }
 
@@ -142,7 +144,7 @@ export default function createRouter(
         }
     });
 
-    router.post('/ask', async (req, res) => {
+    router.post('/ask', upload.single('file'), async (req, res) => {
         const {message, useWebSearch} = req.body;
         if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
@@ -150,10 +152,13 @@ export default function createRouter(
 
         try {
             const augmentedMessage = await enrichPromptWithContext(message);
+            let fileData = null;
+            if (req.file) fileData = {mimeType: req.file.mimetype, data: req.file.buffer.toString('base64')};
+
             const {
                 text: responseText,
                 sources
-            } = await callGeminiAPI(augmentedMessage, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
+            } = await callGeminiAPI(augmentedMessage, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData);
             const updated = appendAndSave(sessionId, conversationHistory, message, responseText);
             res.json({reply: responseText, sources});
             syncToDB(sessionId, userId, updated);
@@ -175,8 +180,15 @@ export default function createRouter(
         try {
             const augmentedMessage = await enrichPromptWithContext(message);
 
+            let fileData = null;
+            if (apiName === 'ArvanCloud' && req.file) {
+                const base64Data = req.file.buffer.toString('base64');
+                const mimeType = req.file.mimetype;
+                fileData = `data:${mimeType};base64,${base64Data}`;
+            }
+
             const response = apiName === 'ArvanCloud'
-                ? await apiCall(augmentedMessage, conversationHistory, model)
+                ? await apiCall(augmentedMessage, conversationHistory, model, fileData)
                 : await apiCall(augmentedMessage, conversationHistory);
             const updated = appendAndSave(sessionId, conversationHistory, message, response);
             res.json({reply: response});
@@ -187,9 +199,9 @@ export default function createRouter(
         }
     };
 
-    router.post('/ask-groq', handleAPIEndpoint(callGrokAPI, 'Groq'));
-    router.post('/ask-openrouter', handleAPIEndpoint(callOpenRouterAPI, 'OpenRouter'));
-    router.post('/ask-arvan', handleAPIEndpoint(callArvanCloudAPI, 'ArvanCloud'));
+    router.post('/ask-groq', upload.single('file'), handleAPIEndpoint(callGrokAPI, 'Groq'));
+    router.post('/ask-openrouter', upload.single('file'), handleAPIEndpoint(callOpenRouterAPI, 'OpenRouter'));
+    router.post('/ask-arvan', upload.single('file'), handleAPIEndpoint(callArvanCloudAPI, 'ArvanCloud'));
 
     router.post('/clear-chat', (req, res) => {
         clearConversationHistory(req.sessionId);
