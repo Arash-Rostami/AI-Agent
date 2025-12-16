@@ -10,16 +10,19 @@ export const sessionManager = new KeySessionManager([
 ]);
 
 export const apiKeyMiddleware = (req, res, next) => {
-    // Session ID for conversation history
     const isExternalService = ['/ask-groq', '/ask-openrouter', '/ask-arvan'].some(p => req.path.startsWith(p));
-    const isRootGet = req.path === '/' && req.method === 'GET';
 
-    // API Key allocation
+    //first time hitting:iframe and app users
+    const isRootGet = req.path === '/' && req.method === 'GET';
+    
+    // API Key rotation for gemini
     req.geminiApiKey = isExternalService ? null : sessionManager.getKeyForIP(req.keyIdentifier)
 
+    //follow-up requests of app & iframe users respectively
     let sessionId = req.cookies?.session_id;
-
     if (!sessionId && !isRootGet && req.userId) sessionId = ConversationManager.getActiveSession(req.userId);
+
+    //initial request of iframe & app users to use in follow-up session id
     if (isRootGet || !sessionId) {
         sessionId = ConversationManager.getOrCreateSessionId(req.userId, req.userIp);
         ConversationManager.mapUserToSession(req.userId, sessionId);

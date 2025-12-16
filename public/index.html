@@ -26,6 +26,11 @@
         </div>
 
         <div class="header-right">
+            <div class="font-size-control">
+                <button class="font-size-btn" id="font-decrease" title="Decrease font size">A-</button>
+                <button class="font-size-btn" id="font-increase" title="Increase font size">A+</button>
+            </div>
+
             <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
                 <i class="fas fa-sun"></i>
             </button>
@@ -130,6 +135,8 @@
     import ThemeToggle from './assets/js/ThemeToggler.js';
     import SyncHandler from "./assets/js/SyncHandler.js";
     import HistoryHandler from "./assets/js/HistoryHandler.js";
+    import FontSizeHandler from './assets/js/FontSizeHandler.js';
+
 
     document.addEventListener('DOMContentLoaded', () => {
         new ChatFacade();
@@ -137,6 +144,7 @@
         new LogoutHandler('logout-btn');
         new ThemeToggle('theme-toggle');
         new SyncHandler('sync-btn');
+        new FontSizeHandler();
     });
 </script>
 </body>
