@@ -2,6 +2,7 @@ import MessageFormatter from './MessageFormatter.js';
 
 export default class ChatFacade {
     constructor() {
+        this.header = document.querySelector('.header');
         this.messages = document.getElementById('messages');
         this.messageInput = document.getElementById('message-input');
         this.sendButton = document.getElementById('send-button');
@@ -118,7 +119,10 @@ export default class ChatFacade {
 
     addMessage(content, sender, isError = false, sources = []) {
         const welcomeMessage = this.messages.querySelector('.welcome-message');
-        if (welcomeMessage) welcomeMessage.remove();
+        if (welcomeMessage) {
+            welcomeMessage.remove();
+            this.header.classList.add('chat-active');
+        }
 
         const messageEl = document.createElement('div');
         messageEl.className = `message ${sender}`;
@@ -220,6 +224,7 @@ export default class ChatFacade {
                 <p>⚡ Express JS | 👩‍💻  Arash R. </p>
             </div>
         `;
+        this.header.classList.remove('chat-active');
         this.updateStatus('Online', 'success');
     }
 
