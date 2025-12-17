@@ -239,7 +239,7 @@ export default class ChatFacade {
 
             const data = await response.json();
             this.setTyping(false);
-            this.addMessage(data.reply, 'ai', false, data.sources);
+            this.addMessage(data.reply, 'ai', false, data.sources, null, data.audioData, data.audioMimeType);
             this.updateStatus('Online', 'success');
         } catch (error) {
             this.setTyping(false);
@@ -249,7 +249,7 @@ export default class ChatFacade {
         }
     }
 
-    addMessage(content, sender, isError = false, sources = [], fileName = null) {
+    addMessage(content, sender, isError = false, sources = [], fileName = null, audioData = null, audioMimeType = null) {
         const welcomeMessage = this.messages.querySelector('.welcome-message');
         if (welcomeMessage) {
             welcomeMessage.remove();
@@ -274,6 +274,14 @@ export default class ChatFacade {
             contentEl.innerHTML = this.formatter.format(content);
 
             contentEl.appendChild(this.formatter.createCopyButton(content));
+
+            if (audioData) {
+                const mimeType = audioMimeType || 'audio/mp3'; // Fallback
+                const visualizer = this.createAudioVisualizer(audioData, mimeType);
+                contentEl.appendChild(visualizer);
+                // Auto-play only if it's a new message (not history load)
+                if (!isError) this.playAudio(visualizer, audioData, mimeType);
+            }
         } else {
             contentEl.textContent = content;
             if (fileName) contentEl.appendChild(this.formatter.createFileAttachmentTag(fileName));
@@ -289,6 +297,50 @@ export default class ChatFacade {
         messageEl.appendChild(contentWrapper);
         this.messages.appendChild(messageEl);
         this.scrollToBottom();
+    }
+
+    createAudioVisualizer(base64Audio, mimeType) {
+        const container = document.createElement('div');
+        container.className = 'audio-visualizer';
+        container.title = 'Click to replay';
+
+        // 5 bars for the wave animation
+        for (let i = 0; i < 5; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar';
+            container.appendChild(bar);
+        }
+
+        container.addEventListener('click', () => this.playAudio(container, base64Audio, mimeType));
+        return container;
+    }
+
+    playAudio(visualizer, base64Data, mimeType) {
+        // Stop any currently playing audio if we had a global reference,
+        // but for now we just create a new one.
+
+        try {
+            const audio = new Audio(`data:${mimeType};base64,${base64Data}`);
+
+            visualizer.classList.add('playing');
+
+            audio.onended = () => {
+                visualizer.classList.remove('playing');
+            };
+
+            audio.onerror = (e) => {
+                console.error('Audio playback error', e);
+                visualizer.classList.remove('playing');
+            };
+
+            audio.play().catch(e => {
+                console.warn('Auto-play blocked or failed:', e);
+                visualizer.classList.remove('playing');
+            });
+        } catch (e) {
+            console.error('Error creating audio object:', e);
+            visualizer.classList.remove('playing');
+        }
     }
 
     setTyping(isTyping) {

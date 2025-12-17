@@ -168,12 +168,49 @@ export default class HistoryHandler {
                 let previewText = this.formatter.excludeQuotationMarks(item.preview || '');
 
                 el.innerHTML = `
-                    <span class="history-date">${time}</span>
-                    <div class="history-preview">${this.formatter.escapeHtml(previewText)}</div>
+                    <div class="history-content-wrapper">
+                        <span class="history-date">${time}</span>
+                        <div class="history-preview">${this.formatter.escapeHtml(previewText)}</div>
+                    </div>
+                    <button class="delete-history-btn" title="Delete Chat"><i class="fas fa-trash"></i></button>
                 `;
+
+                const deleteBtn = el.querySelector('.delete-history-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.confirmDelete(item.sessionId, el);
+                });
+
                 el.addEventListener('click', () => this.loadSessionDetails(item.sessionId));
                 this.listContainer.appendChild(el);
             });
+        }
+    }
+
+    async confirmDelete(sessionId, element) {
+        if (confirm('Are you sure you want to delete this chat session? This action cannot be undone.')) {
+            try {
+                const response = await fetch(`/api/history/${sessionId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-User-Id': this.getUserId()
+                    }
+                });
+
+                if (response.ok) {
+                    element.remove();
+                    // If we are currently viewing this session, close details
+                    if (this.currentSessionId === sessionId) {
+                         this.showList();
+                         this.currentSessionId = null;
+                    }
+                } else {
+                    alert('Failed to delete history.');
+                }
+            } catch (err) {
+                console.error('Delete error:', err);
+                alert('An error occurred while deleting.');
+            }
         }
     }
 

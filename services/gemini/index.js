@@ -24,10 +24,13 @@ export async function callGeminiAPI(
         const contents = formatter.formatContents(conversationHistory, message, fileData);
         const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode);
 
+        const isAudioInput = fileData && fileData.mimeType.startsWith('audio/');
+
         const requestBody = {
             contents,
             tools: allowedTools,
             tool_config: allowedTools ? {function_calling_config: {mode: "AUTO"}} : undefined,
+            generationConfig: isAudioInput ? { responseModalities: ["TEXT", "AUDIO"] } : undefined,
             systemInstruction: {
                 parts: [{
                     text: isRestrictedMode && !useWebSearch && !isBmsMode
