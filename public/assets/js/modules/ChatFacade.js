@@ -1,4 +1,6 @@
 import MessageFormatter from './MessageFormatter.js';
+import AudioHandler from './AudioHandler.js';
+
 
 export default class ChatFacade {
     constructor() {
@@ -18,10 +20,17 @@ export default class ChatFacade {
         this.fileNameSpan = document.getElementById('file-name');
         this.removeFileBtn = document.getElementById('remove-file-btn');
 
+        this.micBtn = document.getElementById('mic-btn');
+        this.audioPreviewContainer = document.getElementById('audio-preview-container');
+        this.audioPreview = document.getElementById('audio-preview');
+        this.removeAudioBtn = document.getElementById('remove-audio-btn');
+
         this.isTyping = false;
         this.selectedFile = null;
+        this.selectedAudioBlob = null;
         this.userId = this.getUserId();
         this.formatter = new MessageFormatter();
+        this.audioHandler = new AudioHandler();
 
         this.init();
     }
@@ -43,23 +52,72 @@ export default class ChatFacade {
         this.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
         this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
-
         this.attachmentBtn.addEventListener('click', () => this.fileInput.click());
         this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
         this.removeFileBtn.addEventListener('click', () => this.clearFileSelection());
-
+        this.micBtn.addEventListener('click', () => this.handleMicClick());
+        this.removeAudioBtn.addEventListener('click', () => this.clearAudioSelection());
         this.messageInput.addEventListener('input', () => this.handleInputFade());
         this.messageInput.addEventListener('focus', () => this.handleInputFade());
-        this.messageInput.addEventListener('blur', () => this.attachmentBtn.classList.remove('fade-out'));
+        this.messageInput.addEventListener('blur', () => {
+            this.attachmentBtn.classList.remove('fade-out');
+            if (this.micBtn) this.micBtn.classList.remove('fade-out');
+        });
     }
 
     handleInputFade() {
         if (this.messageInput.value.trim().length > 0) {
             this.attachmentBtn.classList.add('fade-out');
+            if (this.micBtn) this.micBtn.classList.add('fade-out');
         } else {
             this.attachmentBtn.classList.remove('fade-out');
+            if (this.micBtn) this.micBtn.classList.remove('fade-out');
         }
     }
+
+    async handleMicClick() {
+        if (!this.audioHandler.isRecording) {
+            const started = await this.audioHandler.startRecording();
+            if (started) {
+                this.micBtn.classList.add('recording');
+                this.micBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                this.micBtn.title = "Stop Recording";
+                this.messageInput.placeholder = "Recording audio...";
+                this.messageInput.disabled = true;
+                this.attachmentBtn.style.display = 'none';
+                this.clearFileSelection();
+            }
+        } else {
+            const audioBlob = await this.audioHandler.stopRecording();
+            this.micBtn.classList.remove('recording');
+            this.micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            this.micBtn.title = "Record Audio";
+            this.messageInput.placeholder = "Type your message...";
+            this.messageInput.disabled = false;
+            this.attachmentBtn.style.display = 'inline-block';
+
+            if (audioBlob) {
+                this.selectedAudioBlob = audioBlob;
+                this.audioPreview.src = URL.createObjectURL(audioBlob);
+                this.audioPreviewContainer.classList.remove('hidden');
+                this.handleInputFade();
+            }
+        }
+    }
+
+    clearAudioSelection() {
+        this.selectedAudioBlob = null;
+        this.audioPreview.src = '';
+        this.audioPreviewContainer.classList.add('hidden');
+        this.audioHandler.cancelRecording();
+        if (this.micBtn.classList.contains('recording')) {
+            this.micBtn.classList.remove('recording');
+            this.micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            this.messageInput.placeholder = "Type your message...";
+            this.messageInput.disabled = false;
+        }
+    }
+
 
     toggleWebSearch() {
         this.isWebSearchActive = !this.isWebSearchActive;
@@ -70,7 +128,9 @@ export default class ChatFacade {
         const service = this.serviceSelect.value;
         const isGemini = service === 'gemini';
         this.webSearchBtn.classList.toggle('hidden', !isGemini);
+        this.micBtn.classList.toggle('hidden', !isGemini);
         if (!isGemini && this.isWebSearchActive) this.toggleWebSearch();
+        if (!isGemini) this.clearAudioSelection();
 
         const supportsAttachments = ['gemini', 'gpt-4o'].includes(service);
         this.attachmentBtn.style.display = supportsAttachments ? 'inline-block' : 'none';
@@ -117,9 +177,9 @@ export default class ChatFacade {
         const selectedService = this.serviceSelect.value;
         const useWebSearch = this.isWebSearchActive;
 
-        if (!message || this.isTyping) return;
+        if ((!message && !this.selectedAudioBlob) || this.isTyping) return;
 
-        this.addMessage(message, 'user', false, [], this.selectedFile ? this.selectedFile.name : null);
+        this.addMessage(message, 'user', false, [], this.selectedFile ? this.selectedFile.name : (this.selectedAudioBlob ? 'Voice Message' : null));
         this.messageInput.value = '';
         this.messageInput.style.height = 'auto';
         this.setTyping(true);
@@ -142,14 +202,21 @@ export default class ChatFacade {
                 'X-Frame-Referer': document.referrer
             };
 
-            if (this.selectedFile) {
+            if (this.selectedFile || this.selectedAudioBlob) {
                 const formData = new FormData();
-                formData.append('message', message);
+                formData.append('message', message || "Voice message");
                 formData.append('useWebSearch', useWebSearch);
                 if (modelMap[selectedService]) {
                     formData.append('model', modelMap[selectedService]);
                 }
-                formData.append('file', this.selectedFile);
+
+                if (this.selectedFile) {
+                    formData.append('file', this.selectedFile);
+                } else if (this.selectedAudioBlob) {
+                    const ext = this.selectedAudioBlob.type.includes('webm') ? 'webm' : 'mp3';
+                    const audioFile = new File([this.selectedAudioBlob], `audio_message.${ext}`, {type: this.selectedAudioBlob.type});
+                    formData.append('file', audioFile);
+                }
                 body = formData;
             } else {
                 body = JSON.stringify({
@@ -160,6 +227,7 @@ export default class ChatFacade {
             }
 
             this.clearFileSelection();
+            this.clearAudioSelection();
 
             const response = await fetch(endpoint, {
                 method: 'POST',

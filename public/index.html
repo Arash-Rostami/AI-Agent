@@ -93,10 +93,21 @@
                         </button>
                     </div>
 
+                    <div id="audio-preview-container" class="audio-preview hidden">
+                        <audio id="audio-preview" controls></audio>
+                        <button type="button" id="remove-audio-btn" class="remove-audio-btn" title="Remove Audio">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
                     <button type="button" class="attachment-btn" id="attachment-btn" title="Attach File (1 only)">
                         <i class="fas fa-paperclip"></i>
                     </button>
                     <input type="file" id="file-input" hidden accept="image/*,application/pdf">
+
+                    <button type="button" class="mic-btn" id="mic-btn" title="Record Audio">
+                        <i class="fas fa-microphone"></i>
+                    </button>
 
                     <textarea
                             class="message-input"

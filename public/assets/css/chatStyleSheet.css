@@ -449,6 +449,97 @@ body {
     transform: scale(0.8);
 }
 
+.mic-btn {
+    position: absolute;
+    right: 56px;
+    bottom: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    z-index: 2;
+    font-size: 1.2rem;
+}
+
+.mic-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+[data-theme="dark"] .mic-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.mic-btn.recording {
+    background: rgba(255, 0, 0, 0.1);
+    color: #ff0000;
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+    }
+}
+
+.mic-btn.hidden {
+    display: none !important;
+}
+
+.audio-preview {
+    position: absolute;
+    bottom: calc(100% + 15px);
+    right: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    animation: slideUpFade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    backdrop-filter: blur(8px);
+}
+
+.audio-preview audio {
+    height: 32px;
+    max-width: 200px;
+}
+
+.audio-preview .remove-audio-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 50%;
+    transition: 0.2s;
+    font-size: 1.1rem;
+}
+
+.audio-preview .remove-audio-btn:hover {
+    color: var(--error-color);
+    background: rgba(179, 38, 30, 0.1);
+}
+
 .file-preview {
     position: absolute;
     bottom: calc(100% + 15px);
