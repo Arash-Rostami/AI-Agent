@@ -23,8 +23,21 @@ export default class HistoryHandler {
         this.closeBtn.addEventListener('click', () => this.closeHistory());
         this.backBtn.addEventListener('click', () => this.showList());
 
-        if (this.pdfBtn) this.pdfBtn.addEventListener('click', () => this.exportToPDF());
-        if (this.printBtn) this.printBtn.addEventListener('click', () => this.printHistory());
+        if (this.pdfBtn) {
+            this.pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i>';
+            this.pdfBtn.title = 'Export as PDF';
+            this.pdfBtn.addEventListener('click', () => this.exportToPDF());
+        }
+        if (this.printBtn) {
+            this.printBtn.innerHTML = '<i class="fas fa-print"></i>';
+            this.printBtn.title = 'Print History';
+            this.printBtn.addEventListener('click', () => this.printHistory());
+        }
+
+        if (this.backBtn) {
+            this.backBtn.innerHTML = '<i class="fas fa-arrow-left"></i>';
+            this.backBtn.title = 'Back to List';
+        }
 
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.closeHistory();
@@ -203,6 +216,8 @@ export default class HistoryHandler {
 
     renderMessages(messages) {
         this.messagesContainer.innerHTML = '';
+        this.messagesContainer.classList.add('messages');
+
         messages.forEach(msg => {
             if (msg.role === 'system') return;
 
