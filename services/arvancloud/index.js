@@ -25,10 +25,43 @@ export default async function callArvanCloudAPI(message, conversationHistory = [
 
     let lastMessageContent = message;
     if (fileData && (modelId.toLowerCase().includes('gpt') || modelId.toLowerCase().includes('4o'))) {
-        lastMessageContent = [
-            {type: "text", text: message},
-            {type: "image_url", image_url: {url: fileData}}
-        ];
+        // fileData can be a Data URL string or an object { mimeType, data }
+        let mimeType = '';
+        let base64Data = '';
+        let fileUrl = '';
+
+        if (typeof fileData === 'string' && fileData.startsWith('data:')) {
+            const matches = fileData.match(/^data:(.+);base64,(.+)$/);
+            if (matches) {
+                mimeType = matches[1];
+                base64Data = matches[2];
+                fileUrl = fileData;
+            }
+        } else if (fileData && fileData.mimeType && fileData.data) {
+             mimeType = fileData.mimeType;
+             base64Data = fileData.data;
+             fileUrl = `data:${mimeType};base64,${base64Data}`;
+        }
+
+        if (mimeType.startsWith('image/')) {
+            lastMessageContent = [
+                {type: "text", text: message},
+                {type: "image_url", image_url: {url: fileUrl}}
+            ];
+        } else if (mimeType.startsWith('audio/')) {
+             // For GPT-4o-mini (and similar OpenAI-compatible endpoints), raw audio input via 'input_audio'
+             // is the standard for multimodal audio.
+             lastMessageContent = [
+                 {type: "text", text: message},
+                 {
+                     type: "input_audio",
+                     input_audio: {
+                         data: base64Data,
+                         format: mimeType.split('/')[1] // e.g., 'mp3', 'wav'
+                     }
+                 }
+             ];
+        }
     }
 
     const messages = [
