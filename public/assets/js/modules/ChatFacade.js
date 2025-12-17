@@ -171,7 +171,7 @@ export default class ChatFacade {
 
             const data = await response.json();
             this.setTyping(false);
-            this.addMessage(data.reply, 'ai', false, data.sources);
+            this.addMessage(data.reply, 'ai', false, data.sources, null, data.audio);
             this.updateStatus('Online', 'success');
         } catch (error) {
             this.setTyping(false);
@@ -181,7 +181,7 @@ export default class ChatFacade {
         }
     }
 
-    addMessage(content, sender, isError = false, sources = [], fileName = null) {
+    addMessage(content, sender, isError = false, sources = [], fileName = null, audioData = null) {
         const welcomeMessage = this.messages.querySelector('.welcome-message');
         if (welcomeMessage) {
             welcomeMessage.remove();
@@ -209,6 +209,22 @@ export default class ChatFacade {
         } else {
             contentEl.textContent = content;
             if (fileName) contentEl.appendChild(this.formatter.createFileAttachmentTag(fileName));
+        }
+
+        if (audioData) {
+            const audioEl = document.createElement('audio');
+            audioEl.controls = true;
+            audioEl.src = `data:${audioData.mimeType};base64,${audioData.data}`;
+            audioEl.style.marginTop = '10px';
+            audioEl.style.width = '100%';
+            audioEl.style.maxWidth = '300px'; // Prevent it from being too wide
+
+            // Auto-play logic
+            audioEl.onloadedmetadata = () => {
+                 audioEl.play().catch(e => console.log('Autoplay blocked:', e));
+            };
+
+            contentEl.appendChild(audioEl);
         }
 
         if (isError) contentEl.style.color = '#dc2626';

@@ -28,6 +28,10 @@ export async function callGeminiAPI(
             contents,
             tools: allowedTools,
             tool_config: allowedTools ? {function_calling_config: {mode: "AUTO"}} : undefined,
+            generationConfig: {
+                responseModalities: ["TEXT", "AUDIO"],
+                audioTimestamp: false
+            },
             systemInstruction: {
                 parts: [{
                     text: isRestrictedMode && !useWebSearch && !isBmsMode
