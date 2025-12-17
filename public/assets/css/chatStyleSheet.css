@@ -723,7 +723,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--bg-color);
+    background: var(--surface-color);
     z-index: 2;
     display: flex;
     flex-direction: column;
@@ -741,6 +741,35 @@ body {
     display: flex;
     gap: 0.75rem;
     background: var(--surface-color);
+    align-items: center;
+}
+
+.history-details-header button {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    font-size: 1.1rem;
+}
+
+.history-details-header button:hover {
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--primary-color);
+}
+
+/* Ensure history messages inherit scroll behavior */
+.history-details .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: transparent;
 }
 
 .copy-btn {
