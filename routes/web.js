@@ -109,6 +109,25 @@ export default function createRouter(
         }
     });
 
+    router.delete('/api/history/:id', async (req, res) => {
+        try {
+            const {userId} = req;
+            const {id: sessionId} = req.params;
+            if (!userId) return res.status(401).json({error: 'Unauthorized'});
+
+            const result = await InteractionLog.deleteMany({sessionId, userId});
+
+            if (result.deletedCount === 0) {
+                 return res.status(404).json({error: 'Session not found or already deleted'});
+            }
+
+            res.json({success: true, message: 'Session deleted successfully'});
+        } catch (error) {
+            console.error('Delete session error:', error);
+            res.status(500).json({error: 'Failed to delete session'});
+        }
+    });
+
     router.post('/api/vector/sync', async (req, res) => {
         try {
             const result = await syncDocuments();
@@ -157,10 +176,12 @@ export default function createRouter(
 
             const {
                 text: responseText,
-                sources
+                sources,
+                audioData,
+                audioMimeType
             } = await callGeminiAPI(augmentedMessage, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData);
             const updated = appendAndSave(sessionId, conversationHistory, message, responseText);
-            res.json({reply: responseText, sources});
+            res.json({reply: responseText, sources, audioData, audioMimeType});
             syncToDB(sessionId, userId, updated);
         } catch (error) {
             console.error('Chat error:', error.message);
