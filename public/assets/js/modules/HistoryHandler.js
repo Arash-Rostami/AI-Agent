@@ -23,8 +23,21 @@ export default class HistoryHandler {
         this.closeBtn.addEventListener('click', () => this.closeHistory());
         this.backBtn.addEventListener('click', () => this.showList());
 
-        if (this.pdfBtn) this.pdfBtn.addEventListener('click', () => this.exportToPDF());
-        if (this.printBtn) this.printBtn.addEventListener('click', () => this.printHistory());
+        if (this.pdfBtn) {
+            this.pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i>';
+            this.pdfBtn.title = 'Export as PDF';
+            this.pdfBtn.addEventListener('click', () => this.exportToPDF());
+        }
+        if (this.printBtn) {
+            this.printBtn.innerHTML = '<i class="fas fa-print"></i>';
+            this.printBtn.title = 'Print History';
+            this.printBtn.addEventListener('click', () => this.printHistory());
+        }
+
+        if (this.backBtn) {
+            this.backBtn.innerHTML = '<i class="fas fa-arrow-left"></i>';
+            this.backBtn.title = 'Back to List';
+        }
 
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.closeHistory();
@@ -152,10 +165,11 @@ export default class HistoryHandler {
                 const el = document.createElement('div');
                 el.className = 'history-item';
                 const time = new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                let previewText = this.formatter.excludeQuotationMarks(item.preview || '');
 
                 el.innerHTML = `
                     <span class="history-date">${time}</span>
-                    <div class="history-preview">${this.escapeHtml(item.preview)}</div>
+                    <div class="history-preview">${this.formatter.escapeHtml(previewText)}</div>
                 `;
                 el.addEventListener('click', () => this.loadSessionDetails(item.sessionId));
                 this.listContainer.appendChild(el);
@@ -203,15 +217,15 @@ export default class HistoryHandler {
 
     renderMessages(messages) {
         this.messagesContainer.innerHTML = '';
+        this.messagesContainer.classList.add('messages');
+
         messages.forEach(msg => {
             if (msg.role === 'system') return;
 
             const msgEl = document.createElement('div');
             msgEl.className = `message ${msg.role === 'user' ? 'user' : 'ai'}`;
 
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.innerHTML = msg.role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+            const avatar = this.formatter.createAvatar(msg.role === 'user' ? 'user' : 'ai');
 
             const contentWrapper = document.createElement('div');
             contentWrapper.className = 'message-wrapper';
@@ -219,7 +233,8 @@ export default class HistoryHandler {
             const contentEl = document.createElement('div');
             contentEl.className = 'message-content';
 
-            const text = msg.parts && msg.parts[0] ? msg.parts[0].text : '';
+            let text = this.formatter.excludeQuotationMarks(msg.parts && msg.parts[0] ? msg.parts[0].text : '');
+
             contentEl.innerHTML = this.formatter.format(text);
 
             if (msg.role === 'model' || msg.role === 'assistant') {
@@ -235,15 +250,6 @@ export default class HistoryHandler {
             msgEl.appendChild(contentWrapper);
             this.messagesContainer.appendChild(msgEl);
         });
-    }
-
-
-    escapeHtml(text) {
-        if (!text) return '';
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
     }
 
     getUserId() {

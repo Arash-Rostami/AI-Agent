@@ -62,9 +62,7 @@ export default class MessageFormatter {
     buildTable(lines) {
         if (lines.length < 2) return lines.join('\n');
 
-        const rows = lines.map(line =>
-            line.split('|').slice(1, -1).map(cell => cell.trim())
-        );
+        const rows = lines.map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
 
         const [header, , ...body] = rows;
 
@@ -152,5 +150,76 @@ export default class MessageFormatter {
             if (p.startsWith('<') && !p.startsWith('<strong') && !p.startsWith('<em')) return p;
             return `<p>${p}</p>`;
         }).join('');
+    }
+
+    excludeQuotationMarks(text) {
+        if (typeof text !== 'string') return '';
+        let cleaned = text.trim();
+
+        if (cleaned.startsWith('"')) cleaned = cleaned.substring(1);
+        if (cleaned.endsWith('"')) cleaned = cleaned.substring(0, cleaned.length - 1);
+
+        return cleaned;
+    }
+
+    escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    createAvatar(sender) {
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+        return avatar;
+    }
+
+    createCopyButton(content) {
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+        copyBtn.title = 'Copy message';
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(content).then(() => {
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => copyBtn.innerHTML = '<i class="fas fa-copy"></i>', 2000);
+            });
+        });
+
+        return copyBtn;
+    }
+
+    createFileAttachmentTag(fileName) {
+        const fileTag = document.createElement('div');
+        fileTag.className = 'message-attachment-tag';
+
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-paperclip';
+        fileTag.appendChild(icon);
+
+        const text = document.createTextNode(` ${fileName}`);
+        fileTag.appendChild(text);
+
+        fileTag.style.fontSize = '0.8em';
+        fileTag.style.marginTop = '5px';
+        fileTag.style.opacity = '0.8';
+
+        return fileTag;
+    }
+
+    createSourcesElement(sources) {
+        const sourcesEl = document.createElement('div');
+        sourcesEl.className = 'message-sources';
+        sourcesEl.innerHTML = '<h4>🔗 Sources:</h4>' + sources.map(source => `
+        <div class="source-item">
+            <a href="${source.url}" target="_blank" rel="noopener noreferrer" title="${source.snippet || ''}">
+                <i>${source.title || source.url}</i>
+            </a>
+        </div>`).join('');
+        return sourcesEl;
     }
 }

@@ -191,9 +191,7 @@ export default class ChatFacade {
         const messageEl = document.createElement('div');
         messageEl.className = `message ${sender}`;
 
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+        const avatar = this.formatter.createAvatar(sender);
 
         const contentWrapper = document.createElement('div');
         contentWrapper.className = 'message-wrapper';
@@ -207,54 +205,17 @@ export default class ChatFacade {
             contentEl.classList.add(direction);
             contentEl.innerHTML = this.formatter.format(content);
 
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'copy-btn';
-            copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
-            copyBtn.title = 'Copy message';
-
-            copyBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(content).then(() => {
-                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-                    setTimeout(() => copyBtn.innerHTML = '<i class="fas fa-copy"></i>', 2000);
-                });
-            });
-
-            contentEl.appendChild(copyBtn);
+            contentEl.appendChild(this.formatter.createCopyButton(content));
         } else {
             contentEl.textContent = content;
-            if (fileName) {
-                const fileTag = document.createElement('div');
-                fileTag.className = 'message-attachment-tag';
-
-                const icon = document.createElement('i');
-                icon.className = 'fas fa-paperclip';
-                fileTag.appendChild(icon);
-
-                const text = document.createTextNode(` ${fileName}`);
-                fileTag.appendChild(text);
-
-                fileTag.style.fontSize = '0.8em';
-                fileTag.style.marginTop = '5px';
-                fileTag.style.opacity = '0.8';
-                contentEl.appendChild(fileTag);
-            }
+            if (fileName) contentEl.appendChild(this.formatter.createFileAttachmentTag(fileName));
         }
 
         if (isError) contentEl.style.color = '#dc2626';
 
         contentWrapper.appendChild(contentEl);
 
-        if (sources?.length) {
-            const sourcesEl = document.createElement('div');
-            sourcesEl.className = 'message-sources';
-            sourcesEl.innerHTML = '<h4>🔗 Sources:</h4>' + sources.map(source => `
-                <div class="source-item">
-                    <a href="${source.url}" target="_blank" rel="noopener noreferrer" title="${source.snippet || ''}">
-                        <i>${source.title || source.url}</i>
-                    </a>
-                </div>`).join('');
-            contentWrapper.appendChild(sourcesEl);
-        }
+        if (sources?.length) contentWrapper.appendChild(this.formatter.createSourcesElement(sources));
 
         messageEl.appendChild(avatar);
         messageEl.appendChild(contentWrapper);
