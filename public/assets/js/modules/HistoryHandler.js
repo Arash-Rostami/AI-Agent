@@ -126,7 +126,8 @@ export default class HistoryHandler {
         try {
             const response = await fetch('/api/history', {
                 headers: {
-                    'X-User-Id': this.getUserId()
+                    'X-User-Id': this.getUserId(),
+                    'X-Frame-Referer': document.referrer
                 }
             });
 
@@ -193,7 +194,8 @@ export default class HistoryHandler {
                 const response = await fetch(`/api/history/${sessionId}`, {
                     method: 'DELETE',
                     headers: {
-                        'X-User-Id': this.getUserId()
+                        'X-User-Id': this.getUserId(),
+                        'X-Frame-Referer': document.referrer
                     }
                 });
 
@@ -205,7 +207,7 @@ export default class HistoryHandler {
                          this.currentSessionId = null;
                     }
                 } else {
-                    alert('Failed to delete history.');
+                    alert(`Failed to delete history. Status: ${response.status}`);
                 }
             } catch (err) {
                 console.error('Delete error:', err);
@@ -238,7 +240,8 @@ export default class HistoryHandler {
         try {
             const response = await fetch(`/api/history/${sessionId}`, {
                 headers: {
-                    'X-User-Id': this.getUserId()
+                    'X-User-Id': this.getUserId(),
+                    'X-Frame-Referer': document.referrer
                 }
             });
 
