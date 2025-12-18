@@ -40,7 +40,19 @@ export async function callGeminiAPI(
             }
         };
 
-        const response = await axios.post(`${GEMINI_API_URL}?key=${apiKey}`, requestBody, {
+        let requestUrl = GEMINI_API_URL;
+
+        // If audio input is detected, enforce a model version known to support audio output (gemini-1.5-flash-002)
+        // This regex looks for "/models/ANY_MODEL_NAME:" and replaces it with "/models/gemini-1.5-flash-002:"
+        if (isAudioInput && requestUrl.includes('google')) {
+             const newUrl = requestUrl.replace(/\/models\/[^:]+:/, '/models/gemini-1.5-flash-002:');
+             if (newUrl !== requestUrl) {
+                 console.log(`🎙️ Switching model for audio output: ${requestUrl} -> ${newUrl}`);
+                 requestUrl = newUrl;
+             }
+        }
+
+        const response = await axios.post(`${requestUrl}?key=${apiKey}`, requestBody, {
             headers: {'Content-Type': 'application/json'},
             timeout: 60000
         });
