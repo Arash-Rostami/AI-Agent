@@ -17,6 +17,11 @@ import {logAccess} from './middleware/accessLogger.js';
 
 // Middleware
 const app = express();
+
+// Static Assets (Served early to avoid noise in logs)
+app.use('/assets', express.static('public/assets'));
+app.use('/favicon.ico', express.static('public/favicon.ico'));
+
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(express.text());
