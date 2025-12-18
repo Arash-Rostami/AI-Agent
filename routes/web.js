@@ -127,8 +127,8 @@ export default function createRouter(
                      console.warn(`❌ FOUND Session: ${sessionId} in DB. Owner: ${debugLog.userId} | Request User: ${userId}`);
                      return res.status(403).json({error: 'Session belongs to another user', receivedId: sessionId});
                  } else {
-                     console.warn(`❌ Session: ${sessionId} NOT FOUND in DB.`);
-                     return res.status(404).json({error: 'Session not found', receivedId: sessionId});
+                     console.warn(`⚠️ Session: ${sessionId} NOT FOUND in DB. Assuming already deleted.`);
+                     return res.json({success: true, message: 'Session already deleted'});
                  }
             }
 
