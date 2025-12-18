@@ -112,7 +112,7 @@ export default function createRouter(
     router.delete('/api/history/:id', async (req, res) => {
         try {
             const {userId} = req;
-            const {id: sessionId} = req.params;
+            const sessionId = req.params.id.trim();
             if (!userId) return res.status(401).json({error: 'Unauthorized'});
 
             console.log(`🗑️ Attempting to delete session. Request User: ${userId}, Session ID: ${sessionId}`);
@@ -125,10 +125,10 @@ export default function createRouter(
                  const debugLog = await InteractionLog.findOne({sessionId});
                  if (debugLog) {
                      console.warn(`❌ FOUND Session: ${sessionId} in DB. Owner: ${debugLog.userId} | Request User: ${userId}`);
-                     return res.status(403).json({error: 'Session belongs to another user'});
+                     return res.status(403).json({error: 'Session belongs to another user', receivedId: sessionId});
                  } else {
                      console.warn(`❌ Session: ${sessionId} NOT FOUND in DB.`);
-                     return res.status(404).json({error: 'Session not found'});
+                     return res.status(404).json({error: 'Session not found', receivedId: sessionId});
                  }
             }
 

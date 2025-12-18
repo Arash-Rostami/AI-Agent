@@ -207,7 +207,9 @@ export default class HistoryHandler {
                          this.currentSessionId = null;
                     }
                 } else {
-                    alert(`Failed to delete history. Status: ${response.status}`);
+                    const data = await response.json();
+                    const details = data.receivedId ? `\nID: ${data.receivedId}` : '';
+                    alert(`Failed to delete history.\nStatus: ${response.status}${details}`);
                 }
             } catch (err) {
                 console.error('Delete error:', err);
