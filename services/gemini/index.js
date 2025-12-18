@@ -37,7 +37,26 @@ export async function callGeminiAPI(
             }
         };
 
-        const response = await axios.post(`${GEMINI_API_URL}?key=${apiKey}`, requestBody, {
+        let requestUrl = `${GEMINI_API_URL}?key=${apiKey}`;
+        const isPremium = apiKey === process.env.GEMINI_API_KEY_PREMIUM;
+        const hasAudioInput = fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/');
+
+        if (isPremium && hasAudioInput) {
+            const ttsModel = process.env.GEMINI_TTS_MODEL || "gemini-2.0-flash-exp";
+            requestUrl = `https://generativelanguage.googleapis.com/v1alpha/models/${ttsModel}:generateContent?key=${apiKey}`;
+            requestBody.generationConfig = {
+                responseModalities: ["TEXT", "AUDIO"],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: {
+                            voiceName: "Puck"
+                        }
+                    }
+                }
+            };
+        }
+
+        const response = await axios.post(requestUrl, requestBody, {
             headers: {'Content-Type': 'application/json'},
             timeout: 60000
         });

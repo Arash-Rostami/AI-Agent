@@ -13,11 +13,28 @@ export async function handle(
 ) {
     if (!candidate?.content?.parts?.[0]) throw new Error('No valid content received from Gemini API.');
 
-    const firstPart = candidate.content.parts[0];
-    if (firstPart.functionCall) {
-        return await handleToolCall(firstPart.functionCall, originalMessage, currentConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
+    let textResponse = null;
+    let audioData = null;
+    let audioMimeType = null;
+
+    for (const part of candidate.content.parts) {
+        if (part.text) {
+            textResponse = part.text;
+        } else if (part.inlineData) {
+            audioData = part.inlineData.data;
+            audioMimeType = part.inlineData.mimeType;
+        } else if (part.functionCall) {
+            return await handleToolCall(part.functionCall, originalMessage, currentConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
+        }
     }
-    if (firstPart.text) return {text: firstPart.text, sources: []};
+
+    if (textResponse || audioData) {
+        return {
+            text: textResponse || "",
+            sources: [],
+            audioData: audioData ? { data: audioData, mimeType: audioMimeType } : null
+        };
+    }
 
     throw new Error('Unexpected part type in Gemini response.');
 }

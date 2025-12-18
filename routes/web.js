@@ -156,10 +156,11 @@ export default function createRouter(
 
             const {
                 text: responseText,
-                sources
+                sources,
+                audioData
             } = await callGeminiAPI(augmentedMessage, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData);
             const updated = appendAndSave(sessionId, conversationHistory, message, responseText);
-            res.json({reply: responseText, sources});
+            res.json({reply: responseText, sources, audioData});
             syncToDB(sessionId, userId, updated);
         } catch (error) {
             console.error('Chat error:', error.message);
