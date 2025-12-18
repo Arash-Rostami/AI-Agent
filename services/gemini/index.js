@@ -1,5 +1,11 @@
 import axios from "axios";
-import {CX_BMS_INSTRUCTION, GEMINI_API_URL, SYSTEM_INSTRUCTION_TEXT} from "../../config/index.js";
+import {
+    CX_BMS_INSTRUCTION,
+    GEMINI_API_KEY,
+    GEMINI_API_URL,
+    GEMINI_API_URL_PREMIUM,
+    SYSTEM_INSTRUCTION_TEXT
+} from "../../config/index.js";
 import {allToolDefinitions} from "../../tools/toolDefinitions.js";
 import * as formatter from './formatter.js';
 import * as responseHandler from './responseHandler.js';
@@ -23,6 +29,8 @@ export async function callGeminiAPI(
 
         const contents = formatter.formatContents(conversationHistory, message, fileData);
         const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode);
+        let smartUrl = apiKey === GEMINI_API_KEY ? GEMINI_API_URL_PREMIUM : GEMINI_API_URL;
+        console.log(smartUrl.split('/models/')[1]?.split(':')[0]);
 
         const requestBody = {
             contents,
@@ -37,7 +45,7 @@ export async function callGeminiAPI(
             }
         };
 
-        const response = await axios.post(`${GEMINI_API_URL}?key=${apiKey}`, requestBody, {
+        const response = await axios.post(`${smartUrl}?key=${apiKey}`, requestBody, {
             headers: {'Content-Type': 'application/json'},
             timeout: 60000
         });
