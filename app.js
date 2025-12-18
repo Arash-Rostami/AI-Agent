@@ -4,13 +4,9 @@ import {initializeVectors} from './utils/vectorManager.js';
 
 
 //Instantiating
-import {callGeminiAPI, callSimpleGeminiAPI} from './services//gemini/index.js';
-import callGrokAPI from './services/groq/index.js';
-import callOpenRouterAPI from './services/openrouter/index.js';
-import callArvanCloudAPI from './services/arvancloud/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
-import createRouter from './routes/web.js';
+import webRouter from './routes/web.js';
 import {identityMiddleware} from './middleware/userIdentity.js';
 import {apiKeyMiddleware} from './middleware/keySession.js';
 import {allowFrameEmbedding} from './middleware/frameGuard.js';
@@ -35,13 +31,7 @@ app.use(guardChatRoutes);
 
 app.use(express.static('public'));
 
-app.use('/', createRouter(
-    callGeminiAPI,
-    callGrokAPI,
-    callOpenRouterAPI,
-    callSimpleGeminiAPI,
-    callArvanCloudAPI
-));
+app.use('/', webRouter);
 app.use('/auth', authRoutes);
 
 app.use(errorHandler);
