@@ -6,9 +6,11 @@ export const checkRestrictedMode = (req, res, next) => {
     req.isRestrictedMode = ALLOWED_ORIGINS.some(o => referer.startsWith(o));
     req.isBmsMode = referer.includes('export.communitasker.io');
 
-    console.log(`🔍 Referer: '${referer}'`);
-    req.isBmsMode && console.log('🏭 BMS Mode: ACTIVE (Database Search Enabled)');
-    req.isRestrictedMode && console.log('🔒 Restricted Mode: ACTIVE (Tools Limited)');
+    if (req.path === '/') {
+        console.log(`🔍 Referer: '${referer}'`);
+        req.isBmsMode && console.log('🏭 BMS Mode: ACTIVE (Database Search Enabled)');
+        req.isRestrictedMode && console.log('🔒 Restricted Mode: ACTIVE (Tools Limited)');
+    }
 
     next();
 };

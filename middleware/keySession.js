@@ -37,7 +37,9 @@ export const apiKeyMiddleware = (req, res, next) => {
     req.sessionId = sessionId;
     req.conversationHistory = ConversationManager.getHistory(sessionId);
 
-    console.log(`🔑 ID: ${req.userId || 'anonymous'} | IP: ${req.userIp} | Session: ...${sessionId.slice(-8)} | Key: ...${req.geminiApiKey?.slice(-4) ?? req.body?.model ?? req.path}`);
+    if (req.path === '/') {
+        console.log(`🔑 ID: ${req.userId || 'anonymous'} | IP: ${req.userIp} | Session: ...${sessionId.slice(-8)} | Key: ...${req.geminiApiKey?.slice(-4) ?? req.body?.model ?? req.path}`);
+    }
     next();
 };
 
