@@ -115,16 +115,28 @@ export default function createRouter(
             const {id: sessionId} = req.params;
             if (!userId) return res.status(401).json({error: 'Unauthorized'});
 
-            const result = await InteractionLog.deleteMany({sessionId, userId});
+            console.log(`🗑️ Attempting to delete session. Request User: ${userId}, Session ID: ${sessionId}`);
+
+            const result = await InteractionLog.deleteOne({sessionId, userId});
 
             if (result.deletedCount === 0) {
-                 return res.status(404).json({error: 'Session not found or already deleted'});
+                 console.warn(`⚠️ Delete failed for Session: ${sessionId}. Checking if it exists under another user...`);
+
+                 const debugLog = await InteractionLog.findOne({sessionId});
+                 if (debugLog) {
+                     console.warn(`❌ FOUND Session: ${sessionId} in DB. Owner: ${debugLog.userId} | Request User: ${userId}`);
+                     return res.status(403).json({error: 'Session belongs to another user'});
+                 } else {
+                     console.warn(`❌ Session: ${sessionId} NOT FOUND in DB.`);
+                     return res.status(404).json({error: 'Session not found'});
+                 }
             }
 
+            console.log(`✅ Session deleted successfully: ${sessionId}`);
             res.json({success: true, message: 'Session deleted successfully'});
         } catch (error) {
             console.error('Delete session error:', error);
-            res.status(500).json({error: 'Failed to delete session'});
+            res.status(500).json({error: 'Failed to delete session', details: error.message});
         }
     });
 
