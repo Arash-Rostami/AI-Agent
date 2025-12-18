@@ -112,3 +112,17 @@ export async function searchVectors(query, topK = 3) {
         return [];
     }
 }
+
+
+export const enrichPromptWithContext = async (message) => {
+    try {
+        const results = await searchVectors(message);
+        if (!results || results.length === 0) return message;
+
+        const context = results.map(r => r.text).join('\n\n---\n\n');
+        return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+    } catch (error) {
+        console.error('Context enrichment failed:', error);
+        return message;
+    }
+};

@@ -2,12 +2,7 @@ import express from 'express';
 import {startServer} from './utils/serverManager.js';
 import {initializeVectors} from './utils/vectorManager.js';
 
-
 //Instantiating
-import {callGeminiAPI, callSimpleGeminiAPI} from './services//gemini/index.js';
-import callGrokAPI from './services/groq/index.js';
-import callOpenRouterAPI from './services/openrouter/index.js';
-import callArvanCloudAPI from './services/arvancloud/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
 import createRouter from './routes/web.js';
@@ -35,13 +30,7 @@ app.use(guardChatRoutes);
 
 app.use(express.static('public'));
 
-app.use('/', createRouter(
-    callGeminiAPI,
-    callGrokAPI,
-    callOpenRouterAPI,
-    callSimpleGeminiAPI,
-    callArvanCloudAPI
-));
+app.use('/', createRouter);
 app.use('/auth', authRoutes);
 
 app.use(errorHandler);
