@@ -23,6 +23,15 @@ app.use(express.text());
 app.use(cookieParser());
 app.use(allowFrameEmbedding);
 app.use(express.static('public'));
+
+// Filter out missing assets to prevent logging noise
+app.use((req, res, next) => {
+    if (req.path === '/favicon.ico' || req.path.endsWith('.map') || req.path.startsWith('/assets/')) {
+        return res.status(404).end();
+    }
+    next();
+});
+
 app.use(checkRestrictedMode);
 app.use(identityMiddleware);
 app.use(apiKeyMiddleware);
