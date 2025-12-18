@@ -239,7 +239,7 @@ export default class ChatFacade {
 
             const data = await response.json();
             this.setTyping(false);
-            this.addMessage(data.reply, 'ai', false, data.sources);
+            this.addMessage(data.reply, 'ai', false, data.sources, null, data.audioData);
             this.updateStatus('Online', 'success');
         } catch (error) {
             this.setTyping(false);
@@ -249,7 +249,7 @@ export default class ChatFacade {
         }
     }
 
-    addMessage(content, sender, isError = false, sources = [], fileName = null) {
+    addMessage(content, sender, isError = false, sources = [], fileName = null, audioData = null) {
         const welcomeMessage = this.messages.querySelector('.welcome-message');
         if (welcomeMessage) {
             welcomeMessage.remove();
@@ -283,12 +283,49 @@ export default class ChatFacade {
 
         contentWrapper.appendChild(contentEl);
 
+        if (audioData) {
+            contentWrapper.appendChild(this.createAudioVisualizer(audioData));
+        }
+
         if (sources?.length) contentWrapper.appendChild(this.formatter.createSourcesElement(sources));
 
         messageEl.appendChild(avatar);
         messageEl.appendChild(contentWrapper);
         this.messages.appendChild(messageEl);
         this.scrollToBottom();
+    }
+
+    createAudioVisualizer(audioData) {
+        const container = document.createElement('div');
+        container.className = 'audio-visualizer';
+        container.innerHTML = '<i class="fas fa-volume-up"></i>';
+
+        for (let i = 0; i < 8; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            container.appendChild(bar);
+        }
+
+        const audio = new Audio(`data:${audioData.mimeType};base64,${audioData.data}`);
+
+        container.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                container.classList.add('playing');
+                container.querySelector('i').className = 'fas fa-pause';
+            } else {
+                audio.pause();
+                container.classList.remove('playing');
+                container.querySelector('i').className = 'fas fa-volume-up';
+            }
+        });
+
+        audio.addEventListener('ended', () => {
+            container.classList.remove('playing');
+            container.querySelector('i').className = 'fas fa-volume-up';
+        });
+
+        return container;
     }
 
     setTyping(isTyping) {
