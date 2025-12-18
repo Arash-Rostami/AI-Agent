@@ -32,3 +32,13 @@ export class ConversationManager {
         if (userId) userSessionMap.set(userId, sessionId);
     }
 }
+
+export const appendAndSave = (sessionId, conversationHistory, userMsg, assistantMsg) => {
+    const updated = [
+        ...conversationHistory,
+        ...(userMsg ? [{role: 'user', content: userMsg}] : []),
+        ...(assistantMsg ? [{role: 'assistant', content: assistantMsg}] : [])
+    ];
+    ConversationManager.saveHistory(sessionId, updated);
+    return updated;
+};
