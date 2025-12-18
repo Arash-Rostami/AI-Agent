@@ -92,20 +92,19 @@ export default function createRouter(
         }
     });
 
-    router.get('/api/history/:id', async (req, res) => {
+    router.delete('/api/history/:id', async (req, res) => {
         try {
             const {userId} = req;
             const {id: sessionId} = req.params;
             if (!userId) return res.status(401).json({error: 'Unauthorized'});
 
-            const log = await InteractionLog.findOne({userId, sessionId});
+            const result = await InteractionLog.deleteMany({sessionId, userId});
 
-            if (!log) return res.status(404).json({error: 'Session not found'});
-
-            res.json({messages: log.messages});
+            if (result.deletedCount === 0) return res.status(404).json({error: 'Session not found or already deleted'});
+            res.json({success: true, message: 'Session deleted successfully'});
         } catch (error) {
-            console.error('Fetch session details error:', error);
-            res.status(500).json({error: 'Failed to fetch session details'});
+            console.error('Delete session error:', error);
+            res.status(500).json({error: 'Failed to delete session'});
         }
     });
 

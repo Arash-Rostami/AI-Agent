@@ -585,6 +585,42 @@ body {
     background: rgba(179, 38, 30, 0.1);
 }
 
+
+.history-content-wrapper {
+    flex: 1;
+    overflow: hidden;
+}
+
+.delete-history-btn {
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    margin-left: 8px;
+    align-self: center;
+}
+
+.history-item:hover .delete-history-btn,
+.history-item:focus-within .delete-history-btn {
+    opacity: 1;
+}
+
+.delete-history-btn:hover {
+    color: var(--error-color);
+    background: rgba(179, 38, 30, 0.1);
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+
 @keyframes slideUpFade {
     from {
         opacity: 0;
