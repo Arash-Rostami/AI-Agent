@@ -5,7 +5,7 @@ import {initializeVectors} from './utils/vectorManager.js';
 //Instantiating
 import errorHandler from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
-import createRouter from './routes/web.js';
+import {createRouter} from './routes/web.js';
 import {identityMiddleware} from './middleware/userIdentity.js';
 import {apiKeyMiddleware} from './middleware/keySession.js';
 import {allowFrameEmbedding} from './middleware/frameGuard.js';
@@ -30,7 +30,7 @@ app.use(guardChatRoutes);
 
 app.use(express.static('public'));
 
-app.use('/', createRouter);
+app.use('/', createRouter());
 app.use('/auth', authRoutes);
 
 app.use(errorHandler);

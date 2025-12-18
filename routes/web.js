@@ -10,7 +10,7 @@ import callArvanCloudAPI from '../services/arvancloud/index.js';
 
 const router = express.Router();
 
-export default function createRouter() {
+export const createRouter = () => {
 
     // chat endpoints
     router.get('', PageController.serveIndex);
