@@ -30,7 +30,16 @@ export async function callGeminiAPI(
             contents,
             tools: allowedTools,
             tool_config: allowedTools ? {function_calling_config: {mode: "AUTO"}} : undefined,
-            generationConfig: isAudioInput ? { responseModalities: ["TEXT", "AUDIO"] } : undefined,
+            generationConfig: isAudioInput ? {
+                responseModalities: ["TEXT", "AUDIO"],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: {
+                            voiceName: "Puck"
+                        }
+                    }
+                }
+            } : undefined,
             systemInstruction: {
                 parts: [{
                     text: isRestrictedMode && !useWebSearch && !isBmsMode
@@ -40,17 +49,10 @@ export async function callGeminiAPI(
             }
         };
 
-        let requestUrl = GEMINI_API_URL;
-
-        // If audio input is detected, enforce a model version known to support audio output (gemini-1.5-flash-002)
-        // This regex looks for "/models/ANY_MODEL_NAME:" and replaces it with "/models/gemini-1.5-flash-002:"
-        if (isAudioInput && requestUrl.includes('google')) {
-             const newUrl = requestUrl.replace(/\/models\/[^:]+:/, '/models/gemini-1.5-flash-002:');
-             if (newUrl !== requestUrl) {
-                 console.log(`🎙️ Switching model for audio output: ${requestUrl} -> ${newUrl}`);
-                 requestUrl = newUrl;
-             }
-        }
+        // Use the v1alpha endpoint with gemini-2.0-flash-exp for audio output capabilities
+        let requestUrl = isAudioInput
+            ? "https://generativelanguage.googleapis.com/v1alpha/models/gemini-2.0-flash-exp:generateContent"
+            : GEMINI_API_URL;
 
         const response = await axios.post(`${requestUrl}?key=${apiKey}`, requestBody, {
             headers: {'Content-Type': 'application/json'},
