@@ -22,13 +22,13 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.text());
 app.use(cookieParser());
 app.use(allowFrameEmbedding);
+app.use(express.static('public'));
 app.use(checkRestrictedMode);
 app.use(identityMiddleware);
 app.use(apiKeyMiddleware);
 app.use(logAccess);
 app.use(guardChatRoutes);
 
-app.use(express.static('public'));
 
 app.use('/', createRouter());
 app.use('/auth', authRoutes);
