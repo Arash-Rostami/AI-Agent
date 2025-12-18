@@ -37,31 +37,65 @@ export async function callGeminiAPI(
             }
         };
 
-        let requestUrl = `${GEMINI_API_URL}?key=${apiKey}`;
         const isPremium = apiKey === process.env.GEMINI_API_KEY_PREMIUM;
         const hasAudioInput = fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/');
 
+        let response;
         if (isPremium && hasAudioInput) {
-            const ttsModel = process.env.GEMINI_TTS_MODEL || "gemini-2.0-flash-exp";
-            requestUrl = `https://generativelanguage.googleapis.com/v1alpha/models/${ttsModel}:generateContent?key=${apiKey}`;
-            requestBody.generationConfig = {
-                responseModalities: ["TEXT", "AUDIO"],
-                speechConfig: {
-                    voiceConfig: {
-                        prebuiltVoiceConfig: {
-                            voiceName: "Puck"
+            // Step 1: Transcribe and get text response using standard model
+            const standardResponse = await axios.post(`${GEMINI_API_URL}?key=${apiKey}`, requestBody, {
+                headers: {'Content-Type': 'application/json'},
+                timeout: 60000
+            });
+
+            const processedResponse = await responseHandler.handle(standardResponse.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
+
+            // If the response is just text (no tool calls/errors), generate audio
+            if (processedResponse.text && !processedResponse.audioData) {
+                try {
+                    const ttsModel = process.env.GEMINI_TTS_MODEL || "gemini-2.5-flash-preview-tts";
+                    const ttsUrl = `https://generativelanguage.googleapis.com/v1beta/models/${ttsModel}:generateContent?key=${apiKey}`;
+
+                    const ttsBody = {
+                        contents: [{ parts: [{ text: processedResponse.text }] }],
+                        generationConfig: {
+                            responseModalities: ["AUDIO"],
+                            speechConfig: {
+                                voiceConfig: {
+                                    prebuiltVoiceConfig: {
+                                        voiceName: "Puck"
+                                    }
+                                }
+                            }
                         }
+                    };
+
+                    const ttsResponse = await axios.post(ttsUrl, ttsBody, {
+                        headers: {'Content-Type': 'application/json'},
+                        timeout: 60000
+                    });
+
+                    const candidate = ttsResponse.data.candidates?.[0];
+                    if (candidate?.content?.parts?.[0]?.inlineData) {
+                        processedResponse.audioData = {
+                            data: candidate.content.parts[0].inlineData.data,
+                            mimeType: candidate.content.parts[0].inlineData.mimeType || "audio/wav"
+                        };
                     }
+                } catch (ttsError) {
+                    console.error("TTS Generation failed:", ttsError.message);
+                    // Don't fail the whole request, just return the text
                 }
-            };
+            }
+            return processedResponse;
+
+        } else {
+            response = await axios.post(`${GEMINI_API_URL}?key=${apiKey}`, requestBody, {
+                headers: {'Content-Type': 'application/json'},
+                timeout: 60000
+            });
+            return await responseHandler.handle(response.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
         }
-
-        const response = await axios.post(requestUrl, requestBody, {
-            headers: {'Content-Type': 'application/json'},
-            timeout: 60000
-        });
-
-        return await responseHandler.handle(response.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
     } catch (error) {
         return errorHandler.handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, (msg, hist, key, restricted, search, id, bms) => callGeminiAPI(msg, hist, key, restricted, search, id, bms, fileData), isBmsMode);
     }
