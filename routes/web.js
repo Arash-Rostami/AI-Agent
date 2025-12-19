@@ -29,6 +29,8 @@ router.post('/clear-chat', InteractionController.clearChat);
 //api endpoints
 router.get('/api/history', InteractionController.getInteraction);
 
+router.get('/api/history/:id', InteractionController.getSessionDetails);
+
 router.delete('/api/history/:id', InteractionController.deleteSession);
 
 router.post('/api/vector/sync', VectorController.syncVectors);

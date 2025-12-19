@@ -40,6 +40,26 @@ export const getInteraction = async (req, res) => {
     }
 };
 
+export const getSessionDetails = async (req, res) => {
+    try {
+        const {userId} = req;
+        const {id: sessionId} = req.params;
+
+        if (!userId) return res.status(401).json({error: 'Unauthorized'});
+
+        const log = await InteractionLog.findOne({sessionId, userId}).select('messages');
+
+        if (!log) {
+            return res.status(404).json({error: 'Session not found'});
+        }
+
+        res.json({messages: log.messages});
+    } catch (error) {
+        console.error('Fetch session details error:', error);
+        res.status(500).json({error: 'Failed to fetch session details'});
+    }
+};
+
 export const deleteSession = async (req, res) => {
     try {
         const {userId} = req;
