@@ -1,7 +1,4 @@
 import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
-import {fileURLToPath} from 'url';
 
 dotenv.config();
 export const PORT = process.env.PORT || 3000;
@@ -26,12 +23,9 @@ export const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key_change_m
 
 export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()) : [];
-export const SYSTEM_INSTRUCTION_TEXT = fs.readFileSync(
-    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'documents', 'instructions.txt'), 'utf-8'
-);
-export const CX_BMS_INSTRUCTION = fs.readFileSync(
-    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'documents', 'cxbms.txt'), 'utf-8'
-);
+
+export const SYSTEM_INSTRUCTION_TEXT = "You are a helpful AI assistant. Answer questions based on the provided context.";
+export const CX_BMS_INSTRUCTION = "You are a helpful AI assistant specialized in CX and BMS. Answer questions based on the provided context.";
 
 
 if (!GEMINI_API_URL) {
