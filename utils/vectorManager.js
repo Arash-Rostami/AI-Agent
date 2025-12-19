@@ -47,7 +47,8 @@ function chunkText(text, maxChars = 2000) {
 }
 
 export async function syncDocuments() {
-    const docsDir = path.resolve(__dirname, '../documents/RAG');
+    // Strictly scan only the documents/RAG/ directory
+    const docsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../documents/RAG');
 
     await Vector.deleteMany({});
     vectorCache = [];
@@ -114,7 +115,7 @@ export async function syncDocuments() {
 //     }
 // }
 
-export async function searchVectors(query, topK = 3) {
+export async function searchVectors(query, topK = 3, filterFileName = null) {
     if (!query) return [];
     if (vectorCache.length === 0) {
         console.warn('⚠️ Vector cache is empty during search.');
@@ -122,7 +123,7 @@ export async function searchVectors(query, topK = 3) {
     }
 
     try {
-        console.log(`🔍 Searching vectors for query: "${query.substring(0, 50)}..."`);
+        console.log(`🔍 Searching vectors for query: "${query.substring(0, 50)}..." (Filter: ${filterFileName || 'None'})`);
         const queryVector = await getEmbeddings(query);
 
         if (vectorCache.length > 0) {
@@ -135,20 +136,35 @@ export async function searchVectors(query, topK = 3) {
             }
         }
 
-        const scored = vectorCache.map(item => ({
-            ...item,
-            score: cosineSimilarity(queryVector, item.vector)
-        }));
+        const scored = vectorCache
+            .filter(item => !filterFileName || item.fileName === filterFileName)
+            .map(item => ({
+                ...item,
+                score: cosineSimilarity(queryVector, item.vector)
+            }));
 
         scored.sort((a, b) => b.score - a.score);
 
         const topResults = scored.slice(0, topK);
         console.log('📊 Top 3 Similarity Scores:', topResults.map(r => r.score.toFixed(4)));
 
-        return topResults.filter(item => item.score > 0.3);
+        return topResults.filter(item => item.score > 0.25);
     } catch (error) {
         console.error('❌ Vector search error:', error);
         return [];
+    }
+}
+
+export function getRawFileContent(filename) {
+    try {
+        const filePath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../documents/RAG', filename);
+        if (fs.existsSync(filePath)) {
+            return fs.readFileSync(filePath, 'utf-8');
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error reading RAG file ${filename}:`, error);
+        return null;
     }
 }
 

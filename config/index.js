@@ -32,6 +32,22 @@ export const SYSTEM_INSTRUCTION_TEXT = fs.readFileSync(
 export const CX_BMS_INSTRUCTION = fs.readFileSync(
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'documents', 'cxbms.txt'), 'utf-8'
 );
+export const PERSOL_INSTRUCTION = fs.readFileSync(
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'documents', 'persolbs.txt'), 'utf-8'
+);
+
+export const getRagFileContent = (filename) => {
+    try {
+        const filePath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'documents', 'RAG', filename);
+        if (fs.existsSync(filePath)) {
+            return fs.readFileSync(filePath, 'utf-8');
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error reading RAG file ${filename}:`, error);
+        return null;
+    }
+};
 
 // export const SYSTEM_INSTRUCTION_TEXT = "You are a helpful AI assistant. Answer questions based on the provided context.";
 // export const CX_BMS_INSTRUCTION = "You are a helpful AI assistant specialized in CX and BMS. Answer questions based on the provided context.";
