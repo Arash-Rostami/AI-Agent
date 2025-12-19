@@ -1,5 +1,6 @@
 import {KeySessionManager} from '../utils/sessionManager.js';
 import {ConversationManager} from '../utils/conversationManager.js';
+import {SILENT_PATH} from "../utils/logManager.js";
 
 
 export const sessionManager = new KeySessionManager([
@@ -14,7 +15,7 @@ export const apiKeyMiddleware = (req, res, next) => {
 
     //first time hitting:iframe and app users
     const isRootGet = req.path === '/' && req.method === 'GET';
-    
+
     // API Key rotation for gemini
     req.geminiApiKey = isExternalService ? null : sessionManager.getKeyForIP(req.keyIdentifier)
 
@@ -37,7 +38,10 @@ export const apiKeyMiddleware = (req, res, next) => {
     req.sessionId = sessionId;
     req.conversationHistory = ConversationManager.getHistory(sessionId);
 
-    console.log(`🔑 ID: ${req.userId || 'anonymous'} | IP: ${req.userIp} | Session: ...${sessionId.slice(-8)} | Key: ...${req.geminiApiKey?.slice(-4) ?? req.body?.model ?? req.path}`);
+    if (!SILENT_PATH(req)) {
+        console.log(`🔑 ID: ${req.userId || 'anonymous'} | IP: ${req.userIp} | Session: ...${sessionId.slice(-8)} | Key: ...${req.geminiApiKey?.slice(-4) ?? req.body?.model ?? req.path}`);
+    }
+
     next();
 };
 

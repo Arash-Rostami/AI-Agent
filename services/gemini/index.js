@@ -30,7 +30,7 @@ export async function callGeminiAPI(
         const contents = formatter.formatContents(conversationHistory, message, fileData);
         const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode);
         let smartUrl = apiKey === GEMINI_API_KEY ? GEMINI_API_URL_PREMIUM : GEMINI_API_URL;
-        console.log(smartUrl.split('/models/')[1]?.split(':')[0]);
+        if (apiKey === GEMINI_API_KEY) console.log(smartUrl.split('/models/')[1]?.split(':')[0]);
 
         const requestBody = {
             contents,

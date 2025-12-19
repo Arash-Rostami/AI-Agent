@@ -10,32 +10,29 @@ import callArvanCloudAPI from '../services/arvancloud/index.js';
 
 const router = express.Router();
 
-export const createRouter = () => {
+// chat endpoints
+router.get('', PageController.serveIndex);
 
-    // chat endpoints
-    router.get('', PageController.serveIndex);
+router.get('/initial-prompt', ChatController.initialPrompt);
 
-    router.get('/initial-prompt', ChatController.initialPrompt);
+router.post('/ask', upload.single('file'), ChatController.ask);
 
-    router.post('/ask', upload.single('file'), ChatController.ask);
+router.post('/ask-groq', upload.single('file'), ChatController.handleAPIEndpoint(callGrokAPI, 'Groq'));
 
-    router.post('/ask-groq', upload.single('file'), ChatController.handleAPIEndpoint(callGrokAPI, 'Groq'));
+router.post('/ask-openrouter', upload.single('file'), ChatController.handleAPIEndpoint(callOpenRouterAPI, 'OpenRouter'));
 
-    router.post('/ask-openrouter', upload.single('file'), ChatController.handleAPIEndpoint(callOpenRouterAPI, 'OpenRouter'));
+router.post('/ask-arvan', upload.single('file'), ChatController.handleAPIEndpoint(callArvanCloudAPI, 'ArvanCloud'));
 
-    router.post('/ask-arvan', upload.single('file'), ChatController.handleAPIEndpoint(callArvanCloudAPI, 'ArvanCloud'));
-
-    router.post('/clear-chat', InteractionController.clearChat);
+router.post('/clear-chat', InteractionController.clearChat);
 
 
-    //api endpoints
-    router.get('/api/history', InteractionController.getInteraction);
+//api endpoints
+router.get('/api/history', InteractionController.getInteraction);
 
-    router.delete('/api/history/:id', InteractionController.deleteSession);
+router.delete('/api/history/:id', InteractionController.deleteSession);
 
-    router.post('/api/vector/sync', VectorController.syncVectors);
+router.post('/api/vector/sync', VectorController.syncVectors);
 
-    router.post('/api/', ChatController.simpleApi);
+router.post('/api/', ChatController.simpleApi);
 
-    return router;
-}
+export default router;
