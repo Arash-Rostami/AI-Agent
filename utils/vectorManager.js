@@ -105,6 +105,16 @@ export async function searchVectors(query, topK = 3) {
         console.log(`🔍 Searching vectors for query: "${query.substring(0, 50)}..."`);
         const queryVector = await getEmbeddings(query);
 
+        if (vectorCache.length > 0) {
+            const dimQuery = queryVector.length;
+            const dimCache = vectorCache[0].vector.length;
+            console.log(`📏 Vector Dimensions - Query: ${dimQuery}, Cache[0]: ${dimCache}`);
+
+            if (dimQuery !== dimCache) {
+                console.warn(`⚠️ DIMENSION MISMATCH: Query vector length (${dimQuery}) does not match cached vector length (${dimCache}). Similarity will be 0.`);
+            }
+        }
+
         const scored = vectorCache.map(item => ({
             ...item,
             score: cosineSimilarity(queryVector, item.vector)
