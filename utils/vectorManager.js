@@ -113,16 +113,58 @@ export async function searchVectors(query, topK = 3) {
     }
 }
 
+function loadFallbackContent() {
+    console.warn('⚠️ Vector search yielded no results or failed. Switching to file-based fallback.');
+    const instructionsPath = path.resolve(__dirname, '../documents/instructions.txt');
+    const cxBmsPath = path.resolve(__dirname, '../documents/cxbms.txt');
+
+    let fallbackContext = "";
+
+    try {
+        if (fs.existsSync(instructionsPath)) {
+            fallbackContext += fs.readFileSync(instructionsPath, 'utf-8') + "\n\n";
+        }
+        if (fs.existsSync(cxBmsPath)) {
+            fallbackContext += fs.readFileSync(cxBmsPath, 'utf-8');
+        }
+    } catch (err) {
+        console.error('Critical: Failed to read fallback files:', err);
+    }
+
+    return fallbackContext;
+}
 
 export const enrichPromptWithContext = async (message) => {
     try {
         const results = await searchVectors(message);
-        if (!results || results.length === 0) return message;
 
-        const context = results.map(r => r.text).join('\n\n---\n\n');
-        return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+        // If results are found, use them
+        if (results && results.length > 0) {
+            const context = results.map(r => r.text).join('\n\n---\n\n');
+            return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+        }
+
+        // Fallback Trigger: Empty results
+        const fallbackContext = loadFallbackContent();
+        if (fallbackContext.trim()) {
+             return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+        }
+
+        return message;
+
     } catch (error) {
-        console.error('Context enrichment failed:', error);
+        console.error('Context enrichment failed (Main Block):', error);
+
+        // Fallback Trigger: Exception in search
+        try {
+            const fallbackContext = loadFallbackContent();
+            if (fallbackContext.trim()) {
+                 return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+            }
+        } catch(fallbackError) {
+             console.error('Critical: Fallback also failed in catch block:', fallbackError);
+        }
+
         return message;
     }
 };
