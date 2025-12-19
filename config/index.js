@@ -33,6 +33,9 @@ export const CX_BMS_INSTRUCTION = fs.readFileSync(
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'documents', 'cxbms.txt'), 'utf-8'
 );
 
+// export const SYSTEM_INSTRUCTION_TEXT = "You are a helpful AI assistant. Answer questions based on the provided context.";
+// export const CX_BMS_INSTRUCTION = "You are a helpful AI assistant specialized in CX and BMS. Answer questions based on the provided context.";
+//
 
 if (!GEMINI_API_URL) {
     console.error('❌ Missing GEMINI_API_URL in .env file');

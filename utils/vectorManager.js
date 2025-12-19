@@ -3,6 +3,7 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 import Vector from '../models/Vector.js';
 import {getEmbeddings} from '../services/arvancloud/embeddings.js';
+// import {CX_BMS_INSTRUCTION_FALLBACK, SYSTEM_INSTRUCTION_TEXT_FALLBACK} from "../config/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -126,3 +127,43 @@ export const enrichPromptWithContext = async (message) => {
         return message;
     }
 };
+
+// export const enrichPromptWithContext = async (message) => {
+//     try {
+//         const results = await searchVectors(message);
+//
+//         if (results && results.length > 0) {
+//             const context = results.map(r => r.text).join('\n\n---\n\n');
+//             return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+//         }
+//
+//         // FALLBACK: If no results (or empty), load text files directly
+//         console.warn('⚠️ Vector search yield no results. Switching to file-based fallback.');
+//         let fallbackContext = "";
+//         fallbackContext += SYSTEM_INSTRUCTION_TEXT_FALLBACK + "\n\n";
+//         fallbackContext += CX_BMS_INSTRUCTION_FALLBACK;
+//
+//         if (fallbackContext.trim()) {
+//             return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+//         }
+//
+//         return message;
+//
+//     } catch (error) {
+//         console.error('Context enrichment failed:', error);
+//         try {
+//             console.warn('⚠️ Vector search error. Switching to file-based fallback.');
+//             let fallbackContext = "";
+//             fallbackContext += SYSTEM_INSTRUCTION_TEXT_FALLBACK + "\n\n";
+//             fallbackContext += CX_BMS_INSTRUCTION_FALLBACK;
+//
+//             if (fallbackContext.trim()) {
+//                 return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+//             }
+//         } catch (fallbackError) {
+//             console.error('Critical: Fallback also failed:', fallbackError);
+//         }
+//
+//         return message;
+//     }
+// }
