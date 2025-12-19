@@ -47,7 +47,7 @@ function chunkText(text, maxChars = 2000) {
 }
 
 export async function syncDocuments() {
-    const docsDir = path.resolve(__dirname, '../documents');
+    const docsDir = path.resolve(__dirname, '../documents/RAG');
 
     await Vector.deleteMany({});
     vectorCache = [];
@@ -94,11 +94,46 @@ export async function syncDocuments() {
     return {filesProcessed: files.length, totalChunks};
 }
 
+// export async function searchVectors(query, topK = 3) {
+//     if (!query || vectorCache.length === 0) return [];
+//
+//     try {
+//         const queryVector = await getEmbeddings(query);
+//
+//         const scored = vectorCache.map(item => ({
+//             ...item,
+//             score: cosineSimilarity(queryVector, item.vector)
+//         }));
+//
+//         scored.sort((a, b) => b.score - a.score);
+//
+//         return scored.slice(0, topK).filter(item => item.score > 0.3);
+//     } catch (error) {
+//         console.error('Vector search error:', error);
+//         return [];
+//     }
+// }
+
 export async function searchVectors(query, topK = 3) {
-    if (!query || vectorCache.length === 0) return [];
+    if (!query) return [];
+    if (vectorCache.length === 0) {
+        console.warn('⚠️ Vector cache is empty during search.');
+        return [];
+    }
 
     try {
+        console.log(`🔍 Searching vectors for query: "${query.substring(0, 50)}..."`);
         const queryVector = await getEmbeddings(query);
+
+        if (vectorCache.length > 0) {
+            const dimQuery = queryVector.length;
+            const dimCache = vectorCache[0].vector.length;
+            console.log(`📏 Vector Dimensions - Query: ${dimQuery}, Cache[0]: ${dimCache}`);
+
+            if (dimQuery !== dimCache) {
+                console.warn(`⚠️ DIMENSION MISMATCH: Query vector length (${dimQuery}) does not match cached vector length (${dimCache}). Similarity will be 0.`);
+            }
+        }
 
         const scored = vectorCache.map(item => ({
             ...item,
@@ -107,9 +142,12 @@ export async function searchVectors(query, topK = 3) {
 
         scored.sort((a, b) => b.score - a.score);
 
-        return scored.slice(0, topK).filter(item => item.score > 0.3);
+        const topResults = scored.slice(0, topK);
+        console.log('📊 Top 3 Similarity Scores:', topResults.map(r => r.score.toFixed(4)));
+
+        return topResults.filter(item => item.score > 0.3);
     } catch (error) {
-        console.error('Vector search error:', error);
+        console.error('❌ Vector search error:', error);
         return [];
     }
 }
