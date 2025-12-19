@@ -113,7 +113,11 @@ export async function searchVectors(query, topK = 3, filterFileName = null) {
         scored.sort((a, b) => b.score - a.score);
         const topResults = scored.slice(0, topK);
 
-        return topResults.filter(item => item.score > 0.25);
+        if (topResults.length > 0) {
+            console.log(`📊 Top Scores for "${query.substring(0, 20)}...":`, topResults.map(r => r.score.toFixed(4)).join(', '));
+        }
+
+        return topResults.filter(item => item.score > 0.15);
     } catch (error) {
         console.error('❌ Vector search error:', error);
         return [];
