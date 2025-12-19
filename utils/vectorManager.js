@@ -106,6 +106,12 @@ export async function searchVectors(query, topK = 3) {
 
         scored.sort((a, b) => b.score - a.score);
 
+        // DEBUG LOGGING
+        console.log(`🔍 Vector Search Debug: Top 3 scores for query "${query.substring(0, 20)}..."`);
+        scored.slice(0, 3).forEach((item, idx) => {
+            console.log(`   ${idx + 1}. Score: ${item.score.toFixed(4)} | File: ${item.fileName}`);
+        });
+
         return scored.slice(0, topK).filter(item => item.score > 0.3);
     } catch (error) {
         console.error('Vector search error:', error);
@@ -115,6 +121,9 @@ export async function searchVectors(query, topK = 3) {
 
 function loadFallbackContent() {
     console.warn('⚠️ Vector search yielded no results or failed. Switching to file-based fallback.');
+    // Correct ESM path resolution:
+    // __dirname is already defined at the top of the file as path.dirname(fileURLToPath(import.meta.url))
+    // So we can use it safely here.
     const instructionsPath = path.resolve(__dirname, '../documents/instructions.txt');
     const cxBmsPath = path.resolve(__dirname, '../documents/cxbms.txt');
 
