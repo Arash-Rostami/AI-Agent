@@ -20,7 +20,8 @@ export async function callGeminiAPI(
     useWebSearch = false,
     keyIdentifier = null,
     isBmsMode = false,
-    fileData = null
+    fileData = null,
+    customSystemInstruction = null
 ) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
@@ -32,15 +33,17 @@ export async function callGeminiAPI(
         let smartUrl = apiKey === GEMINI_API_KEY ? GEMINI_API_URL_PREMIUM : GEMINI_API_URL;
         if (apiKey === GEMINI_API_KEY) console.log(smartUrl.split('/models/')[1]?.split(':')[0]);
 
+        const systemInstructionText = customSystemInstruction || (isRestrictedMode && !useWebSearch && !isBmsMode
+            ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
+            : (isBmsMode ? CX_BMS_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT));
+
         const requestBody = {
             contents,
             tools: allowedTools,
             tool_config: allowedTools ? {function_calling_config: {mode: "AUTO"}} : undefined,
             systemInstruction: {
                 parts: [{
-                    text: isRestrictedMode && !useWebSearch && !isBmsMode
-                        ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
-                        : (isBmsMode ? CX_BMS_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT)
+                    text: systemInstructionText
                 }]
             }
         };

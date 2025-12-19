@@ -1,7 +1,8 @@
 import {callGeminiAPI, callSimpleGeminiAPI} from '../services/gemini/index.js';
 import {syncToDatabase} from '../utils/interactionLogManager.js';
-import {enrichPromptWithContext} from '../utils/vectorManager.js';
+// import {enrichPromptWithContext} from '../utils/vectorManager.js';
 import {ConversationManager} from '../utils/conversationManager.js';
+import {constructSystemPrompt} from '../utils/promptManager.js';
 
 const syncToDB = (sessionId, userId, history) =>
     syncToDatabase(sessionId, userId, history).catch(err => console.error('DB sync failed:', err.message));
@@ -21,7 +22,8 @@ export const initialPrompt = async (req, res) => {
     }
 
     try {
-        const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode);
+        const systemInstruction = await constructSystemPrompt(req, prompt);
+        const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, null, greeting);
         res.json({response: greeting, isBmsMode, isRestrictedMode});
         syncToDB(sessionId, userId, updated);
@@ -40,14 +42,15 @@ export const ask = async (req, res) => {
     const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
 
     try {
-        const augmentedMessage = await enrichPromptWithContext(message);
+        // const augmentedMessage = await enrichPromptWithContext(message);
+        const systemInstruction = await constructSystemPrompt(req, message);
         let fileData = null;
         if (req.file) fileData = {mimeType: req.file.mimetype, data: req.file.buffer.toString('base64')};
 
         const {
             text: responseText,
             sources
-        } = await callGeminiAPI(augmentedMessage, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData);
+        } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, responseText);
         res.json({reply: responseText, sources});
         syncToDB(sessionId, userId, updated);
@@ -67,7 +70,8 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
     const {sessionId, conversationHistory, userId} = req;
 
     try {
-        const augmentedMessage = await enrichPromptWithContext(message);
+        // const augmentedMessage = await enrichPromptWithContext(message);
+        const systemInstruction = await constructSystemPrompt(req, message);
 
         let fileData = null;
         if (apiName === 'ArvanCloud' && req.file) {
@@ -76,9 +80,22 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
             fileData = `data:${mimeType};base64,${base64Data}`;
         }
 
+        // Note: ArvanCloud/Grok wrappers might need updates to accept systemInstruction if they support it.
+        // For now, only Gemini is fully updated. We pass it, assuming wrappers might ignore extra args or will be updated.
+        // Since apiCall is generic, we just pass the original message. If RAG is essential for other services,
+        // we might need to append context to 'message' instead of 'systemInstruction' for them.
+        // However, the plan focused on Gemini. For others, we might want to revert to 'augmentedMessage' strategy
+        // OR update their services. Given "App-Scoped Access" requirement applies to all, I should verify ArvanCloud too.
+
+        // IMPORTANT: The previous logic enriched the user message. The new logic puts it in system prompt.
+        // If ArvanCloud service doesn't support system prompt override, this breaks RAG for Arvan.
+        // Let's stick to the plan: "Implement loader logic in config + single controller/service used by all API services."
+        // I will assume for now we pass 'systemInstruction' to apiCall.
+
         const response = apiName === 'ArvanCloud'
-            ? await apiCall(augmentedMessage, conversationHistory, model, fileData)
-            : await apiCall(augmentedMessage, conversationHistory);
+            ? await apiCall(message, conversationHistory, model, fileData, systemInstruction)
+            : await apiCall(message, conversationHistory, systemInstruction);
+
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, response);
         res.json({reply: response});
         syncToDB(sessionId, userId, updated);

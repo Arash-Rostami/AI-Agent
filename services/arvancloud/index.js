@@ -7,7 +7,7 @@ import {
 
 if (!ARVANCLOUD_API_KEY) console.warn('ARVANCLOUD_API_KEY is not set.');
 
-export default async function callArvanCloudAPI(message, conversationHistory = [], model, fileData = null) {
+export default async function callArvanCloudAPI(message, conversationHistory = [], model, fileData = null, customSystemInstruction = null) {
     if (!message || typeof message !== 'string') throw new Error('Message must be a non-empty string');
 
     const MODELS = {
@@ -32,7 +32,7 @@ export default async function callArvanCloudAPI(message, conversationHistory = [
     }
 
     const messages = [
-        {role: 'system', content: SYSTEM_INSTRUCTION_TEXT},
+        {role: 'system', content: customSystemInstruction || SYSTEM_INSTRUCTION_TEXT},
         ...conversationHistory.map(m => ({
             role: m.role === 'assistant' ? 'assistant' : 'user',
             content: m.content
