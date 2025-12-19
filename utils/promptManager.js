@@ -21,7 +21,7 @@ const getRagFileContent = (filename) => {
     }
 };
 
-export const determineAppContext = (req) => {
+const determineAppContext = (req) => {
     if (req.isBmsMode) {
         return 'BMS';
     }
