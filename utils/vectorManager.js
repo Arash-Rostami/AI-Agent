@@ -95,9 +95,14 @@ export async function syncDocuments() {
 }
 
 export async function searchVectors(query, topK = 3) {
-    if (!query || vectorCache.length === 0) return [];
+    if (!query) return [];
+    if (vectorCache.length === 0) {
+        console.warn('⚠️ Vector cache is empty during search.');
+        return [];
+    }
 
     try {
+        console.log(`🔍 Searching vectors for query: "${query.substring(0, 50)}..."`);
         const queryVector = await getEmbeddings(query);
 
         const scored = vectorCache.map(item => ({
@@ -107,9 +112,12 @@ export async function searchVectors(query, topK = 3) {
 
         scored.sort((a, b) => b.score - a.score);
 
-        return scored.slice(0, topK).filter(item => item.score > 0.3);
+        const topResults = scored.slice(0, topK);
+        console.log('📊 Top 3 Similarity Scores:', topResults.map(r => r.score.toFixed(4)));
+
+        return topResults.filter(item => item.score > 0.3);
     } catch (error) {
-        console.error('Vector search error:', error);
+        console.error('❌ Vector search error:', error);
         return [];
     }
 }
@@ -118,52 +126,39 @@ export async function searchVectors(query, topK = 3) {
 export const enrichPromptWithContext = async (message) => {
     try {
         const results = await searchVectors(message);
-        if (!results || results.length === 0) return message;
 
-        const context = results.map(r => r.text).join('\n\n---\n\n');
-        return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+        if (results && results.length > 0) {
+            const context = results.map(r => r.text).join('\n\n---\n\n');
+            return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+        }
+
+        // FALLBACK: If no results (or empty), load text files directly
+        console.warn('⚠️ Vector search yield no results. Switching to file-based fallback.');
+        let fallbackContext = "";
+        fallbackContext += SYSTEM_INSTRUCTION_TEXT + "\n\n";
+        fallbackContext += CX_BMS_INSTRUCTION;
+
+        if (fallbackContext.trim()) {
+            return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+        }
+
+        return message;
+
     } catch (error) {
         console.error('Context enrichment failed:', error);
+        try {
+            console.warn('⚠️ Vector search error. Switching to file-based fallback.');
+            let fallbackContext = "";
+            fallbackContext += SYSTEM_INSTRUCTION_TEXT + "\n\n";
+            fallbackContext += CX_BMS_INSTRUCTION;
+
+            if (fallbackContext.trim()) {
+                return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
+            }
+        } catch (fallbackError) {
+            console.error('Critical: Fallback also failed:', fallbackError);
+        }
+
         return message;
     }
-};
-
-// export const enrichPromptWithContext = async (message) => {
-//     try {
-//         const results = await searchVectors(message);
-//
-//         if (results && results.length > 0) {
-//             const context = results.map(r => r.text).join('\n\n---\n\n');
-//             return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
-//         }
-//
-//         // FALLBACK: If no results (or empty), load text files directly
-//         console.warn('⚠️ Vector search yield no results. Switching to file-based fallback.');
-//         let fallbackContext = "";
-//         fallbackContext += SYSTEM_INSTRUCTION_TEXT_FALLBACK + "\n\n";
-//         fallbackContext += CX_BMS_INSTRUCTION_FALLBACK;
-//
-//         if (fallbackContext.trim()) {
-//             return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
-//         }
-//
-//         return message;
-//
-//     } catch (error) {
-//         console.error('Context enrichment failed:', error);
-//         try {
-//             console.warn('⚠️ Vector search error. Switching to file-based fallback.');
-//             let fallbackContext = "";
-//             fallbackContext += SYSTEM_INSTRUCTION_TEXT_FALLBACK + "\n\n";
-//             fallbackContext += CX_BMS_INSTRUCTION_FALLBACK;
-//
-//             if (fallbackContext.trim()) {
-//                 return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
-//             }
-//         } catch (fallbackError) {
-//             console.error('Critical: Fallback also failed:', fallbackError);
-//         }
-//
-//         return message;
-//     }
-// }
+}
