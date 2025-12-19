@@ -1,10 +1,25 @@
+import fs from 'fs';
+import path from 'path';
 import {
     CX_BMS_INSTRUCTION,
-    PERSOL_INSTRUCTION,
+    PERSOL_BS_INSTRUCTION,
     SYSTEM_INSTRUCTION_TEXT,
-    getRagFileContent
+    ragDirectory
 } from '../config/index.js';
 import {searchVectors} from './vectorManager.js';
+
+const getRagFileContent = (filename) => {
+    try {
+        const filePath = path.join(ragDirectory, filename);
+        if (fs.existsSync(filePath)) {
+            return fs.readFileSync(filePath, 'utf-8');
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error reading RAG file ${filename}:`, error);
+        return null;
+    }
+};
 
 export const determineAppContext = (req) => {
     if (req.isBmsMode) {
@@ -28,7 +43,7 @@ export const constructSystemPrompt = async (req, message) => {
             ragFile = 'cxRag.txt';
             break;
         case 'MAIN':
-            baseInstruction = PERSOL_INSTRUCTION;
+            baseInstruction = PERSOL_BS_INSTRUCTION;
             // Future: Check for 'persolRag.txt' if needed. For now, strictly no RAG.
             ragFile = null;
             break;

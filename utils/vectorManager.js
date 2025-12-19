@@ -1,11 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import {fileURLToPath} from 'url';
 import Vector from '../models/Vector.js';
 import {getEmbeddings} from '../services/arvancloud/embeddings.js';
+import {ragDirectory} from '../config/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 let vectorCache = [];
 
@@ -46,20 +44,17 @@ function chunkText(text, maxChars = 2000) {
 }
 
 export async function syncDocuments() {
-    // Strictly scan only the documents/RAG/ directory
-    const docsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../documents/RAG');
-
     await Vector.deleteMany({});
     vectorCache = [];
     console.log('🗑️ Cleared existing vector.');
 
-    if (!fs.existsSync(docsDir)) throw new Error('Documents directory not found.');
+    if (!fs.existsSync(ragDirectory)) throw new Error('Documents directory not found.');
 
-    const files = fs.readdirSync(docsDir).filter(f => f.endsWith('.txt') || f.endsWith('.md'));
+    const files = fs.readdirSync(ragDirectory).filter(f => f.endsWith('.txt') || f.endsWith('.md'));
     let totalChunks = 0;
 
     for (const file of files) {
-        const filePath = path.join(docsDir, file);
+        const filePath = path.join(ragDirectory, file);
         const content = fs.readFileSync(filePath, 'utf-8');
 
         const chunks = chunkText(content);
@@ -102,30 +97,21 @@ export async function searchVectors(query, topK = 3, filterFileName = null) {
     }
 
     try {
-        console.log(`🔍 Searching vectors for query: "${query.substring(0, 50)}..." (Filter: ${filterFileName || 'None'})`);
         const queryVector = await getEmbeddings(query);
 
         if (vectorCache.length > 0) {
             const dimQuery = queryVector.length;
             const dimCache = vectorCache[0].vector.length;
-            console.log(`📏 Vector Dimensions - Query: ${dimQuery}, Cache[0]: ${dimCache}`);
-
-            if (dimQuery !== dimCache) {
-                console.warn(`⚠️ DIMENSION MISMATCH: Query vector length (${dimQuery}) does not match cached vector length (${dimCache}). Similarity will be 0.`);
-            }
+            if (dimQuery !== dimCache) console.warn(`⚠️ DIMENSION MISMATCH: Query vector length (${dimQuery}) does not match cached vector length (${dimCache}). Similarity will be 0.`);
         }
 
         const scored = vectorCache
             .filter(item => !filterFileName || item.fileName === filterFileName)
             .map(item => ({
-                ...item,
-                score: cosineSimilarity(queryVector, item.vector)
+                ...item, score: cosineSimilarity(queryVector, item.vector)
             }));
-
         scored.sort((a, b) => b.score - a.score);
-
         const topResults = scored.slice(0, topK);
-        console.log('📊 Top 3 Similarity Scores:', topResults.map(r => r.score.toFixed(4)));
 
         return topResults.filter(item => item.score > 0.25);
     } catch (error) {
