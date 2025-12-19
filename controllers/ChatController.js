@@ -1,7 +1,8 @@
 import {callGeminiAPI, callSimpleGeminiAPI} from '../services/gemini/index.js';
 import {syncToDatabase} from '../utils/interactionLogManager.js';
-import {enrichPromptWithContext} from '../utils/vectorManager.js';
 import {ConversationManager} from '../utils/conversationManager.js';
+import {constructSystemPrompt} from '../utils/promptManager.js';
+
 
 const syncToDB = (sessionId, userId, history) =>
     syncToDatabase(sessionId, userId, history).catch(err => console.error('DB sync failed:', err.message));
@@ -21,7 +22,8 @@ export const initialPrompt = async (req, res) => {
     }
 
     try {
-        const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode);
+        const systemInstruction = await constructSystemPrompt(req, prompt);
+        const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, null, greeting);
         res.json({response: greeting, isBmsMode, isRestrictedMode});
         syncToDB(sessionId, userId, updated);
@@ -40,14 +42,14 @@ export const ask = async (req, res) => {
     const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
 
     try {
-        const augmentedMessage = await enrichPromptWithContext(message);
+        const systemInstruction = await constructSystemPrompt(req, message);
         let fileData = null;
         if (req.file) fileData = {mimeType: req.file.mimetype, data: req.file.buffer.toString('base64')};
 
         const {
             text: responseText,
             sources
-        } = await callGeminiAPI(augmentedMessage, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData);
+        } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, responseText);
         res.json({reply: responseText, sources});
         syncToDB(sessionId, userId, updated);
@@ -67,7 +69,7 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
     const {sessionId, conversationHistory, userId} = req;
 
     try {
-        const augmentedMessage = await enrichPromptWithContext(message);
+        const systemInstruction = await constructSystemPrompt(req, message);
 
         let fileData = null;
         if (apiName === 'ArvanCloud' && req.file) {
@@ -77,8 +79,9 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
         }
 
         const response = apiName === 'ArvanCloud'
-            ? await apiCall(augmentedMessage, conversationHistory, model, fileData)
-            : await apiCall(augmentedMessage, conversationHistory);
+            ? await apiCall(message, conversationHistory, model, fileData, systemInstruction)
+            : await apiCall(message, conversationHistory, systemInstruction);
+
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, response);
         res.json({reply: response});
         syncToDB(sessionId, userId, updated);

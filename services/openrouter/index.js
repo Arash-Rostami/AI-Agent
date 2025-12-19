@@ -2,7 +2,7 @@ import axios from 'axios';
 import {OPENROUTER_API_KEY, OPENROUTER_API_URL, SITE_NAME, SITE_URL, SYSTEM_INSTRUCTION_TEXT} from '../../config/index.js';
 
 
-export default async function callOpenRouterAPI(message, conversationHistory = []) {
+export default async function callOpenRouterAPI(message, conversationHistory = [], customSystemInstruction = null) {
     if (!OPENROUTER_API_KEY) throw new Error("OPEN_ROUTER_API_KEY is missing");
 
     try {
@@ -12,10 +12,11 @@ export default async function callOpenRouterAPI(message, conversationHistory = [
         }));
 
         const messages = [
-            {role: 'system', content: SYSTEM_INSTRUCTION_TEXT},
+            {role: 'system', content: customSystemInstruction || SYSTEM_INSTRUCTION_TEXT},
             ...formattedHistory,
             {role: 'user', content: message}
         ];
+
 
         const response = await axios.post(
             OPENROUTER_API_URL,

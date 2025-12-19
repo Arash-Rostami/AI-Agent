@@ -3,7 +3,7 @@ import {GROK_API_KEY, SYSTEM_INSTRUCTION_TEXT} from '../../config/index.js';
 
 if (!GROK_API_KEY) console.warn('GROK_API_KEY is not set. Set it in .env or your environment.');
 
-const groq = new Groq({apiKey: GROK_API_KEY});
+const groq = GROK_API_KEY ? new Groq({apiKey: GROK_API_KEY}) : null;
 
 export async function getGroqChatCompletion() {
     return groq.chat.completions.create({
@@ -12,14 +12,17 @@ export async function getGroqChatCompletion() {
     });
 }
 
-export default async function callGrokAPI(message, conversationHistory = []) {
+export default async function callGrokAPI(message, conversationHistory = [], customSystemInstruction = null) {
     if (!message || typeof message !== 'string') {
         throw new Error('Message must be a non-empty string');
     }
 
-    const messages = [...conversationHistory.map(m => ({
-        role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content
-    })), {role: 'user', content: message}];
+    const messages = [
+        {role: 'system', content: customSystemInstruction || SYSTEM_INSTRUCTION_TEXT},
+        ...conversationHistory.map(m => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content
+        })), {role: 'user', content: message}
+    ];
 
     const completion = await groq.chat.completions.create({
         messages, model: 'qwen/qwen3-32b',

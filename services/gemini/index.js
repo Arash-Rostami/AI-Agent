@@ -20,7 +20,8 @@ export async function callGeminiAPI(
     useWebSearch = false,
     keyIdentifier = null,
     isBmsMode = false,
-    fileData = null
+    fileData = null,
+    customSystemInstruction = null
 ) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
@@ -38,9 +39,9 @@ export async function callGeminiAPI(
             tool_config: allowedTools ? {function_calling_config: {mode: "AUTO"}} : undefined,
             systemInstruction: {
                 parts: [{
-                    text: isRestrictedMode && !useWebSearch && !isBmsMode
+                    text: customSystemInstruction || (isRestrictedMode && !useWebSearch && !isBmsMode
                         ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
-                        : (isBmsMode ? CX_BMS_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT)
+                        : (isBmsMode ? CX_BMS_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT))
                 }]
             }
         };

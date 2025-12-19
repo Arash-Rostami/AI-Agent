@@ -1,12 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import {fileURLToPath} from 'url';
 import Vector from '../models/Vector.js';
 import {getEmbeddings} from '../services/arvancloud/embeddings.js';
-// import {CX_BMS_INSTRUCTION_FALLBACK, SYSTEM_INSTRUCTION_TEXT_FALLBACK} from "../config/index.js";
+import {ragDirectory} from '../config/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 let vectorCache = [];
 
@@ -47,19 +44,17 @@ function chunkText(text, maxChars = 2000) {
 }
 
 export async function syncDocuments() {
-    const docsDir = path.resolve(__dirname, '../documents/RAG');
-
     await Vector.deleteMany({});
     vectorCache = [];
     console.log('🗑️ Cleared existing vector.');
 
-    if (!fs.existsSync(docsDir)) throw new Error('Documents directory not found.');
+    if (!fs.existsSync(ragDirectory)) throw new Error('Documents directory not found.');
 
-    const files = fs.readdirSync(docsDir).filter(f => f.endsWith('.txt') || f.endsWith('.md'));
+    const files = fs.readdirSync(ragDirectory).filter(f => f.endsWith('.txt') || f.endsWith('.md'));
     let totalChunks = 0;
 
     for (const file of files) {
-        const filePath = path.join(docsDir, file);
+        const filePath = path.join(ragDirectory, file);
         const content = fs.readFileSync(filePath, 'utf-8');
 
         const chunks = chunkText(content);
@@ -94,27 +89,7 @@ export async function syncDocuments() {
     return {filesProcessed: files.length, totalChunks};
 }
 
-// export async function searchVectors(query, topK = 3) {
-//     if (!query || vectorCache.length === 0) return [];
-//
-//     try {
-//         const queryVector = await getEmbeddings(query);
-//
-//         const scored = vectorCache.map(item => ({
-//             ...item,
-//             score: cosineSimilarity(queryVector, item.vector)
-//         }));
-//
-//         scored.sort((a, b) => b.score - a.score);
-//
-//         return scored.slice(0, topK).filter(item => item.score > 0.3);
-//     } catch (error) {
-//         console.error('Vector search error:', error);
-//         return [];
-//     }
-// }
-
-export async function searchVectors(query, topK = 3) {
+export async function searchVectors(query, topK = 3, filterFileName = null) {
     if (!query) return [];
     if (vectorCache.length === 0) {
         console.warn('⚠️ Vector cache is empty during search.');
@@ -122,86 +97,25 @@ export async function searchVectors(query, topK = 3) {
     }
 
     try {
-        console.log(`🔍 Searching vectors for query: "${query.substring(0, 50)}..."`);
         const queryVector = await getEmbeddings(query);
 
         if (vectorCache.length > 0) {
             const dimQuery = queryVector.length;
             const dimCache = vectorCache[0].vector.length;
-            console.log(`📏 Vector Dimensions - Query: ${dimQuery}, Cache[0]: ${dimCache}`);
-
-            if (dimQuery !== dimCache) {
-                console.warn(`⚠️ DIMENSION MISMATCH: Query vector length (${dimQuery}) does not match cached vector length (${dimCache}). Similarity will be 0.`);
-            }
+            if (dimQuery !== dimCache) console.warn(`⚠️ DIMENSION MISMATCH: Query vector length (${dimQuery}) does not match cached vector length (${dimCache}). Similarity will be 0.`);
         }
 
-        const scored = vectorCache.map(item => ({
-            ...item,
-            score: cosineSimilarity(queryVector, item.vector)
-        }));
-
+        const scored = vectorCache
+            .filter(item => !filterFileName || item.fileName === filterFileName)
+            .map(item => ({
+                ...item, score: cosineSimilarity(queryVector, item.vector)
+            }));
         scored.sort((a, b) => b.score - a.score);
-
         const topResults = scored.slice(0, topK);
-        console.log('📊 Top 3 Similarity Scores:', topResults.map(r => r.score.toFixed(4)));
 
-        return topResults.filter(item => item.score > 0.3);
+        return topResults.filter(item => item.score > 0.15);
     } catch (error) {
         console.error('❌ Vector search error:', error);
         return [];
     }
 }
-
-
-export const enrichPromptWithContext = async (message) => {
-    try {
-        const results = await searchVectors(message);
-        if (!results || results.length === 0) return message;
-
-        const context = results.map(r => r.text).join('\n\n---\n\n');
-        return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
-    } catch (error) {
-        console.error('Context enrichment failed:', error);
-        return message;
-    }
-};
-
-// export const enrichPromptWithContext = async (message) => {
-//     try {
-//         const results = await searchVectors(message);
-//
-//         if (results && results.length > 0) {
-//             const context = results.map(r => r.text).join('\n\n---\n\n');
-//             return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
-//         }
-//
-//         // FALLBACK: If no results (or empty), load text files directly
-//         console.warn('⚠️ Vector search yield no results. Switching to file-based fallback.');
-//         let fallbackContext = "";
-//         fallbackContext += SYSTEM_INSTRUCTION_TEXT_FALLBACK + "\n\n";
-//         fallbackContext += CX_BMS_INSTRUCTION_FALLBACK;
-//
-//         if (fallbackContext.trim()) {
-//             return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
-//         }
-//
-//         return message;
-//
-//     } catch (error) {
-//         console.error('Context enrichment failed:', error);
-//         try {
-//             console.warn('⚠️ Vector search error. Switching to file-based fallback.');
-//             let fallbackContext = "";
-//             fallbackContext += SYSTEM_INSTRUCTION_TEXT_FALLBACK + "\n\n";
-//             fallbackContext += CX_BMS_INSTRUCTION_FALLBACK;
-//
-//             if (fallbackContext.trim()) {
-//                 return `Context information is below.\n---------------------\n${fallbackContext}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
-//             }
-//         } catch (fallbackError) {
-//             console.error('Critical: Fallback also failed:', fallbackError);
-//         }
-//
-//         return message;
-//     }
-// }
