@@ -3,7 +3,7 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 import Vector from '../models/Vector.js';
 import {getEmbeddings} from '../services/arvancloud/embeddings.js';
-// import {CX_BMS_INSTRUCTION_FALLBACK, SYSTEM_INSTRUCTION_TEXT_FALLBACK} from "../config/index.js";
+import {CX_BMS_INSTRUCTION, SYSTEM_INSTRUCTION_TEXT} from "../config/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -125,7 +125,8 @@ export async function searchVectors(query, topK = 3) {
         const topResults = scored.slice(0, topK);
         console.log('📊 Top 3 Similarity Scores:', topResults.map(r => r.score.toFixed(4)));
 
-        return topResults.filter(item => item.score > 0.3);
+        // Lowered threshold from 0.3 to 0.18 to catch relevant but lower-scoring matches
+        return topResults.filter(item => item.score > 0.18);
     } catch (error) {
         console.error('❌ Vector search error:', error);
         return [];
@@ -142,8 +143,9 @@ export const enrichPromptWithContext = async (message) => {
             return `Context information is below.\n---------------------\n${context}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: ${message}`;
         }
 
-        // FALLBACK: If no results (or empty), load text files directly
-        console.warn('⚠️ Vector search yield no results. Switching to file-based fallback.');
+        // FALLBACK: If no results (or empty), load static text files
+        console.warn('⚠️ Vector search yielded no results. Switching to file-based fallback.');
+
         let fallbackContext = "";
         fallbackContext += SYSTEM_INSTRUCTION_TEXT + "\n\n";
         fallbackContext += CX_BMS_INSTRUCTION;
@@ -171,4 +173,4 @@ export const enrichPromptWithContext = async (message) => {
 
         return message;
     }
-}
+};
