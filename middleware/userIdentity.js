@@ -39,6 +39,10 @@ export const identityMiddleware = (req, res, next) => {
     req.userId = userId;
     req.userIp = userIp;
     req.keyIdentifier = userId || userIp;
-    console.log(`id: ${req.userId}, ip: ${req.userIp}`);
+
+    const silentPaths = ['/initial-prompt', '/auth/admin', '/api/history'];
+    if (!silentPaths.includes(req.path)) {
+        console.log(`id: ${req.userId}, ip: ${req.userIp}`);
+    }
     next();
 };
