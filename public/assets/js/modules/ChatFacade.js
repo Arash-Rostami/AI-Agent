@@ -29,6 +29,7 @@ export default class ChatFacade {
         this.selectedFile = null;
         this.selectedAudioBlob = null;
         this.userId = this.getUserId();
+        this.parentOrigin = this.getParentOrigin();
         this.formatter = new MessageFormatter();
         this.audioHandler = new AudioHandler();
 
@@ -38,6 +39,25 @@ export default class ChatFacade {
     getUserId() {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('user');
+    }
+
+    getParentOrigin() {
+        const storageKey = `parentOrigin_${this.userId || 'default'}`;
+        const stored = sessionStorage.getItem(storageKey);
+        if (stored) return stored;
+
+        try {
+            let origin = null;
+            if (window.self !== window.top) {
+                origin = window.location.ancestorOrigins?.[0] || (document.referrer ? new URL(document.referrer).origin : null);
+            }
+            origin = origin || window.location.origin;
+
+            sessionStorage.setItem(storageKey, origin);
+            return origin;
+        } catch {
+            return window.location.origin;
+        }
     }
 
     init() {
@@ -199,7 +219,7 @@ export default class ChatFacade {
             let body;
             const headers = {
                 'X-User-Id': this.userId,
-                'X-Frame-Referer': document.referrer
+                'X-Frame-Referer': this.parentOrigin
             };
 
             if (this.selectedFile || this.selectedAudioBlob) {
@@ -351,7 +371,7 @@ export default class ChatFacade {
             const response = await fetch('/initial-prompt', {
                 headers: {
                     'X-User-Id': this.userId,
-                    'X-Frame-Referer': document.referrer
+                    'X-Frame-Referer': this.parentOrigin
                 }
             });
             const data = await response.json();
