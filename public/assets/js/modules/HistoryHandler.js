@@ -1,7 +1,9 @@
-import MessageFormatter from './MessageFormatter.js';
+import BaseHandler from './BaseHandler.js';
 
-export default class HistoryHandler {
+export default class HistoryHandler extends BaseHandler {
     constructor() {
+        super();
+
         this.historyBtn = document.getElementById('history-btn');
         this.modal = document.getElementById('history-modal');
         this.closeBtn = document.getElementById('close-history-btn');
@@ -12,7 +14,6 @@ export default class HistoryHandler {
         this.pdfBtn = document.getElementById('pdf-btn');
         this.printBtn = document.getElementById('print-btn');
 
-        this.formatter = new MessageFormatter();
         this.init();
     }
 
@@ -126,7 +127,8 @@ export default class HistoryHandler {
         try {
             const response = await fetch('/api/history', {
                 headers: {
-                    'X-User-Id': this.getUserId(),
+                    'X-User-Id': this.userId,
+                    'X-Frame-Referer': this.parentOrigin
                 }
             });
 
@@ -192,7 +194,8 @@ export default class HistoryHandler {
                 const response = await fetch(`/api/history/${sessionId}`, {
                     method: 'DELETE',
                     headers: {
-                        'X-User-Id': this.getUserId(),
+                        'X-User-Id': this.userId,
+                        'X-Frame-Referer': this.parentOrigin
                     }
                 });
 
@@ -236,7 +239,8 @@ export default class HistoryHandler {
         try {
             const response = await fetch(`/api/history/${sessionId}`, {
                 headers: {
-                    'X-User-Id': this.getUserId(),
+                    'X-User-Id': this.userId,
+                    'X-Frame-Referer': this.parentOrigin
                 }
             });
 
@@ -273,7 +277,6 @@ export default class HistoryHandler {
             contentEl.innerHTML = this.formatter.format(text);
 
             if (msg.role === 'model' || msg.role === 'assistant') {
-                // Check for RTL
                 if (/[\u0600-\u06FF]/.test(text)) {
                     contentEl.classList.add('rtl');
                     contentEl.dir = 'rtl';
@@ -285,11 +288,6 @@ export default class HistoryHandler {
             msgEl.appendChild(contentWrapper);
             this.messagesContainer.appendChild(msgEl);
         });
-    }
-
-    getUserId() {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('user');
     }
 
     async exportToPDF() {

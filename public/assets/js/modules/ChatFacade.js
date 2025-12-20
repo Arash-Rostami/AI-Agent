@@ -1,9 +1,10 @@
-import MessageFormatter from './MessageFormatter.js';
+import BaseHandler from './BaseHandler.js';
 import AudioHandler from './AudioHandler.js';
 
-
-export default class ChatFacade {
+export default class ChatFacade extends BaseHandler {
     constructor() {
+        super();
+
         this.header = document.querySelector('.header');
         this.messages = document.getElementById('messages');
         this.messageInput = document.getElementById('message-input');
@@ -19,7 +20,6 @@ export default class ChatFacade {
         this.filePreviewContainer = document.getElementById('file-preview-container');
         this.fileNameSpan = document.getElementById('file-name');
         this.removeFileBtn = document.getElementById('remove-file-btn');
-
         this.micBtn = document.getElementById('mic-btn');
         this.audioPreviewContainer = document.getElementById('audio-preview-container');
         this.audioPreview = document.getElementById('audio-preview');
@@ -28,36 +28,9 @@ export default class ChatFacade {
         this.isTyping = false;
         this.selectedFile = null;
         this.selectedAudioBlob = null;
-        this.userId = this.getUserId();
-        this.parentOrigin = this.getParentOrigin();
-        this.formatter = new MessageFormatter();
         this.audioHandler = new AudioHandler();
 
         this.init();
-    }
-
-    getUserId() {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('user');
-    }
-
-    getParentOrigin() {
-        const storageKey = `parentOrigin_${this.userId || 'default'}`;
-        const stored = sessionStorage.getItem(storageKey);
-        if (stored) return stored;
-
-        try {
-            let origin = null;
-            if (window.self !== window.top) {
-                origin = window.location.ancestorOrigins?.[0] || (document.referrer ? new URL(document.referrer).origin : null);
-            }
-            origin = origin || window.location.origin;
-
-            sessionStorage.setItem(storageKey, origin);
-            return origin;
-        } catch {
-            return window.location.origin;
-        }
     }
 
     init() {
@@ -137,7 +110,6 @@ export default class ChatFacade {
             this.messageInput.disabled = false;
         }
     }
-
 
     toggleWebSearch() {
         this.isWebSearchActive = !this.isWebSearchActive;
