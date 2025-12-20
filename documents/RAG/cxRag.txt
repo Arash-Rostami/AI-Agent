@@ -1,224 +1,197 @@
-The underlying architecture relies on Laravel 10, Filament PHP 3, and MySQL.
-The Commercial Lifecycle
-1. Contract Creation: A Proforma Invoice (PI) is created first. This represents the main contract.
-2. Advance Payment: An advance Payment Request is created, linked to the Proforma Invoice. A Payment is then recorded against this request.
-3. Execution (Orders): Based on the contract, one or many Orders are created. Each order represents a shipment or part.
-4. Logistics: Each Order connects to specific Order Details (financials), Logistics (shipping), and Docs (customs/BL).
-5. Balance Payments: As orders proceed, Payment Requests for balances are created. These are linked to the Order (not the PI).
-6. Finalization: When order_status is closed or accounting_approved, the order is successfully sent and financially verified.
-Currency & Entity Logic
-•	Foreign Currency: Usually associated with Suppliers and main contracts (Proforma/Orders).
-•	Rial Currency: Usually associated with Contractors, domestic payments, and Packaging costs.
-•	These are all currency values in BMS: 'USD', 'EURO', 'Yuan', 'Dirham', 'Ruble', 'Rial'.
-
-•	Proforma Invoice: proforma_number (starts with PI-) or contract_number.
-•	Order: reference_number (starts with O-), invoice_number, or part.
-•	Payment Request: reference_number (starts with PR-).
-•	Payment: reference_number (starts with P-).
-The extra column in many tables is a JSON field containing miscellaneous details.
-A. Commercial Models
-1. ProformaInvoice (Table: proforma_invoices)
-Represents the main contract.
-Columns:
-{
-"grade_id": "Product grade identifier (used with product and category, e.g., HDPE, Polymers, grade HMB5510).",
-"quantity": "Total contract quantity in metric tons (mt).",
-"price": "Unit price in USD per metric ton; total value equals price multiplied by quantity.",
-"details": "Optional agent notes about the contract. Often low importance; mention only if explicitly requested or contextually relevant.",
-"status": "Contract state; only meaningful if cancelled or rejected, indicating an aborted contract. Refrain from mentioning other than mentioned status.",
-"extra": "High-level shipment and order insight. Indicates which shipment parts already have orders created to which destination and which parts still require order records.",
-"proforma_number": "Supplier-provided proforma invoice number.",
-"proforma_date": "Date the proforma invoice and contract were signed.",
-"contract_number": "Internal export contract identifier (CT + date format).",
-"percentage": "Advance payment percentage of total contract value; always linked to a payment request.",
-"reference_number": "System reference identifier for the proforma invoice (PI + year + sequence).",
-"part": "Total number of cargo shipments required to deliver the full quantity.",
-"verified": "Indicates whether the contract data has been formally verified.",
-"verified_by": "User who verified the contract data.",
-"verified_at": "Timestamp of contract verification.",
-"user_id": "User who created the proforma invoice record.",
-"assignee_id": "Agent responsible for managing and following up the contract.",
-"category_id": "Product category classification (used with product and grade).",
-"product_id": "Specific product traded (described with category and grade).",
-"buyer_id": "Buyer company receiving the product.",
-"supplier_id": "Supplier company providing the product."
-}
-Relationships:
-•	activeOrders(): HasMany Order (where deleted_at is null). Shows orders attached to this contract.
-•	orders(): HasMany Order (includes soft deleted).
-•	associatedPaymentRequests(): BelongsToMany PaymentRequest. Shows advance payments.
-•	assignee(): BelongsTo User. Person assigned to follow up.
-•	buyer(): BelongsTo Buyer.
-•	supplier(): BelongsTo Supplier.
-•	product(): BelongsTo Product.
-•	category(): BelongsTo Category.
-•	grade(): BelongsTo Grade.
-•	attachments(): HasMany Attachment: if asked just mention name of attachment for that proforma invoice.
-•	names(): HasMany Name (attachment titles).
-•	user(): BelongsTo User (Creator).
-2. Order (Table: orders)
-Represents a specific shipment or part of the contract.
-Columns:
-{
-"reference_number": "System reference identifier for the order (O + year + sequence).",
-"invoice_number": "Must exactly match the contract number of the attached proforma invoice; mismatch indicates a wrongly registered order.",
-"part": "Shipment part number of the contract. Must match the corresponding part defined in the proforma invoice extra field.",
-"proforma_number": "Supplier-provided proforma invoice number; identical to the attached proforma invoice.",
-"proforma_date": "Date the proforma invoice and contract were signed; inherited from the attached proforma invoice.",
-"order_status": "Operational state of the order, ranging from processing to accounting approval, rejection, closure, or cancellation.",
-"extra": "High-level operational notes about the order lifecycle, not shipment or financial details.",
-"grade_id": "Product grade identifier, identical to the attached proforma invoice (used with product and category).",
-"proforma_invoice_id": "Foreign key reference to the parent proforma invoice defining the contract.",
-"user_id": "User who created the order record.",
-"purchase_status_id": "Physical shipment progress state such as Pending, In Transit, Customs, Delivered, Released, or Shipped.",
-"category_id": "Product category, identical to the attached proforma invoice.",
-"product_id": "Specific product traded, identical to the attached proforma invoice.",
-"order_detail_id": "Links to financial and quantity calculations specific to this shipment order.",
-"party_id": "Defines buyer, supplier, and packaging entities specific to this order.",
-"logistic_id": "Links to shipment and transport data for this order.",
-"doc_id": "Links to official shipping and customs documentation for this order."
-}
-Relationships:
-•	proformaInvoice(): BelongsTo ProformaInvoice.
-•	orderDetail(): BelongsTo OrderDetail (Financial specifics).
-•	logistic(): BelongsTo Logistic (Shipping specifics).
-•	doc(): BelongsTo Doc (Document specifics).
-•	party(): BelongsTo Party (Buyer/Supplier/Packaging for this specific order).
-•	purchaseStatus(): BelongsTo PurchaseStatus (e.g., Pending, Shipped).
-•	paymentRequests(): HasMany PaymentRequest (Balance/Final payments).
-•	attachments(): HasMany Attachment: if asked just mention name of attachment for that order.
-•	product(): BelongsTo Product.
-•	grade(): BelongsTo Grade.
-•	category(): BelongsTo Category.
-
-2a. OrderDetail (Table: order_details)
-Attached to an Order. Contains granular financial and quantity data.
-Columns:
-{
-"buying_quantity": "Original contract quantity inherited from the proforma invoice.",
-"provisional_quantity": "Initially recorded shipment quantity for this order.",
-"final_quantity": "Final delivered quantity; must match provisional quantity.",
-"buying_price": "Unit price per metric ton inherited from the proforma invoice.",
-"provisional_price": "Temporary shipment price used before final settlement.",
-"final_price": "Final settled price at buyer delivery; overrides provisional price.",
-"currency": "Transaction currency, usually USD.",
-"initial_payment": "This order’s share of the advance payment made at proforma level.",
-"provisional_payment": "Interim payment calculated before final pricing.",
-"remaining": "Outstanding balance remaining for this order.",
-"payment": "Total payment made for this order so far.",
-"initial_total": "Total advance payment made for the full proforma invoice (reference only).",
-"provisional_total": "Amount required to complete balance payment before final pricing.",
-"final_total": "Adjustment based on final price; positive means extra payable, negative means refund.",
-"total": "Final payable amount after combining provisional and final adjustments.",
-"extra": "Advance payment inheritance logic. Indicates whether this order absorbs remaining advance from this proforma or from all related proformas."
-}
-Relationships:
-•	order(): HasOne Order.
-
-2b. Logistic (Table: logistics)
-Attached to an Order. Contains shipping info.
-Columns:
-{
-"booking_number": "Shipping line booking reference for this order.",
-"loading_deadline (date)," "net_weight": "Net shipped weight; must equal final quantity if available, otherwise provisional quantity.", "number_of_containers", "full_container_load_type (FCL)", "ocean_freight", "terminal_handling_charges", "free_time_POD", "shipping_line_id": "Shipping carrier handling the transport.", "gross_weight,
-"port_of_delivery_id": "Destination port for this shipment.",
-"delivery_term_id": "Delivery terms defining responsibility and risk (e.g., CIF, FOB).",
-"extra": "Supplementary logistics notes, only relevant when shipment issues arise."
-}
-Relationships:
-•	order(): HasOne Order.
-•	deliveryTerm(): BelongsTo DeliveryTerm.
-•	packaging(): BelongsTo Packaging.
-•	portOfDelivery(): BelongsTo PortOfDelivery.
-•	shippingLine(): BelongsTo ShippingLine.
-2c. Doc (Table: docs)
-Attached to an Order. Contains official paperwork details.
-Columns:
-{
-voyage_number.
-declaration_date (date).
-extra (json),
-"declaration_number": "Customs declaration reference for this shipment.",
-"BL_number": "Bill of Lading number identifying the shipment.",
-"BL_date": "Bill of Lading issuance date."
-}
-Relationships:
-•	order(): HasOne Order.
-
-2d. Party (Table: parties)
-Attached to an Order. Groups the entities involved.
-Columns:
-{
-"buyer_id": "Buyer entity for this specific shipment order.",
-"supplier_id": "Supplier entity fulfilling this shipment order.",
-"packaging_id": "Packaging type used for this shipment order."
-}
-Relationships:
-•	buyer(): BelongsTo Buyer.
-•	supplier(): BelongsTo Supplier.
-•	packaging(): BelongsTo Packaging.
-
-2e. PurchaseStatus (Table: purchase_statuses)
-Tracks the shipping status of an Order.
-Columns: name, description, user_id.
-Logic:
-{
-"name": "Human-readable shipment progress state used in sorted order for tracking order movement.",
-"description": "Explanation of the shipment state such as pending, in transit, customs clearance, delivery, shipment, or release."
-}
-B. Financial Models
-3. PaymentRequest (Table: payment_requests)
-A request for funds (Advance or Balance).
-Columns:
-•	id, reference_number, status, currency, deadline (datetime).
-•	reason_for_payment (links to Allocation), type_of_payment.
-•	cost_center (links to Department), purpose, description.
-•	requested_amount, total_amount.
-Bank Details:
-•	beneficiary_name, recipient_name, beneficiary_address, bank_name, bank_address, account_number, swift_code, IBAN, IFSC, MICR.
-Other Columns:
-•	proforma_invoice_number, part, case_number, sequential_id, extra (json).
-•	user_id, order_id, supplier_id, contractor_id, payee_id, department_id.
-Relationships:
-•	activeApprovedProformaInvoices(): BelongsToMany ProformaInvoice. (Advance payments, approved only).
-•	associatedProformaInvoices(): BelongsToMany ProformaInvoice. (All linked PIs).
-•	order(): BelongsTo Order. (If set, this is a Balance/Final payment).
-•	payments(): BelongsToMany Payment. (The actual money transfers).
-•	beneficiary(): BelongsTo Beneficiary (via payee_id).
-•	supplier(): BelongsTo Supplier (Non-Rial payments).
-•	contractor(): BelongsTo Contractor (Rial payments).
-•	department(): BelongsTo Department.
-•	costCenter(): BelongsTo Department.
-•	reason(): BelongsTo Allocation.
-•	attachments(): HasMany Attachment.
-4. Payment (Table: payments)
-The actual financial transaction.
-Columns:
-•	id, reference_number, transaction_id.
-•	status, payer, date (datetime), notes.
-•	amount, currency, equivalent_amount, exchange_rate.
-•	bank_charges, bank_charges_currency.
-•	payment_request (legacy/direct link), bypass_cash_ledger.
-•	extra (json), user_id.
-Relationships:
-•	paymentRequests(): BelongsToMany PaymentRequest.
-•	approvedPaymentRequests(): BelongsToMany PaymentRequest (Filtered by status: processing, approved, allowed).
-•	reason(): HasOneThrough Allocation (via PaymentRequest).
-•	attachments(): HasMany Attachment (Receipts).
-5. Allocation (Table: allocations)
-Represents the reason/budget allocation.
-Columns: reason, department (department code), extra.
-C. Master Data (Dictionaries)
-The following tables all share the standard columns: name, description, user_id.
-•	Suppliers (suppliers)
-•	Buyers (buyers)
-•	ShippingLines (shipping_lines)
-•	DeliveryTerms (delivery_terms)
-•	PortsOfDelivery (ports_of_deliveries)
-•	Packagings (packagings)
-•	Contractors (contractors)
-Other Master Data:
-•	Products (products): name, description, category_id. Rel: category(), grades().
-•	Categories (categories): name, description. Rel: products().
-•	Departments (departments): name, code, description.
-•	Attachments (attachments): name, file_path. Foreign keys: order_id, payment_id, payment_request_id, proforma_invoice_id.
+# BMS Data Dictionary & Field Definitions
+## A. Commercial Data Definitions
+### 1. Proforma Invoice (Contract)
+**Table:** `proforma_invoices`
+**Definition:** The primary contract record between the Buyer and Supplier.
+**Field Definitions:**
+* `grade_id`: Product grade identifier (used with product and category, e.g., HDPE, Polymers, grade HMB5510).
+* `quantity`: Total contract quantity in metric tons (mt).
+* `price`: Unit price in USD per metric ton; total value equals price multiplied by quantity.
+* `details`: Optional agent notes about the contract. Often low importance; mention only if explicitly requested or contextually relevant.
+* `status`: Contract state; only meaningful if cancelled or rejected, indicating an aborted contract. Refrain from mentioning other than mentioned status.
+* `extra`: High-level shipment and order insight. Indicates which shipment parts already have orders created to which destination and which parts still require order records.
+* `proforma_number`: Supplier-provided proforma invoice number.
+* `proforma_date`: Date the proforma invoice and contract were signed.
+* `contract_number`: Internal export contract identifier (CT + date format).
+* `percentage`: Advance payment percentage of total contract value; always linked to a payment request.
+* `reference_number`: System reference identifier for the proforma invoice (PI + year + sequence).
+* `part`: Total number of cargo shipments required to deliver the full quantity.
+* `verified`: Indicates whether the contract data has been formally verified.
+* `verified_by`: User who verified the contract data.
+* `verified_at`: Timestamp of contract verification.
+* `user_id`: User who created the proforma invoice record.
+* `assignee_id`: Agent responsible for managing and following up the contract.
+* `category_id`: Product category classification (used with product and grade).
+* `product_id`: Specific product traded (described with category and grade).
+* `buyer_id`: Buyer company receiving the product.
+* `supplier_id`: Supplier company providing the product.
+### 2. Order (Shipment/Part)
+**Table:** `orders`
+**Definition:** Represents a specific physical shipment or "part" of the main Proforma.
+**Field Definitions:**
+* `reference_number`: System reference identifier for the order (O + year + sequence).
+* `invoice_number`: Must exactly match the contract number of the attached proforma invoice; mismatch indicates a wrongly registered order.
+* `part`: Shipment part number of the contract. Must match the corresponding part defined in the proforma invoice extra field.
+* `proforma_number`: Supplier-provided proforma invoice number; identical to the attached proforma invoice.
+* `proforma_date`: Date the proforma invoice and contract were signed; inherited from the attached proforma invoice.
+* `order_status`: Operational state of the order, ranging from processing to accounting approval, rejection, closure, or cancellation.
+* `extra`: High-level operational notes about the order lifecycle, not shipment or financial details.
+* `grade_id`: Product grade identifier, identical to the attached proforma invoice (used with product and category).
+* `proforma_invoice_id`: Foreign key reference to the parent proforma invoice defining the contract.
+* `user_id`: User who created the order record.
+* `purchase_status_id`: Physical shipment progress state such as Pending, In Transit, Customs, Delivered, Released, or Shipped.
+* `category_id`: Product category, identical to the attached proforma invoice.
+* `product_id`: Specific product traded, identical to the attached proforma invoice.
+* `order_detail_id`: Links to financial and quantity calculations specific to this shipment order.
+* `party_id`: Defines buyer, supplier, and packaging entities specific to this order.
+* `logistic_id`: Links to shipment and transport data for this order.
+* `doc_id`: Links to official shipping and customs documentation for this order.
+### 2a. Order Details (Financials)
+**Table:** `order_details`
+**Definition:** Granular financial and quantity data specific to a single Order.
+**Field Definitions:**
+* `buying_quantity`: Original contract quantity inherited from the proforma invoice.
+* `provisional_quantity`: Initially recorded shipment quantity for this order.
+* `final_quantity`: Final delivered quantity; must match provisional quantity.
+* `buying_price`: Unit price per metric ton inherited from the proforma invoice.
+* `provisional_price`: Temporary shipment price used before final settlement.
+* `final_price`: Final settled price at buyer delivery; overrides provisional price.
+* `currency`: Transaction currency, usually USD.
+* `initial_payment`: This order’s share of the advance payment made at proforma level.
+* `provisional_payment`: Interim payment calculated before final pricing.
+* `remaining`: Outstanding balance remaining for this order.
+* `payment`: Total payment made for this order so far.
+* `initial_total`: Total advance payment made for the full proforma invoice (reference only).
+* `provisional_total`: Amount required to complete balance payment before final pricing.
+* `final_total`: Adjustment based on final price; positive means extra payable, negative means refund.
+* `total`: Final payable amount after combining provisional and final adjustments.
+* `extra`: Advance payment inheritance logic. Indicates whether this order absorbs remaining advance from this proforma or from all related proformas.
+### 2b. Logistics (Shipping)
+**Table:** `logistics`
+**Definition:** Transport and container details.
+**Field Definitions:**
+* `booking_number`: Shipping line booking reference for this order.
+* `loading_deadline`: Date deadline for loading.
+* `net_weight`: Net shipped weight; must equal final quantity if available, otherwise provisional quantity.
+* `number_of_containers`: Count of containers.
+* `full_container_load_type`: FCL type (e.g., 20ft, 40ft).
+* `ocean_freight`: Cost of sea transport.
+* `terminal_handling_charges`: THC costs.
+* `free_time_POD`: Allowed free days at the Port of Delivery.
+* `shipping_line_id`: Shipping carrier handling the transport.
+* `gross_weight`: Total weight including packaging.
+* `port_of_delivery_id`: Destination port for this shipment.
+* `delivery_term_id`: Delivery terms defining responsibility and risk (e.g., CIF, FOB).
+* `extra`: Supplementary logistics notes, only relevant when shipment issues arise.
+### 2c. Documentation (Customs)
+**Table:** `docs`
+**Definition:** Official paperwork references.
+**Field Definitions:**
+* `voyage_number`: Vessel voyage identifier.
+* `declaration_date`: Date of customs declaration.
+* `extra`: JSON containing misc info.
+* `declaration_number`: Customs declaration reference for this shipment.
+* `BL_number`: Bill of Lading number identifying the shipment.
+* `BL_date`: Bill of Lading issuance date.
+### 2d. Party (Entities)
+**Table:** `parties`
+**Definition:** Groups the entities involved in a specific order.
+**Field Definitions:**
+* `buyer_id`: Buyer entity for this specific shipment order.
+* `supplier_id`: Supplier entity fulfilling this shipment order.
+* `packaging_id`: Packaging type used for this shipment order.
+### 2e. Purchase Status
+**Table:** `purchase_statuses`
+**Definition:** Tracks the shipping status of an Order.
+**Field Definitions:**
+* `name`: Human-readable shipment progress state used in sorted order for tracking order movement.
+* `description`: Explanation of the shipment state such as pending, in transit, customs clearance, delivery, shipment, or release.
+## B. Financial Data Definitions
+### 3. Payment Request (PR)
+**Table:** `payment_requests`
+**Definition:** A formal request for money (either Advance or Balance).
+**Field Definitions:**
+* `id`: Database Primary Key.
+* `reference_number`: Unique ID (starts with PR-).
+* `status`: Current state of the request (e.g., approved, pending).
+* `currency`: Currency of the request (USD, EURO, RIAL).
+* `deadline`: Due date for payment.
+* `reason_for_payment`: Budget allocation code (links to Allocation).
+* `type_of_payment`: Classification of payment.
+* `cost_center`: Department being charged.
+* `purpose`: Short code for purpose.
+* `description`: Text description of the payment purpose.
+* `requested_amount`: The amount initially asked for.
+* `total_amount`: The final approved amount.
+* `beneficiary_name`: Who receives the money.
+* `recipient_name`: Name of the actual recipient if different from beneficiary.
+* `beneficiary_address`: Physical address of the beneficiary.
+* `bank_name`: Name of the bank.
+* `bank_address`: Physical address of the beneficiary bank.
+* `account_number`: Bank account number.
+* `swift_code`: International bank code.
+* `IBAN`: International Bank Account Number.
+* `IFSC`: Indian Financial System Code (if applicable).
+* `MICR`: Magnetic Ink Character Recognition code.
+* `proforma_invoice_number`: Associated PI number.
+* `part`: Associated Part number.
+* `case_number`: Associated Case number.
+* `sequential_id`: Internal sequence ID.
+* `extra`: JSON field containing miscellaneous details.
+* `user_id`: Creator of the request.
+* `order_id`: Associated Order ID (for balance payments).
+* `supplier_id`: Associated Supplier ID.
+* `contractor_id`: Associated Contractor ID.
+* `payee_id`: Associated Payee ID.
+* `department_id`: Associated Department ID.
+### 4. Payment (Transaction)
+**Table:** `payments`
+**Definition:** The actual financial transaction record.
+**Field Definitions:**
+* `id`: Database Primary Key.
+* `reference_number`: Unique ID (starts with P-).
+* `transaction_id`: Bank transaction reference.
+* `status`: Status of the payment (e.g., Success, Failed).
+* `payer`: Entity who paid.
+* `date`: Date of transaction.
+* `notes`: Additional notes.
+* `amount`: Amount paid.
+* `currency`: Currency of payment.
+* `equivalent_amount`: Converted amount if currency differs.
+* `exchange_rate`: Rate used for conversion.
+* `bank_charges`: Fees charged by the bank.
+* `bank_charges_currency`: Currency of bank charges.
+* `payment_request`: Link to the parent request.
+* `bypass_cash_ledger`: Flag for accounting bypass.
+* `extra`: JSON field containing miscellaneous details.
+* `user_id`: User who recorded the payment.
+### 5. Allocation (Budget)
+**Table:** `allocations`
+**Definition:** Represents the reason/budget allocation.
+**Field Definitions:**
+* `reason`: The reason code or name.
+* `department`: The department code.
+* `extra`: Miscellaneous details.
+## C. Master Data (Reference Lists)
+**The following entities are used to populate IDs in the main tables:**
+* `Suppliers` (Table: suppliers): External vendors.
+* `Buyers` (Table: buyers): Customers.
+* `ShippingLines` (Table: shipping_lines): Carriers.
+* `DeliveryTerms` (Table: delivery_terms): Incoterms.
+* `PortsOfDelivery` (Table: ports_of_deliveries): Destinations.
+* `Packagings` (Table: packagings): Packaging types.
+* `Contractors` (Table: contractors): Service providers.
+* `Products` (Table: products):
+    * `name`: Product Name.
+    * `description`: Product Description.
+    * `category_id`: Link to Category.
+* `Categories` (Table: categories):
+    * `name`: Category Name.
+    * `description`: Category Description.
+* `Departments` (Table: departments):
+    * `name`: Department Name.
+    * `code`: Department Code.
+    * `description`: Description.
+* `Attachments` (Table: attachments):
+    * `name`: File Name.
+    * `file_path`: Storage path.

@@ -323,6 +323,141 @@ body {
     color: #ffffff;
 }
 
+.message-content ul,
+.message-content ol {
+    margin: 12px 0;
+    padding-left: 28px;
+    line-height: 1.8;
+}
+
+.message-content li {
+    margin: 8px 0;
+    padding-left: 8px;
+}
+
+.message-content ul li {
+    list-style-type: disc;
+}
+
+.message-content ol li {
+    list-style-type: decimal;
+}
+
+.message-content p + ul,
+.message-content p + ol {
+    margin-top: 12px;
+}
+
+.message-content ul + p,
+.message-content ol + p {
+    margin-top: 12px;
+}
+
+.message-content li strong {
+    font-weight: 600;
+}
+
+/* Headings inside messages */
+.message-content h1,
+.message-content h2,
+.message-content h3 {
+    margin: 1.25rem 0 0.75rem 0;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-color);
+}
+
+.message-content h1 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.message-content h2 {
+    font-size: 1.25rem;
+}
+
+.message-content h3 {
+    font-size: 1.1rem;
+}
+
+/* Paragraphs */
+.message-content p {
+    margin: 0.75rem 0;
+}
+
+.message-content p:first-child {
+    margin-top: 0;
+}
+
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Links */
+.message-content a {
+    color: var(--primary-color);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.message-content a:hover {
+    border-bottom-color: var(--primary-color);
+}
+
+/* Tables */
+.message-content .table-wrapper {
+    overflow-x: auto;
+    margin: 1rem 0;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.message-content .markdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.message-content .markdown-table th,
+.message-content .markdown-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.message-content .markdown-table th {
+    background: rgba(0, 0, 0, 0.03);
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .message-content .markdown-table th {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.message-content .markdown-table tr:last-child td {
+    border-bottom: none;
+}
+
+.message-content .markdown-table tr:hover {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .message-content .markdown-table tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.message-content strong {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.message-content em {
+    font-style: italic;
+}
+
 .welcome-message {
     margin: auto;
     text-align: center;
