@@ -10,8 +10,13 @@ export default class ChatFacade extends BaseHandler {
         this.messageInput = document.getElementById('message-input');
         this.sendButton = document.getElementById('send-button');
         this.clearButton = document.getElementById('clear-button');
-        this.newChatBtn = document.getElementById('new-chat-btn');
-        this.clearChatBtn = document.getElementById('clear-chat-btn');
+
+        // Kebab Menu Elements
+        this.kebabContainer = document.querySelector('.kebab-menu-container');
+        this.kebabTrigger = document.getElementById('kebab-trigger');
+        this.newChatAction = document.getElementById('new-chat-action');
+        this.clearChatAction = document.getElementById('clear-chat-action');
+
         this.chatForm = document.getElementById('chat-form');
         this.statusText = document.getElementById('status-text');
         this.serviceSelect = document.getElementById('service-select');
@@ -43,8 +48,31 @@ export default class ChatFacade extends BaseHandler {
 
     setupEventListeners() {
         this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
-        if (this.newChatBtn) this.newChatBtn.addEventListener('click', () => this.handleNewChat());
-        if (this.clearChatBtn) this.clearChatBtn.addEventListener('click', () => this.handleClearChat());
+
+        // Kebab Menu Listeners
+        if (this.newChatAction) this.newChatAction.addEventListener('click', () => {
+            this.handleNewChat();
+            this.closeKebabMenu();
+        });
+        if (this.clearChatAction) this.clearChatAction.addEventListener('click', () => {
+            this.handleClearChat();
+            this.closeKebabMenu();
+        });
+
+        if (this.kebabTrigger) {
+            this.kebabTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.kebabContainer.classList.toggle('active');
+            });
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (this.kebabContainer && !this.kebabContainer.contains(e.target)) {
+                this.closeKebabMenu();
+            }
+        });
+
         this.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
         this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
@@ -386,6 +414,12 @@ export default class ChatFacade extends BaseHandler {
 
         if (isBmsMode || isRestrictedMode) {
             if (this.logoutBtn) this.logoutBtn.style.display = 'none';
+        }
+    }
+
+    closeKebabMenu() {
+        if (this.kebabContainer) {
+            this.kebabContainer.classList.remove('active');
         }
     }
 }

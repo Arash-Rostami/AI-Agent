@@ -127,15 +127,20 @@
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
-                <div class="action-buttons">
-                    <button type="button" class="action-btn new-chat-btn" id="new-chat-btn" title="Start New Chat">
-                        <i class="fas fa-plus"></i>
-                        <span>New Chat</span>
+                <div class="kebab-menu-container">
+                    <button type="button" class="kebab-trigger" id="kebab-trigger" title="Menu">
+                        <i class="fas fa-ellipsis-v"></i>
                     </button>
-                    <button type="button" class="action-btn clear-chat-btn" id="clear-chat-btn" title="Delete All Chat History">
-                        <i class="fas fa-trash"></i>
-                        <span>Clear History</span>
-                    </button>
+                    <div class="kebab-dropdown">
+                        <button type="button" class="kebab-item" id="new-chat-action" title="Start New Chat">
+                            <i class="fas fa-plus"></i>
+                            <span>New Chat</span>
+                        </button>
+                        <button type="button" class="kebab-item" id="clear-chat-action" title="Delete All Chat History">
+                            <i class="fas fa-trash"></i>
+                            <span>Clear History</span>
+                        </button>
+                    </div>
                 </div>
             </form>
 
