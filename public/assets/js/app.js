@@ -1,10 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const loginForm = document.getElementById('login-form');
-    const chatPage = document.getElementById('messages');
+    const [loginPage, chatPage] = ['login-form', 'messages'].map(id => document.getElementById(id));
 
     try {
-        //LOGIN PAGE
-        if (loginForm) {
+        // <=> LOGIN PAGE <=> //
+        if (loginPage) {
             const [{default: LoginHandler}, {default: ThemeToggle}] =
                 await Promise.all([import('./modules/LoginHandler.js'), import('./modules/ThemeToggler.js')]);
 
@@ -13,9 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        //CHAT PAGE
+        // <=> CHAT PAGE <=> //
         if (chatPage) {
-            // Fast-loading
+            // Instant-loading
             const [{default: ChatFacade}, {default: ThemeToggle}, {default: FontSizeHandler}] =
                 await Promise.all([import('./modules/ChatFacade.js'), import('./modules/ThemeToggler.js'), import('./modules/FontSizeHandler.js')]);
 
@@ -24,9 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             new ThemeToggle('theme-toggle');
 
             // Lazy-loading
-            const idle = window.requestIdleCallback || function (fn) {
-                return setTimeout(fn, 500);
-            };
+            const idle = window.requestIdleCallback || (fn => setTimeout(fn, 500));
+
             idle(async () => {
                 try {
                     const [{default: HistoryHandler}, {default: LogoutHandler}, {default: SyncHandler}] =

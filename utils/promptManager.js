@@ -21,7 +21,7 @@ const determineAppContext = (req) => {
         return 'BMS';
     }
     if (req.isRestrictedMode) {
-        return 'GENERIC'; // Restricted but not BMS
+        return 'GENERIC'; // Other Apps (iframes) :not BMS
     }
     return 'MAIN';
 };
