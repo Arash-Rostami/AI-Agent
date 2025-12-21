@@ -57,7 +57,7 @@ Interact naturally with voice.
     *   **Logout:** Secure session termination via the top-right menu.
 *   **Visual Attachments:** Drag-and-drop support for images and PDFs with client-side preview.
 *   **Admin Features:**
-    *   **Sync Knowledge Base:** Manual vector DB synchronization button (restricted to admins `arash`, `siamak`, `ata`).
+    *   **Sync Knowledge Base:** Manual vector DB synchronization button (restricted to specific admin users configured in the backend).
 
 ---
 
