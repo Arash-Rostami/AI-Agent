@@ -25,6 +25,8 @@ router.post('/ask-arvan', upload.single('file'), ChatController.handleAPIEndpoin
 
 router.post('/clear-chat', InteractionController.clearChat);
 
+router.post('/new-chat', InteractionController.newChat);
+
 
 //api endpoints
 router.get('/api/history', InteractionController.getInteraction);

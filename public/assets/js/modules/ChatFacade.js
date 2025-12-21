@@ -9,7 +9,8 @@ export default class ChatFacade extends BaseHandler {
         this.messages = document.getElementById('messages');
         this.messageInput = document.getElementById('message-input');
         this.sendButton = document.getElementById('send-button');
-        this.clearButton = document.getElementById('clear-button');
+        this.newChatBtn = document.getElementById('new-chat-btn');
+        this.clearChatBtn = document.getElementById('clear-chat-btn');
         this.chatForm = document.getElementById('chat-form');
         this.statusText = document.getElementById('status-text');
         this.serviceSelect = document.getElementById('service-select');
@@ -41,7 +42,8 @@ export default class ChatFacade extends BaseHandler {
 
     setupEventListeners() {
         this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
-        this.clearButton.addEventListener('click', () => this.clearChat());
+        if (this.newChatBtn) this.newChatBtn.addEventListener('click', () => this.handleNewChat());
+        if (this.clearChatBtn) this.clearChatBtn.addEventListener('click', () => this.handleClearChat());
         this.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
         this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
@@ -309,16 +311,33 @@ export default class ChatFacade extends BaseHandler {
         }
     }
 
-    async clearChat() {
+    async handleNewChat() {
+        try {
+            await fetch('/new-chat', {
+                method: 'POST',
+                headers: {'X-User-Id': this.userId}
+            });
+            this.resetUI();
+            void this.loadInitialGreeting();
+        } catch (error) {
+            console.error('New chat error:', error);
+        }
+    }
+
+    async handleClearChat() {
         try {
             await fetch('/clear-chat', {
                 method: 'POST',
                 headers: {'X-User-Id': this.userId}
             });
+            this.resetUI();
+            void this.loadInitialGreeting();
         } catch (error) {
             console.error('Clear chat error:', error);
         }
+    }
 
+    resetUI() {
         this.messages.innerHTML = `
             <div class="welcome-message">
                 <h2>Welcome to AI Assistant <span class="spin-icon"> ֎ </span></h2>
