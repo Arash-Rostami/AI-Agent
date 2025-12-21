@@ -767,9 +767,13 @@ body {
     }
 }
 
-.clear-button {
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
     height: 56px;
-    padding: 0 1.5rem;
     border-radius: 28px;
     background: var(--input-bg);
     border: 1px solid var(--border-color);
@@ -780,16 +784,53 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    transition: var(--transition);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 0 1rem;
+    width: 56px;
+}
+
+.action-btn i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.action-btn span {
+    max-width: 0;
+    opacity: 0;
+    margin-left: 0;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     white-space: nowrap;
 }
 
-.clear-button:hover {
+.action-btn:hover {
+    width: auto;
+    padding: 0 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.action-btn:hover i {
+    transform: scale(1.1);
+}
+
+.action-btn:hover span {
+    max-width: 200px;
+    opacity: 1;
+    margin-left: 0.5rem;
+}
+
+.new-chat-btn:hover {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+}
+
+.clear-chat-btn:hover {
     background: var(--error-color);
     color: #ffffff;
     border-color: var(--error-color);
-    box-shadow: var(--shadow);
 }
 
 .service-selector {
@@ -1116,7 +1157,7 @@ pre {
         align-items: stretch;
     }
 
-    .clear-button {
+    .action-btn {
         width: 56px;
         height: 56px;
         padding: 0;
@@ -1124,15 +1165,21 @@ pre {
         align-items: center;
         flex-shrink: 0;
         border-radius: 50%;
-        font-size: 0;
     }
 
-    .clear-button i {
+    .action-btn:hover {
+        width: 56px;
+        padding: 0;
+    }
+
+    .action-btn span {
+        display: none;
+    }
+
+    .action-btn i {
         font-size: 1.25rem;
         margin: 0;
         line-height: 1;
-        position: relative;
-        left: 4px;
     }
 
     .service-selector {

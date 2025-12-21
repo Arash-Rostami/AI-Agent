@@ -1,5 +1,7 @@
 import InteractionLog from '../models/InteractionLog.js';
 import {clearConversationHistory} from '../middleware/keySession.js';
+import {ConversationManager} from '../utils/conversationManager.js';
+
 
 export const getInteraction = async (req, res) => {
     try {
@@ -77,4 +79,17 @@ export const deleteInteraction = async (req, res) => {
 export const clearChat = (req, res) => {
     clearConversationHistory(req.sessionId);
     res.json({success: true});
+};
+
+export const newChat = (req, res) => {
+    const newSessionId = ConversationManager.getOrCreateSessionId(req.userId, req.userIp);
+    ConversationManager.mapUserToSession(req.userId, newSessionId);
+
+    res.cookie('session_id', newSessionId, {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'strict'
+    });
+
+    res.json({sessionId: newSessionId});
 };
