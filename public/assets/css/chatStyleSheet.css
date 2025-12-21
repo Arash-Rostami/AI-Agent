@@ -1250,3 +1250,111 @@ pre {
     margin-top: 1rem;
     opacity: 1;
 }
+
+.sidebar-toggle {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 56px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    transition: all 0.4s cubic-bezier(0.2, 0, 0, 1);
+    box-shadow: var(--shadow-lg);
+    color: var(--text-secondary);
+    backdrop-filter: blur(10px);
+}
+
+.sidebar-toggle .fa-history {
+    display: block;
+    font-size: 1.3rem;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.sidebar-toggle .fa-chevron-left {
+    position: absolute;
+    display: block;
+    font-size: 1rem;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.sidebar-toggle.active .fa-history {
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+.sidebar-toggle.active .fa-chevron-left {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.sidebar-toggle:hover {
+    background: var(--primary-color);
+    color: var(--bg-color);
+    border-color: var(--primary-color);
+    width: 48px;
+    box-shadow: 0 8px 16px rgba(11, 87, 208, 0.3);
+}
+
+[data-theme="dark"] .sidebar-toggle:hover {
+    color: #000000;
+    box-shadow: 0 8px 16px rgba(168, 199, 250, 0.3);
+}
+
+.sidebar-toggle.active {
+    left: calc(min(90%, 420px) - 1px);
+    background: var(--surface-color);
+    color: var(--text-secondary);
+    border-right: none;
+    border-left: 1px solid var(--border-color);
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.sidebar-toggle.active:hover {
+    background: var(--error-color);
+    color: #ffffff;
+    border-color: var(--error-color);
+    box-shadow: 0 8px 16px rgba(179, 38, 30, 0.3);
+}
+
+[data-theme="dark"] .sidebar-toggle.active:hover {
+    color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        top: 50%;
+        width: 36px;
+        height: 48px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .sidebar-toggle:hover {
+        width: 42px;
+    }
+
+    .sidebar-toggle.active {
+        left: calc(min(90%, 420px) - 1px);
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar-toggle {
+        width: 32px;
+        height: 44px;
+    }
+
+    .sidebar-toggle:hover {
+        width: 38px;
+    }
+}

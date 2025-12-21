@@ -5,6 +5,7 @@ export default class HistoryHandler extends BaseHandler {
         super();
 
         this.historyBtn = document.getElementById('history-btn');
+        this.sidebarToggle = document.getElementById('sidebar-toggle');
         this.modal = document.getElementById('history-modal');
         this.closeBtn = document.getElementById('close-history-btn');
         this.listContainer = document.getElementById('history-list');
@@ -23,6 +24,10 @@ export default class HistoryHandler extends BaseHandler {
         this.historyBtn.addEventListener('click', () => this.openHistory());
         this.closeBtn.addEventListener('click', () => this.closeHistory());
         this.backBtn.addEventListener('click', () => this.showList());
+
+        if (this.sidebarToggle) {
+            this.sidebarToggle.addEventListener('click', () => this.modal.classList.contains('hidden') ? this.openHistory() : this.closeHistory());
+        }
 
         if (this.pdfBtn) {
             this.pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i>';
@@ -95,12 +100,14 @@ export default class HistoryHandler extends BaseHandler {
     async openHistory() {
         this.modal.classList.add('active');
         this.modal.classList.remove('hidden');
+        if (this.sidebarToggle) this.sidebarToggle.classList.add('active');
         this.showList();
         await this.loadHistoryList();
     }
 
     closeHistory() {
         this.modal.classList.remove('active');
+        if (this.sidebarToggle) this.sidebarToggle.classList.remove('active');
         setTimeout(() => {
             this.modal.classList.add('hidden');
             this.detailsContainer.classList.remove('active');
