@@ -1405,3 +1405,121 @@ pre {
         width: 38px;
     }
 }
+/* Kebab Menu Styles */
+.kebab-menu-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.kebab-trigger {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.kebab-trigger:hover,
+.kebab-menu-container.active .kebab-trigger {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--primary-color);
+    box-shadow: var(--shadow);
+}
+
+[data-theme="dark"] .kebab-trigger:hover,
+[data-theme="dark"] .kebab-menu-container.active .kebab-trigger {
+    background: var(--surface-color);
+}
+
+.kebab-dropdown {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 12px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 8px;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    z-index: 1000;
+}
+
+/* Show menu on hover (desktop) or active class (mobile/click) */
+.kebab-menu-container:hover .kebab-dropdown,
+.kebab-menu-container.active .kebab-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.kebab-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: var(--transition);
+    text-align: left;
+    white-space: nowrap;
+    width: 100%;
+    font-family: inherit;
+}
+
+.kebab-item i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.kebab-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .kebab-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.kebab-item:hover i {
+    color: var(--primary-color);
+}
+
+/* Specific item hover colors if desired */
+#clear-chat-action:hover i {
+    color: var(--error-color);
+}
+
+#clear-chat-action:hover {
+    background: rgba(179, 38, 30, 0.08);
+    color: var(--error-color);
+}
+
+/* Ensure container handles responsive layouts if needed */
+@media (max-width: 768px) {
+    .kebab-dropdown {
+        min-width: 180px;
+    }
+}
