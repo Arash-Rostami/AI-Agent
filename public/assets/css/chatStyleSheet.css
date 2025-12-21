@@ -1250,3 +1250,64 @@ pre {
     margin-top: 1rem;
     opacity: 1;
 }
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 48px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    border-radius: 0 50px 50px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001; /* Above history modal (1000) */
+    transition: left 0.4s cubic-bezier(0.2, 0, 0, 1), background-color 0.3s;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    color: var(--text-secondary);
+}
+
+.sidebar-toggle:hover {
+    background: var(--primary-color);
+    color: var(--bg-color);
+    border-color: var(--primary-color);
+    width: 28px; /* Slight expansion on hover */
+}
+
+.sidebar-toggle .icon {
+    font-size: 0.8rem;
+    transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Active State (Sidebar Open) */
+.sidebar-toggle.active {
+    left: min(90%, 420px); /* Matches history modal width */
+    background: var(--surface-color);
+    color: var(--text-secondary);
+    border-left: 1px solid var(--border-color); /* Restore border if moving away from edge */
+}
+
+.sidebar-toggle.active:hover {
+    background: var(--error-color); /* Indicating close action */
+    color: #ffffff;
+    border-color: var(--error-color);
+}
+
+.sidebar-toggle.active .icon {
+    transform: rotate(180deg);
+}
+
+[data-theme="dark"] .sidebar-toggle.active:hover {
+    color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: none;
+    }
+}

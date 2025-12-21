@@ -5,6 +5,7 @@ export default class HistoryHandler extends BaseHandler {
         super();
 
         this.historyBtn = document.getElementById('history-btn');
+        this.sidebarToggle = document.getElementById('sidebar-toggle');
         this.modal = document.getElementById('history-modal');
         this.closeBtn = document.getElementById('close-history-btn');
         this.listContainer = document.getElementById('history-list');
@@ -21,6 +22,15 @@ export default class HistoryHandler extends BaseHandler {
         if (!this.historyBtn || !this.modal) return;
 
         this.historyBtn.addEventListener('click', () => this.openHistory());
+        if (this.sidebarToggle) {
+            this.sidebarToggle.addEventListener('click', () => {
+                if (this.modal.classList.contains('hidden')) {
+                    this.openHistory();
+                } else {
+                    this.closeHistory();
+                }
+            });
+        }
         this.closeBtn.addEventListener('click', () => this.closeHistory());
         this.backBtn.addEventListener('click', () => this.showList());
 
@@ -95,12 +105,14 @@ export default class HistoryHandler extends BaseHandler {
     async openHistory() {
         this.modal.classList.add('active');
         this.modal.classList.remove('hidden');
+        if (this.sidebarToggle) this.sidebarToggle.classList.add('active');
         this.showList();
         await this.loadHistoryList();
     }
 
     closeHistory() {
         this.modal.classList.remove('active');
+        if (this.sidebarToggle) this.sidebarToggle.classList.remove('active');
         setTimeout(() => {
             this.modal.classList.add('hidden');
             this.detailsContainer.classList.remove('active');
