@@ -7,7 +7,7 @@
 
 ### 1. Multi-Model Cognitive Engine
 Built to adapt to any task using the best-in-class models from leading providers.
-*   **Google Gemini (Primary):** Powered by **Gemini 2.0 Flash** & **Gemini 1.5 Pro**. Supports native **Multimodal** input (Text, Images, PDFs) and **Function Calling**.
+*   **Google Gemini (Primary):** Powered by **Gemini 2.0 Flash** & **Gemini 1.5 Pro**. Supports native **Multimodal** input (Text, Images, Audio, PDFs) and **Function Calling**.
 *   **ArvanCloud Integration:** Access to **GPT-4o** (Multimodal) and **DeepSeek V3** via secure, localized routing.
 *   **OpenRouter & Groq:** High-speed inference using **Grok 4.1 Fast** and **Qwen 2.5** for cost-effective scaling.
 *   **Context Aware:** Maintains deep conversation history with intelligent summarization and "sticky" sessions for seamless continuity.
@@ -22,14 +22,14 @@ Breaking the knowledge cutoff with Gemini's Grounding.
 More than just a chatbot—it's a business tool.
 *   **RAG (Retrieval-Augmented Generation):** Ingests internal policy documents and uses **Vector Search** to answer employee queries with 100% accuracy.
 *   **BMS Connector:** Securely queries your **Business Management System (BMS)** to retrieve real-time data on contracts, shipments, and payments (Restricted Access).
-*   **File Analysis:** Upload Images or PDFs for instant analysis, OCR, and data extraction (Gemini & GPT-4o only).
-*   **Utilities:** Built-in tools for **Weather Forecasting**, **Time/Date** awareness, and **PDF Export** of chat history.
+*   **File Analysis:** Upload Images or PDFs for instant analysis, OCR, and data extraction.
+*   **Utilities:** Built-in tools for **Weather Forecasting**, **Time/Date** awareness.
 
-### 4. Secure & Embeddable Architecture
-Designed for safe deployment in public or private environments.
-*   **Restricted Mode:** Automatically locks down sensitive tools (Web Search, BMS) when embedded in external websites via **Referer Validation**.
-*   **Session Guard:** Uses **IP-based** and **Sticky Session** binding to prevent unauthorized access and maintain state without cookies in iframes.
-*   **JWT Authentication:** Secure admin access for managing vector knowledge bases and viewing logs.
+### 4. Multimodal Audio & Visualization
+Interact naturally with voice.
+*   **Voice Input:** Record and send audio messages directly to supported models (Gemini, GPT-4o).
+*   **Audio Response:** AI generates natural speech playback.
+*   **Visualizer:** Interactive "wave" animation (`.audio-visualizer`) responds to audio playback in real-time.
 
 ---
 
@@ -43,6 +43,21 @@ Designed for safe deployment in public or private environments.
     *   `frameGuard` Middleware (Iframe protection)
     *   `KeySessionManager` (API Key Rotation & Quota Management)
     *   Input Sanitization & MIME Type Validation
+
+---
+
+## 🎨 UI Features
+
+*   **Material Design 3:** Modern, responsive interface with Dark/Light mode support.
+*   **Chat History:**
+    *   **Sidebar Navigation:** Slide-out history panel (`left: 0`, `translateX(-100%)`).
+    *   **Sticky Sessions:** Smart session recovery for iframe users (via IP/Referer) even without cookies.
+    *   **Export to PDF:** Download full conversation transcripts with one click using `html2pdf.js`.
+    *   **Print View:** Clean, formatted print layout for archiving.
+    *   **Logout:** Secure session termination via the top-right menu.
+*   **Visual Attachments:** Drag-and-drop support for images and PDFs with client-side preview.
+*   **Admin Features:**
+    *   **Sync Knowledge Base:** Manual vector DB synchronization button (restricted to admins `arash`, `siamak`, `ata`).
 
 ---
 
@@ -95,13 +110,14 @@ BMS_API_URL=https://example.io/ai/query
 ```
 
 ### 3. Database & User Setup
-The system uses MongoDB for user authentication. You must create an initial user to log in.
-Use the built-in utility script:
+The system uses MongoDB for user authentication. There is no public sign-up page. You must create users manually via the CLI.
 
+**Create a new user:**
 ```bash
 # Syntax: node utils/userManager.js <username> <password>
 node utils/userManager.js admin securePassword123
 ```
+*Note: This command connects to the MongoDB instance defined in your `.env` file.*
 
 ### 4. Running the Service
 
@@ -115,22 +131,11 @@ npm start
 
 ---
 
-## 🎨 UI Features
-
-*   **Material Design 3:** Modern, responsive interface with Dark/Light mode support.
-*   **Chat History:**
-    *   Persistent sidebar history with "Sticky" session recall.
-    *   **Export to PDF:** Download full conversation transcripts with one click.
-    *   **Print View:** Clean, formatted print layout for archiving.
-*   **Visual Attachments:** Drag-and-drop support for images and PDFs with client-side preview.
-*   **Accessibility:** Font size controls and ARIA-compliant markup.
-
----
-
 ## 🛡️ Security Features
 
-*   **Iframe Protection:** The `frameGuard` middleware validates `Referer` headers to prevent unauthorized embedding.
-*   **Key Rotation:** The `KeySessionManager` automatically rotates API keys (Gemini, Groq, etc.) to handle rate limits and ensure uptime.
+*   **Restricted Mode:** Automatically locks down sensitive tools (Web Search, BMS) when embedded in external websites. Detects origin via `Referer` or `X-Frame-Referer` headers.
+*   **Iframe Protection:** The `frameGuard` middleware validates origins against `ALLOWED_ORIGINS`.
+*   **Key Rotation:** The `KeySessionManager` automatically rotates API keys to handle rate limits and ensure uptime.
 *   **Sanitized Inputs:** All inputs are validated against injection attacks before processing.
 *   **Access Control:** Strict separation between "Public" tools (Web Search, Weather) and "Private" tools (BMS, Internal Docs).
 
