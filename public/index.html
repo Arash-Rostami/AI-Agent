@@ -13,6 +13,13 @@
     <meta name="referrer" content="no-referrer-when-downgrade"/>
 </head>
 <body>
+<div id="initial-loader" class="loader-overlay">
+    <div class="ai-loader-container">
+        <div class="ai-sparkle main"></div>
+        <div class="ai-sparkle second"></div>
+        <div class="ai-sparkle third"></div>
+    </div>
+</div>
 <div class="container">
     <header class="header">
         <div class="header-left">
@@ -25,7 +32,6 @@
                 <span id="status-text">Online</span>
             </div>
         </div>
-
         <div class="header-right">
             <div class="font-size-control">
                 <button class="font-size-btn" id="font-decrease" title="Decrease font size">A-</button>
@@ -70,12 +76,10 @@
             </div>
         </div>
     </div>
-
     <button id="sidebar-toggle" class="sidebar-toggle" title="Toggle Chat History">
         <i class="fas fa-history"></i>
         <i class="fas fa-chevron-left icon"></i>
     </button>
-
     <div class="chat-container">
         <div class="messages" id="messages">
             <div class="welcome-message">
@@ -127,15 +131,20 @@
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
-                <div class="action-buttons">
-                    <button type="button" class="action-btn new-chat-btn" id="new-chat-btn" title="Start New Chat">
-                        <i class="fas fa-plus"></i>
-                        <span>New Chat</span>
+                <div class="kebab-menu-container">
+                    <button type="button" class="kebab-trigger" id="kebab-trigger" title="Menu">
+                        <i class="fas fa-ellipsis-v"></i>
                     </button>
-                    <button type="button" class="action-btn clear-chat-btn" id="clear-chat-btn" title="Delete All Chat History">
-                        <i class="fas fa-trash"></i>
-                        <span>Clear History</span>
-                    </button>
+                    <div class="kebab-dropdown">
+                        <button type="button" class="kebab-item" id="new-chat-action" title="Start New Chat">
+                            <i class="fas fa-plus"></i>
+                            <span>New Chat</span>
+                        </button>
+                        <button type="button" class="kebab-item" id="clear-chat-action" title="Delete All Chat History">
+                            <i class="fas fa-trash"></i>
+                            <span>Clear History</span>
+                        </button>
+                    </div>
                 </div>
             </form>
 

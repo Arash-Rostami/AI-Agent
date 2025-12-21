@@ -1,7 +1,7 @@
 import BaseHandler from './BaseHandler.js';
 import AudioHandler from './AudioHandler.js';
 
-export default class ChatFacade extends BaseHandler {
+export default class ChatHandler extends BaseHandler {
     constructor() {
         super();
 
@@ -9,9 +9,10 @@ export default class ChatFacade extends BaseHandler {
         this.messages = document.getElementById('messages');
         this.messageInput = document.getElementById('message-input');
         this.sendButton = document.getElementById('send-button');
-        this.clearButton = document.getElementById('clear-button');
-        this.newChatBtn = document.getElementById('new-chat-btn');
-        this.clearChatBtn = document.getElementById('clear-chat-btn');
+        this.kebabContainer = document.querySelector('.kebab-menu-container');
+        this.kebabTrigger = document.getElementById('kebab-trigger');
+        this.newChatAction = document.getElementById('new-chat-action');
+        this.clearChatAction = document.getElementById('clear-chat-action');
         this.chatForm = document.getElementById('chat-form');
         this.statusText = document.getElementById('status-text');
         this.serviceSelect = document.getElementById('service-select');
@@ -26,6 +27,7 @@ export default class ChatFacade extends BaseHandler {
         this.audioPreviewContainer = document.getElementById('audio-preview-container');
         this.audioPreview = document.getElementById('audio-preview');
         this.removeAudioBtn = document.getElementById('remove-audio-btn');
+        this.loader = document.getElementById('initial-loader');
 
         this.isTyping = false;
         this.selectedFile = null;
@@ -43,8 +45,17 @@ export default class ChatFacade extends BaseHandler {
 
     setupEventListeners() {
         this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
-        if (this.newChatBtn) this.newChatBtn.addEventListener('click', () => this.handleNewChat());
-        if (this.clearChatBtn) this.clearChatBtn.addEventListener('click', () => this.handleClearChat());
+        if (this.newChatAction) this.newChatAction.addEventListener('click', () => this.handleNewChat().then(() => this.closeKebabMenu()));
+        if (this.clearChatAction) this.clearChatAction.addEventListener('click', () => this.handleClearChat().then(() => this.closeKebabMenu()));
+        if (this.kebabTrigger) {
+            this.kebabTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.kebabContainer.classList.toggle('active');
+            });
+        }
+        document.addEventListener('click', (e) => {
+            if (this.kebabContainer && !this.kebabContainer.contains(e.target)) this.closeKebabMenu();
+        });
         this.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
         this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
@@ -372,6 +383,11 @@ export default class ChatFacade extends BaseHandler {
             this.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode);
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
+        } finally {
+            if (this.loader) {
+                this.loader.classList.add('fade-out');
+                setTimeout(() => this.loader.remove(), 500);
+            }
         }
     }
 
@@ -387,5 +403,9 @@ export default class ChatFacade extends BaseHandler {
         if (isBmsMode || isRestrictedMode) {
             if (this.logoutBtn) this.logoutBtn.style.display = 'none';
         }
+    }
+
+    closeKebabMenu() {
+        if (this.kebabContainer) this.kebabContainer.classList.remove('active');
     }
 }
