@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure directory exists
-const uploadDir = path.join(__dirname, '../public/uploads/avatars');
+const uploadDir = path.join(__dirname, '../public/assets/uploads/avatars');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
