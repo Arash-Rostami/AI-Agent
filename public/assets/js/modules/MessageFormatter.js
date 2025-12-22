@@ -173,7 +173,23 @@ export default class MessageFormatter {
     createAvatar(sender) {
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
-        avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+
+        if (sender === 'user') {
+            const headerAvatar = document.getElementById('header-avatar');
+            if (headerAvatar && !headerAvatar.classList.contains('hidden') && headerAvatar.src) {
+                const img = document.createElement('img');
+                img.src = headerAvatar.src;
+                img.alt = 'User Avatar';
+                img.onerror = () => {
+                    avatar.innerHTML = '<i class="fas fa-user"></i>';
+                };
+                avatar.appendChild(img);
+                return avatar;
+            }
+            avatar.innerHTML = '<i class="fas fa-user"></i>';
+        } else {
+            avatar.innerHTML = '<i class="fas fa-robot"></i>';
+        }
         return avatar;
     }
 
