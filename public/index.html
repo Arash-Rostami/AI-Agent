@@ -44,11 +44,65 @@
                 <i class="fas fa-history"></i>
             </button>
 
+            <button class="settings-btn" id="settings-btn" title="Settings">
+                <i class="fas fa-cog"></i>
+            </button>
+
             <button class="logout-btn" id="logout-btn" title="Log out">
                 <i class="fas fa-sign-out-alt"></i>
             </button>
         </div>
     </header>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="settings-modal hidden">
+        <div class="settings-modal-content">
+            <div class="settings-header">
+                <h3><i class="fas fa-cog"></i> Settings</h3>
+                <button id="close-settings-btn" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="settings-tabs">
+                <button class="settings-tab-btn active" data-tab="profile">Profile</button>
+                <button class="settings-tab-btn" data-tab="security">Security</button>
+            </div>
+
+            <div class="settings-body">
+                <!-- Profile Tab -->
+                <div id="settings-tab-profile" class="settings-tab-content">
+                    <div class="avatar-section">
+                        <div class="avatar-wrapper">
+                            <img id="settings-avatar-preview" src="./assets/img/default-avatar.png" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0b57d0&color=fff'" alt="Profile">
+                            <button id="trigger-avatar-upload" class="edit-avatar-btn"><i class="fas fa-camera"></i></button>
+                        </div>
+                        <input type="file" id="settings-avatar-input" accept="image/*" hidden>
+                        <p class="avatar-hint">Click icon to change photo</p>
+                        <button id="upload-avatar-btn" class="primary-btn" disabled>Save Photo</button>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div id="settings-tab-security" class="settings-tab-content hidden">
+                    <form id="settings-password-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="current-password">Current Password</label>
+                            <input type="password" id="current-password" placeholder="Enter current password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">New Password</label>
+                            <input type="password" id="new-password" placeholder="Enter new password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Confirm Password</label>
+                            <input type="password" id="confirm-password" placeholder="Confirm new password" required>
+                        </div>
+                        <button type="submit" id="save-password-btn" class="primary-btn">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="history-modal" class="history-modal hidden">
         <div class="history-modal-content">
             <div class="history-header">
