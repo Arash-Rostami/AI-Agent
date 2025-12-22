@@ -6,6 +6,7 @@ export default class MenuHandler extends BaseHandler {
         this.menuBtn = document.getElementById('user-menu-btn');
         this.dropdown = document.getElementById('user-dropdown');
         this.headerAvatar = document.getElementById('header-avatar');
+        this.headerIcon = document.getElementById('header-avatar-icon');
         this.settingsBtn = document.getElementById('settings-btn');
         this.logoutBtn = document.getElementById('logout-btn');
 
@@ -63,7 +64,16 @@ export default class MenuHandler extends BaseHandler {
             if (!response.ok) return;
             const data = await response.json();
 
-            if (data.avatar && this.headerAvatar) this.headerAvatar.src = data.avatar;
+            if (data.avatar) {
+                if (this.headerAvatar) {
+                    this.headerAvatar.src = data.avatar;
+                    this.headerAvatar.classList.remove('hidden');
+                }
+                if (this.headerIcon) this.headerIcon.classList.add('hidden');
+            } else {
+                if (this.headerAvatar) this.headerAvatar.classList.add('hidden');
+                if (this.headerIcon) this.headerIcon.classList.remove('hidden');
+            }
         } catch (error) {
             console.error('Failed to load menu profile:', error);
         }

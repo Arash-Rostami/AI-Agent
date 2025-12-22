@@ -54,12 +54,12 @@ router.get('/admin', async (req, res) => {
         if (!token) return res.json({username: null, canSync: false});
 
         const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await User.findById(decoded.id).select('username');
+        const user = await User.findById(decoded.id).select('username avatar');
 
         if (!user) return res.json({username: null, canSync: false});
 
         const canSync = ['arash', 'siamak', 'ata'].includes(user.username.toLowerCase());
-        res.json({username: user.username, canSync});
+        res.json({username: user.username, avatar: user.avatar, canSync});
     } catch (error) {
         res.json({username: null, canSync: false});
     }

@@ -71,6 +71,17 @@ export default class SettingsHandler extends BaseHandler {
     updateAvatarUI(avatarUrl) {
         if (this.avatarPreview) this.avatarPreview.src = avatarUrl;
 
+        // Update Header Avatar
+        const headerAvatar = document.getElementById('header-avatar');
+        const headerIcon = document.getElementById('header-avatar-icon');
+
+        if (headerAvatar) {
+            headerAvatar.src = avatarUrl;
+            headerAvatar.classList.remove('hidden');
+        }
+        if (headerIcon) headerIcon.classList.add('hidden');
+
+        // Update Settings Button (in dropdown)
         const settingsIcon = this.settingsBtn.querySelector('i');
         const settingsImg = this.settingsBtn.querySelector('img');
 
