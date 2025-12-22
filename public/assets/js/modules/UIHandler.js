@@ -25,6 +25,9 @@ export default class UIHandler {
         const welcomeMessage = this.messages.querySelector('.welcome-message');
         if (welcomeMessage) {
             welcomeMessage.remove();
+            // The visibility is now controlled by .interface-unpinned on body
+            // We can keep 'chat-active' if it's used for other styling,
+            // but for visibility we rely on the PinHandler logic.
             this.header.classList.add('chat-active');
         }
 

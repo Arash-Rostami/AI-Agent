@@ -14,7 +14,12 @@
     z-index: 100;
 }
 
-.header.chat-active {
+/*
+   State: Unpinned (Auto-hide mode)
+   Triggered by .interface-unpinned on body.
+   Replaces the old .header.chat-active logic for visibility control.
+*/
+body.interface-unpinned .header {
     max-height: 15px;
     padding-top: 0;
     padding-bottom: 0;
@@ -23,14 +28,27 @@
     pointer-events: auto;
 }
 
-.header.chat-active:hover,
-.container:has(.service-selector:hover) .header.chat-active {
+body.interface-unpinned .header:hover,
+body.interface-unpinned .container:has(.service-selector:hover) .header {
     max-height: 150px;
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
     opacity: 1;
     border-bottom-color: var(--border-color);
     box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1);
+}
+
+/*
+   State: Pinned (Force Visible)
+   Explicit override to ensure visibility if needed,
+   though simply removing .interface-unpinned returns to default block layout.
+*/
+body.pinned .header {
+    max-height: 150px;
+    opacity: 1;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom-color: var(--border-color);
 }
 
 /* Header Left Section */
@@ -104,6 +122,7 @@
 /* Control Buttons */
 .font-size-btn,
 .theme-toggle,
+.pin-btn,
 .history-btn,
 .logout-btn,
 .sync-btn,
@@ -125,6 +144,7 @@
 
 .font-size-btn:hover,
 .theme-toggle:hover,
+.pin-btn:hover,
 .history-btn:hover,
 .logout-btn:hover,
 .sync-btn:hover,
@@ -137,11 +157,22 @@
 
 [data-theme="dark"] .font-size-btn:hover,
 [data-theme="dark"] .theme-toggle:hover,
+[data-theme="dark"] .pin-btn:hover,
 [data-theme="dark"] .history-btn:hover,
 [data-theme="dark"] .logout-btn:hover,
 [data-theme="dark"] .sync-btn:hover,
 [data-theme="dark"] .settings-btn:hover {
     color: #000000;
+}
+
+.pin-btn.active {
+    background: var(--surface-color); /* Or keep primary if you want it filled */
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.pin-btn.active i {
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
 }
 
 .sync-btn {
