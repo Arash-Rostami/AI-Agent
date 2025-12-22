@@ -28,7 +28,7 @@ export const AI_SERVICE_SECRET = process.env.AI_SERVICE_SECRET;
 export const MONGO_URI = process.env.MONGO_URI;
 export const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key_change_me';
 
-export const uploadDir = path.join(__dirname, '../public/uploads/avatars');
+export const uploadDir = path.join(__dirname, '../public/assets/img/avatars');
 
 
 export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS

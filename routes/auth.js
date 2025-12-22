@@ -2,10 +2,11 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import {generateToken} from '../utils/authManager.js';
-import {JWT_SECRET, NODE_ENV} from '../config/index.js';
+import {JWT_SECRET, NODE_ENV, uploadDir} from '../config/index.js';
 import avatarUpload from '../middleware/avatarUpload.js';
 import {protect} from '../middleware/authGuard.js';
-
+import fs from 'fs';
+import path from 'path';
 
 const router = express.Router();
 
@@ -54,12 +55,12 @@ router.get('/admin', async (req, res) => {
         if (!token) return res.json({username: null, canSync: false});
 
         const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await User.findById(decoded.id).select('username');
+        const user = await User.findById(decoded.id).select('username avatar');
 
         if (!user) return res.json({username: null, canSync: false});
 
         const canSync = ['arash', 'siamak', 'ata'].includes(user.username.toLowerCase());
-        res.json({username: user.username, canSync});
+        res.json({username: user.username, avatar: user.avatar, canSync});
     } catch (error) {
         res.json({username: null, canSync: false});
     }
@@ -90,9 +91,44 @@ router.post('/upload-avatar', protect, avatarUpload.single('avatar'), async (req
 
         const user = await User.findById(req.user._id);
         if (user) {
-            user.avatar = `/uploads/avatars/${req.file.filename}`;
+            if (user.avatar) {
+                const oldFilename = path.basename(user.avatar);
+                const oldPath = path.join(uploadDir, oldFilename);
+                if (fs.existsSync(oldPath)) {
+                    fs.unlink(oldPath, (err) => {
+                        if (err) console.error('Failed to delete old avatar:', err);
+                    });
+                }
+            }
+
+            user.avatar = `/assets/img/avatars/${req.file.filename}`;
             await user.save();
             res.json({message: 'Avatar updated', avatar: user.avatar});
+        } else {
+            res.status(404).json({message: 'User not found'});
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: 'Server error'});
+    }
+});
+
+router.post('/remove-avatar', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (user) {
+            if (user.avatar) {
+                const oldFilename = path.basename(user.avatar);
+                const oldPath = path.join(uploadDir, oldFilename);
+                if (fs.existsSync(oldPath)) {
+                    fs.unlink(oldPath, (err) => {
+                        if (err) console.error('Failed to delete old avatar:', err);
+                    });
+                }
+                user.avatar = null;
+                await user.save();
+            }
+            res.json({message: 'Avatar removed', avatar: null});
         } else {
             res.status(404).json({message: 'User not found'});
         }

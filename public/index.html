@@ -55,10 +55,10 @@
 
             <div class="user-menu-container">
                 <button class="user-menu-btn" id="user-menu-btn" title="User Menu">
-                   <i class="fas fa-user"></i>
+                    <i id="header-avatar-icon" class="fas fa-user"></i>
+                    <img id="header-avatar" class="header-avatar hidden" alt="User Avatar" src="">
                 </button>
                 <div id="user-dropdown" class="user-dropdown hidden">
-                    <div class="dropdown-divider"></div>
                     <button id="settings-btn" class="dropdown-item">
                         <i class="fas fa-cog"></i> Settings
                     </button>
@@ -97,7 +97,10 @@
                         </div>
                         <input type="file" id="settings-avatar-input" accept="image/*" hidden>
                         <p class="avatar-hint">Click icon to change photo</p>
-                        <button id="upload-avatar-btn" class="primary-btn" disabled>Save Photo</button>
+                        <div class="avatar-actions">
+                            <button id="upload-avatar-btn" class="primary-btn" disabled>Save Photo</button>
+                            <button id="remove-avatar-btn" class="secondary-btn hidden">Remove</button>
+                        </div>
                     </div>
                 </div>
 
@@ -228,6 +231,7 @@
                             <i class="fas fa-plus"></i>
                             <span>New Chat</span>
                         </button>
+                        <div class="dropdown-divider"></div>
                         <button type="button" class="kebab-item" id="clear-chat-action" title="Delete All Chat History">
                             <i class="fas fa-trash"></i>
                             <span>Clear History</span>

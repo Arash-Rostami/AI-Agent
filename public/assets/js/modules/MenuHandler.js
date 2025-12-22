@@ -6,6 +6,7 @@ export default class MenuHandler extends BaseHandler {
         this.menuBtn = document.getElementById('user-menu-btn');
         this.dropdown = document.getElementById('user-dropdown');
         this.headerAvatar = document.getElementById('header-avatar');
+        this.headerIcon = document.getElementById('header-avatar-icon');
         this.settingsBtn = document.getElementById('settings-btn');
         this.logoutBtn = document.getElementById('logout-btn');
 
@@ -13,6 +14,13 @@ export default class MenuHandler extends BaseHandler {
     }
 
     async init() {
+        if (this.headerAvatar) {
+            this.headerAvatar.addEventListener('error', () => {
+                this.headerAvatar.classList.add('hidden');
+                if (this.headerIcon) this.headerIcon.classList.remove('hidden');
+            });
+        }
+
         if (this.menuBtn && this.dropdown) {
             this.menuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -50,10 +58,19 @@ export default class MenuHandler extends BaseHandler {
         const isRestricted = document.cookie.split('; ').some(row => row.startsWith('restricted_ui='));
 
         if (isRestricted) {
+            if (this.menuBtn) {
+                this.menuBtn.style.display = 'none';
+                this.menuBtn.style.pointerEvents = 'none';
+                this.menuBtn.style.cursor = 'default';
+            }
             if (this.settingsBtn) {
-                this.settingsBtn.parentElement.querySelector('.dropdown-divider').style.display = 'none';
                 this.settingsBtn.classList.add('restricted-hidden');
             }
+            if (this.logoutBtn) {
+                this.logoutBtn.classList.add('restricted-hidden');
+            }
+            const dividers = this.dropdown ? this.dropdown.querySelectorAll('.dropdown-divider') : [];
+            dividers.forEach(el => el.style.display = 'none');
         }
     }
 
@@ -63,7 +80,16 @@ export default class MenuHandler extends BaseHandler {
             if (!response.ok) return;
             const data = await response.json();
 
-            if (data.avatar && this.headerAvatar) this.headerAvatar.src = data.avatar;
+            if (data.avatar) {
+                if (this.headerAvatar) {
+                    this.headerAvatar.src = data.avatar;
+                    this.headerAvatar.classList.remove('hidden');
+                }
+                if (this.headerIcon) this.headerIcon.classList.add('hidden');
+            } else {
+                if (this.headerAvatar) this.headerAvatar.classList.add('hidden');
+                if (this.headerIcon) this.headerIcon.classList.remove('hidden');
+            }
         } catch (error) {
             console.error('Failed to load menu profile:', error);
         }

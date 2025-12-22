@@ -176,8 +176,15 @@
     color: var(--text-secondary);
 }
 
-.primary-btn {
+.avatar-actions {
+    display: flex;
+    gap: 0.5rem;
     width: 100%;
+    margin-top: 0.5rem;
+}
+
+.primary-btn, .secondary-btn {
+    flex: 1;
     padding: 0.75rem;
     border-radius: var(--radius-md);
     background: var(--primary-color);
@@ -186,19 +193,29 @@
     font-weight: 600;
     cursor: pointer;
     transition: 0.2s;
-    margin-top: 0.5rem;
+}
+
+.secondary-btn {
+    background: transparent;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+}
+
+.secondary-btn:hover {
+    background: #dc2626;
+    color: #ffffff;
 }
 
 [data-theme="dark"] .primary-btn {
     color: #000000;
 }
 
-.primary-btn:hover {
+.primary-btn:hover, .secondary-btn:hover {
     opacity: 0.9;
     transform: translateY(-1px);
 }
 
-.primary-btn:disabled {
+.primary-btn:disabled, .secondary-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;

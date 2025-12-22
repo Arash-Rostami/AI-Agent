@@ -15,7 +15,10 @@
     z-index: 100;
 }
 
-/* Header Active State - Collapsible */
+.hidden {
+    display: none !important;
+}
+
 .header.chat-active {
     max-height: 15px;
     padding-top: 0;
