@@ -1,5 +1,6 @@
 import AudioHandler from './AudioHandler.js';
 import BaseHandler from './BaseHandler.js';
+import PinHandler from './PinHandler.js';
 import UIHandler from './UIHandler.js';
 
 export default class ChatHandler extends BaseHandler {
@@ -8,6 +9,7 @@ export default class ChatHandler extends BaseHandler {
 
         this.uiHandler = new UIHandler(this.formatter);
         this.audioHandler = new AudioHandler();
+        this.pinHandler = new PinHandler();
 
         this.kebabContainer = document.querySelector('.kebab-menu-container');
         this.kebabTrigger = document.getElementById('kebab-trigger');
