@@ -55,10 +55,8 @@ export default class MenuHandler extends BaseHandler {
     }
 
     checkRestrictedMode() {
-        const isRestricted = document.cookie.split('; ').some(row => row.startsWith('restricted_ui='));
-
-        if (isRestricted) {
-            // Hide the entire container
+        // Iframe mode check - Hide menu in iframe/restricted context
+        if (window.self !== window.top) {
             const menuContainer = document.querySelector('.user-menu-container');
             if (menuContainer) {
                 menuContainer.style.display = 'none';
