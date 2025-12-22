@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import {generateToken} from '../utils/authManager.js';
 import {JWT_SECRET, NODE_ENV} from '../config/index.js';
+import avatarUpload from '../middleware/avatarUpload.js';
+import {protect} from '../middleware/authGuard.js';
 
 
 const router = express.Router();
@@ -60,6 +62,43 @@ router.get('/admin', async (req, res) => {
         res.json({username: user.username, canSync});
     } catch (error) {
         res.json({username: null, canSync: false});
+    }
+});
+
+router.post('/change-password', protect, async (req, res) => {
+    const {currentPassword, newPassword} = req.body;
+
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user && (await user.matchPassword(currentPassword))) {
+            user.password = newPassword;
+            await user.save();
+            res.json({message: 'Password updated successfully'});
+        } else {
+            res.status(401).json({message: 'Invalid current password'});
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: 'Server error'});
+    }
+});
+
+router.post('/upload-avatar', protect, avatarUpload.single('avatar'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({message: 'No file uploaded'});
+
+        const user = await User.findById(req.user._id);
+        if (user) {
+            user.avatar = `/uploads/avatars/${req.file.filename}`;
+            await user.save();
+            res.json({message: 'Avatar updated', avatar: user.avatar});
+        } else {
+            res.status(404).json({message: 'User not found'});
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: 'Server error'});
     }
 });
 

@@ -1,0 +1,66 @@
+.loader-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-color);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.loader-overlay.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.ai-loader-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.ai-sparkle {
+    position: absolute;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #a8c7fa 50%, var(--primary-color) 100%);
+    background-size: 200% 200%;
+    clip-path: polygon(50% 0%, 65% 40%, 100% 50%, 65% 60%, 50% 100%, 35% 60%, 0% 50%, 35% 40%);
+    animation: ai-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite, ai-shimmer 3s linear infinite;
+    opacity: 0;
+}
+
+[data-theme="dark"] .ai-sparkle {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #ffffff 50%, var(--primary-color) 100%);
+}
+
+.ai-sparkle.main {
+    width: 32px;
+    height: 32px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: 0s;
+    z-index: 2;
+}
+
+.ai-sparkle.second {
+    width: 20px;
+    height: 20px;
+    top: 25%;
+    left: 20%;
+    animation-delay: 0.3s;
+}
+
+.ai-sparkle.third {
+    width: 14px;
+    height: 14px;
+    bottom: 25%;
+    right: 20%;
+    animation-delay: 0.6s;
+}
+
+.ai-sparkle.second,
+.ai-sparkle.third {
+    animation-name: ai-pulse-offset, ai-shimmer;
+}

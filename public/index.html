@@ -13,6 +13,8 @@
     <meta name="referrer" content="no-referrer-when-downgrade"/>
 </head>
 <body>
+
+<!-- Initial Loader -->
 <div id="initial-loader" class="loader-overlay">
     <div class="ai-loader-container">
         <div class="ai-sparkle main"></div>
@@ -20,7 +22,11 @@
         <div class="ai-sparkle third"></div>
     </div>
 </div>
+
+<!-- Main Container -->
 <div class="container">
+
+    <!-- Header -->
     <header class="header">
         <div class="header-left">
             <div class="logo">
@@ -32,56 +38,126 @@
                 <span id="status-text">Online</span>
             </div>
         </div>
-        <div class="header-right">
+        <nav class="header-right">
             <div class="font-size-control">
                 <button class="font-size-btn" id="font-decrease" title="Decrease font size">A-</button>
                 <button class="font-size-btn" id="font-increase" title="Increase font size">A+</button>
             </div>
-
             <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
                 <i class="fas fa-sun"></i>
             </button>
-
             <button class="sync-btn" id="sync-btn" title="Sync Knowledge Base">
                 <i class="fas fa-sync"></i>
             </button>
-
             <button class="history-btn" id="history-btn" title="Chat History">
                 <i class="fas fa-history"></i>
             </button>
 
-            <button class="logout-btn" id="logout-btn" title="Log out">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
-        </div>
+            <div class="user-menu-container">
+                <button class="user-menu-btn" id="user-menu-btn" title="User Menu">
+                   <i class="fas fa-user"></i>
+                </button>
+                <div id="user-dropdown" class="user-dropdown hidden">
+                    <div class="dropdown-divider"></div>
+                    <button id="settings-btn" class="dropdown-item">
+                        <i class="fas fa-cog"></i> Settings
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button id="logout-btn" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Log Out
+                    </button>
+                </div>
+            </div>
+        </nav>
     </header>
-    <div id="history-modal" class="history-modal hidden">
+
+    <!-- Settings Modal -->
+    <dialog id="settings-modal" class="settings-modal hidden">
+        <div class="settings-modal-content">
+            <div class="settings-header">
+                <h3><i class="fas fa-cog"></i> Settings</h3>
+                <button id="close-settings-btn" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="settings-tabs">
+                <button class="settings-tab-btn active" data-tab="profile">Profile</button>
+                <button class="settings-tab-btn" data-tab="security">Security</button>
+            </div>
+
+            <div class="settings-body">
+                <!-- Profile Tab -->
+                <div id="settings-tab-profile" class="settings-tab-content">
+                    <div class="avatar-section">
+                        <div class="avatar-wrapper">
+                            <img id="settings-avatar-preview"
+                                 src="./assets/img/avatars/user.png"
+                                 alt="Profile">
+                            <button id="trigger-avatar-upload" class="edit-avatar-btn"><i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                        <input type="file" id="settings-avatar-input" accept="image/*" hidden>
+                        <p class="avatar-hint">Click icon to change photo</p>
+                        <button id="upload-avatar-btn" class="primary-btn" disabled>Save Photo</button>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div id="settings-tab-security" class="settings-tab-content hidden">
+                    <form id="settings-password-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="current-password">Current Password</label>
+                            <input type="password" id="current-password" placeholder="Enter current password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">New Password</label>
+                            <input type="password" id="new-password" placeholder="Enter new password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Confirm Password</label>
+                            <input type="password" id="confirm-password" placeholder="Confirm new password" required>
+                        </div>
+                        <button type="submit" id="save-password-btn" class="primary-btn">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+
+    <!-- History Modal Sidebar -->
+    <aside id="history-modal" class="history-modal hidden">
         <div class="history-modal-content">
-            <div class="history-header">
+            <header class="history-header">
                 <h3><i class="fas fa-history"></i> Chat History</h3>
                 <button id="close-history-btn" class="close-btn"><i class="fas fa-times"></i></button>
-            </div>
+            </header>
             <div class="history-body">
                 <div id="history-list" class="history-list">
                     <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
                 </div>
                 <div id="history-details" class="history-details hidden">
-                    <div class="history-details-header">
+                    <header class="history-details-header">
                         <button id="back-to-list-btn" class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
                         <button id="print-btn" class="print-btn"><i class="fas fa-print"></i> Print</button>
                         <button id="pdf-btn" class="pdf-btn"><i class="fas fa-file-pdf"></i> PDF</button>
-                    </div>
+                    </header>
                     <div id="history-messages" class="history-messages"></div>
                 </div>
             </div>
         </div>
-    </div>
+    </aside>
+
+    <!-- Sidebar Toggle Button -->
     <button id="sidebar-toggle" class="sidebar-toggle" title="Toggle Chat History">
         <i class="fas fa-history"></i>
         <i class="fas fa-chevron-left icon"></i>
     </button>
-    <div class="chat-container">
-        <div class="messages" id="messages">
+
+    <!-- Chat Container -->
+    <main class="chat-container">
+
+        <!-- Messages Area -->
+        <section class="messages" id="messages">
             <div class="welcome-message">
                 <h2>
                     Welcome to AI Assistant
@@ -89,20 +165,26 @@
                 </h2>
                 <p>⚡ Express JS | 👩‍💻 Arash R.</p>
             </div>
-        </div>
+        </section>
 
-        <div class="input-container">
+        <!-- Input Container -->
+        <footer class="input-container">
             <form class="input-form" id="chat-form">
+
+                <!-- Input Wrapper -->
                 <div class="input-wrapper">
                     <label for="message-input"></label>
 
+                    <!-- File Preview -->
                     <div id="file-preview-container" class="file-preview hidden">
                         <i class="fas fa-file-alt"></i>
                         <span id="file-name"></span>
-                        <button type="button" id="remove-file-btn" class="remove-file-btn"><i class="fas fa-times"></i>
+                        <button type="button" id="remove-file-btn" class="remove-file-btn">
+                            <i class="fas fa-times"></i>
                         </button>
                     </div>
 
+                    <!-- Audio Preview -->
                     <div id="audio-preview-container" class="audio-preview hidden">
                         <audio id="audio-preview" controls></audio>
                         <button type="button" id="remove-audio-btn" class="remove-audio-btn" title="Remove Audio">
@@ -110,15 +192,18 @@
                         </button>
                     </div>
 
+                    <!-- Attachment Button -->
                     <button type="button" class="attachment-btn" id="attachment-btn" title="Attach File (1 only)">
                         <i class="fas fa-paperclip"></i>
                     </button>
                     <input type="file" id="file-input" hidden accept="image/*,application/pdf">
 
+                    <!-- Mic Button -->
                     <button type="button" class="mic-btn" id="mic-btn" title="Record Audio">
                         <i class="fas fa-microphone"></i>
                     </button>
 
+                    <!-- Message Input -->
                     <textarea
                             class="message-input"
                             id="message-input"
@@ -127,15 +212,18 @@
                             autocomplete="off"
                     ></textarea>
 
+                    <!-- Send Button -->
                     <button type="submit" class="send-button" id="send-button" title="Submit Prompt">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
+
+                <!-- Kebab Menu -->
                 <div class="kebab-menu-container">
                     <button type="button" class="kebab-trigger" id="kebab-trigger" title="Menu">
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
-                    <div class="kebab-dropdown">
+                    <nav class="kebab-dropdown">
                         <button type="button" class="kebab-item" id="new-chat-action" title="Start New Chat">
                             <i class="fas fa-plus"></i>
                             <span>New Chat</span>
@@ -144,15 +232,15 @@
                             <i class="fas fa-trash"></i>
                             <span>Clear History</span>
                         </button>
-                    </div>
+                    </nav>
                 </div>
             </form>
 
-            <div class="service-selector">
+            <!-- Service Selector -->
+            <nav class="service-selector">
                 <label for="service-select">
                     <small>AI Model: </small>
                 </label>
-
                 <select id="service-select" title="Switch AI Model">
                     <option value="gemini" selected>Gemini</option>
                     <option value="gpt-4o">GPT-4o</option>
@@ -160,19 +248,14 @@
                     <option value="deepseek">DeepSeek</option>
                     <option value="groq">Qwen</option>
                 </select>
-
-                <button
-                        type="button"
-                        id="web-search-btn"
-                        class="web-search-btn"
-                        title="Toggle Web Search"
-                >
+                <button type="button" id="web-search-btn" class="web-search-btn" title="Toggle Web Search">
                     <i class="fas fa-globe"></i> <small>Web Search</small>
                 </button>
-            </div>
-        </div>
-    </div>
+            </nav>
+        </footer>
+    </main>
 </div>
+
 <script type="module" src="./assets/js/app.js"></script>
 </body>
 </html>

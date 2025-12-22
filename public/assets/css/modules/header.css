@@ -1,0 +1,168 @@
+.header {
+    flex-shrink: 0;
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    z-index: 50;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    max-height: 150px;
+    overflow: hidden;
+    z-index: 100;
+}
+
+/* Header Active State - Collapsible */
+.header.chat-active {
+    max-height: 15px;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+    border-bottom-color: transparent;
+    pointer-events: auto;
+}
+
+.header.chat-active:hover,
+.container:has(.service-selector:hover) .header.chat-active {
+    max-height: 150px;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    opacity: 1;
+    border-bottom-color: var(--border-color);
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Header Left Section */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Logo */
+.logo {
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color);
+    white-space: nowrap;
+    letter-spacing: -0.02em;
+}
+
+.logo i {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logo:hover i {
+    transform: rotate(360deg) scale(1.2);
+    cursor: pointer;
+}
+
+/* Status Indicator */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--button-bg);
+    border: 1px solid var(--border-color);
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-pill);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--success-color);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(20, 108, 46, 0.2);
+}
+
+/* Header Right Section */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Font Size Control */
+.font-size-control {
+    display: flex;
+    gap: 0.5rem;
+    padding-right: 0.75rem;
+    margin-right: 0.25rem;
+    border-right: 1px solid var(--border-color);
+}
+
+/* Control Buttons */
+.font-size-btn,
+.theme-toggle,
+.history-btn,
+.logout-btn,
+.sync-btn,
+.settings-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-color);
+    border: 1px solid var(--button-border);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 1.1rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.font-size-btn:hover,
+.theme-toggle:hover,
+.history-btn:hover,
+.logout-btn:hover,
+.sync-btn:hover,
+.settings-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--bg-color);
+    transform: translateY(-2px);
+}
+
+[data-theme="dark"] .font-size-btn:hover,
+[data-theme="dark"] .theme-toggle:hover,
+[data-theme="dark"] .history-btn:hover,
+[data-theme="dark"] .logout-btn:hover,
+[data-theme="dark"] .sync-btn:hover,
+[data-theme="dark"] .settings-btn:hover {
+    color: #000000;
+}
+
+.sync-btn {
+    display: none;
+}
+
+/* Spin Icon */
+.spin-icon {
+    display: inline-block;
+    font-family: "Segoe UI Symbol", "Arial Unicode MS", "Noto Sans", sans-serif;
+    font-size: 1.2em;
+    transform-origin: center;
+    vertical-align: middle;
+    margin-left: 0.25rem;
+    will-change: transform;
+    background: linear-gradient(135deg, var(--primary-color), var(--my-custom-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: elegant-spin 6s linear infinite, gradient 3s ease infinite;
+    background-size: 200% 200%;
+}
