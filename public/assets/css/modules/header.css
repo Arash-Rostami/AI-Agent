@@ -14,7 +14,7 @@
     z-index: 100;
 }
 
-.header.chat-active {
+body.interface-unpinned .header {
     max-height: 15px;
     padding-top: 0;
     padding-bottom: 0;
@@ -23,8 +23,8 @@
     pointer-events: auto;
 }
 
-.header.chat-active:hover,
-.container:has(.service-selector:hover) .header.chat-active {
+body.interface-unpinned .header:hover,
+body.interface-unpinned .container:has(.service-selector:hover) .header {
     max-height: 150px;
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
@@ -33,14 +33,12 @@
     box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* Header Left Section */
 .header-left {
     display: flex;
     align-items: center;
     gap: 1rem;
 }
 
-/* Logo */
 .logo {
     font-weight: 700;
     font-size: 1.25rem;
@@ -63,7 +61,6 @@
     cursor: pointer;
 }
 
-/* Status Indicator */
 .status-indicator {
     display: flex;
     align-items: center;

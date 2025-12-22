@@ -24,13 +24,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const idle = window.requestIdleCallback || (fn => setTimeout(fn, 500));
             idle(async () => {
                 try {
-                    const [{default: HistoryHandler}, {default: LogoutHandler}, {default: SyncHandler}, {default: SettingsHandler}, {default: MenuHandler}] =
+                    const [{default: HistoryHandler}, {default: LogoutHandler}, {default: SyncHandler}, {default: SettingsHandler}, {default: MenuHandler}, {default: PinHandler}] =
                         await Promise.all([
                             import('./modules/HistoryHandler.js'),
                             import('./modules/LogoutHandler.js'),
                             import('./modules/SyncHandler.js'),
                             import('./modules/SettingsHandler.js'),
-                            import('./modules/MenuHandler.js')
+                            import('./modules/MenuHandler.js'),
+                            import('./modules/PinHandler.js')
                         ]);
 
                     new HistoryHandler();
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     new SyncHandler('sync-btn');
                     new SettingsHandler();
                     new MenuHandler();
+                    new PinHandler()
                 } catch (e) {
                     console.error('Lazy module load failed:', e);
                 }

@@ -34,7 +34,6 @@
     transform: translateX(0);
 }
 
-/* History Header */
 .history-header {
     padding: 1.5rem;
     border-bottom: 1px solid var(--border-color);
@@ -70,7 +69,6 @@
     border-color: var(--error-color);
 }
 
-/* History Body */
 .history-body {
     flex: 1;
     overflow-y: auto;
@@ -82,7 +80,6 @@
     overflow: hidden;
 }
 
-/* History Item */
 .history-item {
     background: var(--input-bg);
     border: 1px solid var(--border-color);
@@ -141,7 +138,6 @@
     line-height: 1.5;
 }
 
-/* Delete History Button */
 .delete-history-btn {
     opacity: 0;
     transition: opacity 0.2s;
@@ -165,7 +161,6 @@
     background: rgba(179, 38, 30, 0.1);
 }
 
-/* History Details */
 .history-details {
     position: absolute;
     top: 0;
@@ -220,7 +215,6 @@
     background: transparent;
 }
 
-/* Sidebar Toggle Button */
 .sidebar-toggle {
     position: fixed;
     left: 0;
