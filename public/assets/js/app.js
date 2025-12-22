@@ -27,18 +27,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             idle(async () => {
                 try {
-                    const [{default: HistoryHandler}, {default: LogoutHandler}, {default: SyncHandler}, {default: SettingsHandler}] =
+                    const [{default: HistoryHandler}, {default: LogoutHandler}, {default: SyncHandler}, {default: SettingsHandler}, {default: MenuHandler}] =
                         await Promise.all([
                             import('./modules/HistoryHandler.js'),
                             import('./modules/LogoutHandler.js'),
                             import('./modules/SyncHandler.js'),
-                            import('./modules/SettingsHandler.js')
+                            import('./modules/SettingsHandler.js'),
+                            import('./modules/MenuHandler.js')
                         ]);
 
                     new HistoryHandler();
                     new LogoutHandler('logout-btn');
                     new SyncHandler('sync-btn');
                     new SettingsHandler();
+                    new MenuHandler();
 
                 } catch (e) {
                     console.error('Lazy module load failed:', e);
