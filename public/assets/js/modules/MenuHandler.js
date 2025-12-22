@@ -70,8 +70,18 @@ export default class MenuHandler extends BaseHandler {
             if (!response.ok) return;
             const data = await response.json();
 
-            if (data.avatar && this.headerAvatar) {
-                this.headerAvatar.src = data.avatar;
+            if (this.headerAvatar) {
+                // Set fallback with username before trying to load avatar
+                const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || 'User')}&background=0b57d0&color=fff`;
+                this.headerAvatar.onerror = () => {
+                    this.headerAvatar.src = fallbackUrl;
+                };
+
+                if (data.avatar) {
+                    this.headerAvatar.src = data.avatar;
+                } else {
+                    this.headerAvatar.src = fallbackUrl;
+                }
             }
         } catch (error) {
             console.error('Failed to load menu profile:', error);

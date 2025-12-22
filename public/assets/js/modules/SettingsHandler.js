@@ -77,8 +77,18 @@ export default class SettingsHandler extends BaseHandler {
             if (!response.ok) return;
             const data = await response.json();
 
-            if (data.avatar) {
-                this.updateAvatarUI(data.avatar);
+            // Set fallback for modal preview
+            if (this.avatarPreview) {
+                const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || 'User')}&background=0b57d0&color=fff`;
+                this.avatarPreview.onerror = () => {
+                    this.avatarPreview.src = fallbackUrl;
+                };
+
+                 if (data.avatar) {
+                    this.updateAvatarUI(data.avatar);
+                } else {
+                    this.avatarPreview.src = fallbackUrl;
+                }
             }
         } catch (error) {
             console.error('Failed to load user profile:', error);
@@ -91,24 +101,10 @@ export default class SettingsHandler extends BaseHandler {
             this.avatarPreview.src = avatarUrl;
         }
 
-        // Update header button icon if it exists and we want to replace the gear with avatar
-        // For now, let's look for a dedicated user-avatar-icon if we added one,
-        // or just keep the gear but maybe add a small avatar next to it?
-        // Let's assume the settings button itself might become the avatar or contain it.
-        const settingsIcon = this.settingsBtn.querySelector('i');
-        const settingsImg = this.settingsBtn.querySelector('img');
-
-        if (settingsImg) {
-            settingsImg.src = avatarUrl;
-            settingsImg.classList.remove('hidden');
-            if (settingsIcon) settingsIcon.classList.add('hidden');
-        } else if (settingsIcon) {
-            // Create img if doesn't exist
-            const img = document.createElement('img');
-            img.src = avatarUrl;
-            img.classList.add('header-avatar');
-            this.settingsBtn.appendChild(img);
-            settingsIcon.classList.add('hidden');
+        // Also update the header avatar if it exists (managed by MenuHandler primarily, but good to sync)
+        const headerAvatar = document.getElementById('header-avatar');
+        if (headerAvatar) {
+            headerAvatar.src = avatarUrl;
         }
     }
 
