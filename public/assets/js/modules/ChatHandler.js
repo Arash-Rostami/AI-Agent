@@ -16,7 +16,6 @@ export default class ChatHandler extends BaseHandler {
         this.chatForm = document.getElementById('chat-form');
         this.serviceSelect = document.getElementById('service-select');
         this.webSearchBtn = document.getElementById('web-search-btn');
-        this.logoutBtn = document.getElementById('logout-btn');
         this.attachmentBtn = document.getElementById('attachment-btn');
         this.fileInput = document.getElementById('file-input');
         this.removeFileBtn = document.getElementById('remove-file-btn');
@@ -158,7 +157,7 @@ export default class ChatHandler extends BaseHandler {
             });
             const data = await response.json();
             this.uiHandler.addMessage(data.response, 'ai');
-            this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn, this.logoutBtn);
+            this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn);
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
         } finally {
