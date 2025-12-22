@@ -90,7 +90,7 @@ router.post('/upload-avatar', protect, avatarUpload.single('avatar'), async (req
 
         const user = await User.findById(req.user._id);
         if (user) {
-            user.avatar = `/uploads/avatars/${req.file.filename}`;
+            user.avatar = `/assets/img/avatars/${req.file.filename}`;
             await user.save();
             res.json({message: 'Avatar updated', avatar: user.avatar});
         } else {
