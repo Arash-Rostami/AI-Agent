@@ -14,6 +14,14 @@ export default class MenuHandler extends BaseHandler {
     }
 
     async init() {
+        if (this.headerAvatar) {
+            this.headerAvatar.addEventListener('error', () => {
+                console.warn('Avatar failed to load, falling back to icon.');
+                this.headerAvatar.classList.add('hidden');
+                if (this.headerIcon) this.headerIcon.classList.remove('hidden');
+            });
+        }
+
         if (this.menuBtn && this.dropdown) {
             this.menuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
