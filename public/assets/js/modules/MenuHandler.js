@@ -1,8 +1,5 @@
-import BaseHandler from './BaseHandler.js';
-
-export default class MenuHandler extends BaseHandler {
+export default class MenuHandler {
     constructor() {
-        super();
         this.menuBtn = document.getElementById('user-menu-btn');
         this.dropdown = document.getElementById('user-dropdown');
         this.headerAvatar = document.getElementById('header-avatar');
