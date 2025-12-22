@@ -2,10 +2,11 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import {generateToken} from '../utils/authManager.js';
-import {JWT_SECRET, NODE_ENV} from '../config/index.js';
+import {JWT_SECRET, NODE_ENV, uploadDir} from '../config/index.js';
 import avatarUpload from '../middleware/avatarUpload.js';
 import {protect} from '../middleware/authGuard.js';
-
+import fs from 'fs';
+import path from 'path';
 
 const router = express.Router();
 
@@ -90,9 +91,45 @@ router.post('/upload-avatar', protect, avatarUpload.single('avatar'), async (req
 
         const user = await User.findById(req.user._id);
         if (user) {
+            // Delete old avatar if exists
+            if (user.avatar) {
+                const oldFilename = path.basename(user.avatar);
+                const oldPath = path.join(uploadDir, oldFilename);
+                if (fs.existsSync(oldPath)) {
+                    fs.unlink(oldPath, (err) => {
+                        if (err) console.error('Failed to delete old avatar:', err);
+                    });
+                }
+            }
+
             user.avatar = `/assets/img/avatars/${req.file.filename}`;
             await user.save();
             res.json({message: 'Avatar updated', avatar: user.avatar});
+        } else {
+            res.status(404).json({message: 'User not found'});
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: 'Server error'});
+    }
+});
+
+router.post('/remove-avatar', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (user) {
+            if (user.avatar) {
+                const oldFilename = path.basename(user.avatar);
+                const oldPath = path.join(uploadDir, oldFilename);
+                if (fs.existsSync(oldPath)) {
+                    fs.unlink(oldPath, (err) => {
+                        if (err) console.error('Failed to delete old avatar:', err);
+                    });
+                }
+                user.avatar = null;
+                await user.save();
+            }
+            res.json({message: 'Avatar removed', avatar: null});
         } else {
             res.status(404).json({message: 'User not found'});
         }

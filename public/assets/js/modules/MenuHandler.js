@@ -59,10 +59,19 @@ export default class MenuHandler extends BaseHandler {
         const isRestricted = document.cookie.split('; ').some(row => row.startsWith('restricted_ui='));
 
         if (isRestricted) {
+            if (this.menuBtn) {
+                this.menuBtn.style.pointerEvents = 'none';
+                this.menuBtn.style.cursor = 'default';
+            }
             if (this.settingsBtn) {
-                this.settingsBtn.parentElement.querySelector('.dropdown-divider').style.display = 'none';
                 this.settingsBtn.classList.add('restricted-hidden');
             }
+            if (this.logoutBtn) {
+                this.logoutBtn.classList.add('restricted-hidden');
+            }
+            // Hide dividers
+            const dividers = this.dropdown ? this.dropdown.querySelectorAll('.dropdown-divider') : [];
+            dividers.forEach(el => el.style.display = 'none');
         }
     }
 

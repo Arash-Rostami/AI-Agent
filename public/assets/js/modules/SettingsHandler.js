@@ -14,6 +14,7 @@ export default class SettingsHandler extends BaseHandler {
         this.avatarInput = document.getElementById('settings-avatar-input');
         this.avatarPreview = document.getElementById('settings-avatar-preview');
         this.uploadBtn = document.getElementById('upload-avatar-btn');
+        this.removeAvatarBtn = document.getElementById('remove-avatar-btn');
         this.triggerUploadBtn = document.getElementById('trigger-avatar-upload');
         // Password elements
         this.passwordForm = document.getElementById('settings-password-form');
@@ -44,6 +45,7 @@ export default class SettingsHandler extends BaseHandler {
         if (this.triggerUploadBtn) this.triggerUploadBtn.addEventListener('click', () => this.avatarInput.click());
         if (this.avatarInput) this.avatarInput.addEventListener('change', (e) => this.handleFileSelect(e));
         if (this.uploadBtn) this.uploadBtn.addEventListener('click', () => this.uploadAvatar());
+        if (this.removeAvatarBtn) this.removeAvatarBtn.addEventListener('click', () => this.removeAvatar());
 
 
         if (this.savePasswordBtn) {
@@ -69,32 +71,44 @@ export default class SettingsHandler extends BaseHandler {
     }
 
     updateAvatarUI(avatarUrl) {
-        if (this.avatarPreview) this.avatarPreview.src = avatarUrl;
+        if (this.avatarPreview) this.avatarPreview.src = avatarUrl || './assets/img/avatars/user.png';
 
         // Update Header Avatar
         const headerAvatar = document.getElementById('header-avatar');
         const headerIcon = document.getElementById('header-avatar-icon');
 
-        if (headerAvatar) {
-            headerAvatar.src = avatarUrl;
-            headerAvatar.classList.remove('hidden');
+        if (avatarUrl) {
+            if (headerAvatar) {
+                headerAvatar.src = avatarUrl;
+                headerAvatar.classList.remove('hidden');
+            }
+            if (headerIcon) headerIcon.classList.add('hidden');
+            if (this.removeAvatarBtn) this.removeAvatarBtn.classList.remove('hidden');
+        } else {
+            if (headerAvatar) headerAvatar.classList.add('hidden');
+            if (headerIcon) headerIcon.classList.remove('hidden');
+            if (this.removeAvatarBtn) this.removeAvatarBtn.classList.add('hidden');
         }
-        if (headerIcon) headerIcon.classList.add('hidden');
 
         // Update Settings Button (in dropdown)
         const settingsIcon = this.settingsBtn.querySelector('i');
         const settingsImg = this.settingsBtn.querySelector('img');
 
-        if (settingsImg) {
-            settingsImg.src = avatarUrl;
-            settingsImg.classList.remove('hidden');
-            if (settingsIcon) settingsIcon.classList.add('hidden');
-        } else if (settingsIcon) {
-            const img = document.createElement('img');
-            img.src = avatarUrl;
-            img.classList.add('header-avatar');
-            this.settingsBtn.appendChild(img);
-            settingsIcon.classList.add('hidden');
+        if (avatarUrl) {
+            if (settingsImg) {
+                settingsImg.src = avatarUrl;
+                settingsImg.classList.remove('hidden');
+                if (settingsIcon) settingsIcon.classList.add('hidden');
+            } else if (settingsIcon) {
+                const img = document.createElement('img');
+                img.src = avatarUrl;
+                img.classList.add('header-avatar');
+                this.settingsBtn.appendChild(img);
+                settingsIcon.classList.add('hidden');
+            }
+        } else {
+            if (settingsImg) settingsImg.classList.add('hidden');
+            if (settingsIcon) settingsIcon.classList.remove('hidden');
         }
     }
 
@@ -165,6 +179,35 @@ export default class SettingsHandler extends BaseHandler {
         } finally {
             this.uploadBtn.textContent = 'Save Photo';
             this.uploadBtn.disabled = false;
+        }
+    }
+
+    async removeAvatar() {
+        if (!confirm('Are you sure you want to remove your profile photo?')) return;
+
+        this.removeAvatarBtn.textContent = 'Removing...';
+        this.removeAvatarBtn.disabled = true;
+
+        try {
+            const response = await fetch('/auth/remove-avatar', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Avatar removed successfully!');
+                this.updateAvatarUI(null);
+                this.avatarInput.value = '';
+            } else {
+                alert(data.message || 'Removal failed');
+            }
+        } catch (error) {
+            console.error('Removal error:', error);
+            alert('An error occurred while removing.');
+        } finally {
+            this.removeAvatarBtn.textContent = 'Remove';
+            this.removeAvatarBtn.disabled = false;
         }
     }
 
