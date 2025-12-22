@@ -1,9 +1,5 @@
-import BaseHandler from './BaseHandler.js';
-
-export default class SettingsHandler extends BaseHandler {
+export default class SettingsHandler {
     constructor() {
-        super();
-
         this.settingsBtn = document.getElementById('settings-btn');
         this.modal = document.getElementById('settings-modal');
         this.closeBtn = document.getElementById('close-settings-btn');
