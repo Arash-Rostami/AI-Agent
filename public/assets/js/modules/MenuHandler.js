@@ -4,8 +4,6 @@ export default class MenuHandler {
         this.dropdown = document.getElementById('user-dropdown');
         this.headerAvatar = document.getElementById('header-avatar');
         this.headerIcon = document.getElementById('header-avatar-icon');
-        this.settingsBtn = document.getElementById('settings-btn');
-        this.logoutBtn = document.getElementById('logout-btn');
 
         this.init();
     }
