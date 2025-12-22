@@ -1,8 +1,5 @@
-import BaseHandler from './BaseHandler.js';
-
-export default class SettingsHandler extends BaseHandler {
+export default class SettingsHandler {
     constructor() {
-        super();
 
         this.settingsBtn = document.getElementById('settings-btn');
         this.modal = document.getElementById('settings-modal');
@@ -16,7 +13,6 @@ export default class SettingsHandler extends BaseHandler {
         this.removeAvatarBtn = document.getElementById('remove-avatar-btn');
         this.triggerUploadBtn = document.getElementById('trigger-avatar-upload');
 
-        this.passwordForm = document.getElementById('settings-password-form');
         this.currentPassword = document.getElementById('current-password');
         this.newPassword = document.getElementById('new-password');
         this.confirmPassword = document.getElementById('confirm-password');

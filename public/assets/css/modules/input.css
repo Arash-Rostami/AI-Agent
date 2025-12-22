@@ -21,7 +21,6 @@
     align-items: center;
 }
 
-/* Message Input Textarea */
 .message-input {
     width: 100%;
     min-height: 56px;
@@ -49,7 +48,6 @@
     box-shadow: 0 0 0 2px rgba(168, 199, 250, 0.15);
 }
 
-/* Send Button */
 .send-button {
     position: absolute;
     right: 8px;
@@ -77,7 +75,6 @@
     transform: scale(1.05);
 }
 
-/* Attachment Button */
 .attachment-btn {
     position: absolute;
     left: 8px;
@@ -113,7 +110,6 @@
     transform: scale(0.8);
 }
 
-/* Microphone Button */
 .mic-btn {
     position: absolute;
     right: 56px;
@@ -159,7 +155,6 @@
     transform: scale(0.8);
 }
 
-/* File Preview */
 .file-preview {
     position: absolute;
     bottom: calc(100% + 15px);
@@ -205,7 +200,6 @@
     background: rgba(179, 38, 30, 0.1);
 }
 
-/* Audio Preview */
 .audio-preview {
     position: absolute;
     bottom: calc(100% + 15px);
@@ -246,7 +240,6 @@
     background: rgba(179, 38, 30, 0.1);
 }
 
-/* Kebab Menu */
 .kebab-menu-container {
     position: relative;
     display: flex;
@@ -356,7 +349,6 @@
     color: var(--error-color);
 }
 
-/* Service Selector */
 .service-selector {
     display: flex;
     justify-content: center;
@@ -387,7 +379,6 @@
 .service-selector select,
 .web-search-btn {
     height: 40px;
-    padding: 0 1.25rem;
     border-radius: 20px;
     background: var(--input-bg);
     border: 1px solid var(--border-color);
@@ -399,7 +390,19 @@
     font-weight: 500;
 }
 
+.service-selector select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 0 2.5rem 0 1.25rem;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%235f6368" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.2em;
+}
+
 .web-search-btn {
+    padding: 0 1.25rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -408,7 +411,11 @@
 .service-selector select:hover,
 .web-search-btn:hover {
     border-color: var(--primary-color);
-    background: var(--surface-color);
+    background-color: var(--surface-color);
+}
+
+[data-theme="dark"] .service-selector select {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23e3e3e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
 }
 
 .web-search-btn.active {

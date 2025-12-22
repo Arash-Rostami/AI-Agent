@@ -101,16 +101,12 @@ export default class UIHandler {
         }
     }
 
-    handleRestrictedUI(isRestrictedMode, isBmsMode, serviceSelect, webSearchBtn, logoutBtn) {
+    handleRestrictedUI(isRestrictedMode, isBmsMode, serviceSelect, webSearchBtn) {
         if (isBmsMode) {
             if (serviceSelect) serviceSelect.style.display = 'none';
             const label = document.querySelector('label[for="service-select"]');
             if (label) label.style.display = 'none';
             if (webSearchBtn) webSearchBtn.style.display = 'none';
-        }
-
-        if (isBmsMode || isRestrictedMode) {
-            if (logoutBtn) logoutBtn.style.display = 'none';
         }
     }
 

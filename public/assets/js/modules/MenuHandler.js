@@ -1,14 +1,9 @@
-import BaseHandler from './BaseHandler.js';
-
-export default class MenuHandler extends BaseHandler {
+export default class MenuHandler {
     constructor() {
-        super();
         this.menuBtn = document.getElementById('user-menu-btn');
         this.dropdown = document.getElementById('user-dropdown');
         this.headerAvatar = document.getElementById('header-avatar');
         this.headerIcon = document.getElementById('header-avatar-icon');
-        this.settingsBtn = document.getElementById('settings-btn');
-        this.logoutBtn = document.getElementById('logout-btn');
 
         this.init();
     }
@@ -55,22 +50,9 @@ export default class MenuHandler extends BaseHandler {
     }
 
     checkRestrictedMode() {
-        const isRestricted = document.cookie.split('; ').some(row => row.startsWith('restricted_ui='));
-
-        if (isRestricted) {
-            if (this.menuBtn) {
-                this.menuBtn.style.display = 'none';
-                this.menuBtn.style.pointerEvents = 'none';
-                this.menuBtn.style.cursor = 'default';
-            }
-            if (this.settingsBtn) {
-                this.settingsBtn.classList.add('restricted-hidden');
-            }
-            if (this.logoutBtn) {
-                this.logoutBtn.classList.add('restricted-hidden');
-            }
-            const dividers = this.dropdown ? this.dropdown.querySelectorAll('.dropdown-divider') : [];
-            dividers.forEach(el => el.style.display = 'none');
+        if (window.self !== window.top) {
+            const menuContainer = document.querySelector('.user-menu-container');
+            if (menuContainer) menuContainer.style.display = 'none';
         }
     }
 

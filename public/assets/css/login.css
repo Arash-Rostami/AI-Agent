@@ -1,3 +1,5 @@
+@import url("font.css");
+
 * {
     margin: 0;
     padding: 0;
@@ -25,6 +27,9 @@
     --radius-lg: 16px;
     --radius-pill: 999px;
     --transition: all 0.3s cubic-bezier(0.2, 0.0, 0, 1.0);
+
+    /* Light Mode: More visible shift between white and light blue-gray */
+    --bg-gradient: linear-gradient(-45deg, #f0f4f9, #dbe4f0, #ffffff, #f0f4f9);
 }
 
 [data-theme="dark"] {
@@ -41,19 +46,39 @@
     --button-bg: #1e1e1e;
     --button-border: #444746;
     --my-custom-color: #e3e3e3;
+
+    /* Dark Mode: Strictly Black and Dark Grays (No Blue Tint) */
+    --bg-gradient: linear-gradient(-45deg, #000000, #1f1f1f, #000000, #141414);
 }
 
 body {
     font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: var(--bg-color);
+
+    /* Apply the gradient background */
+    background: var(--bg-gradient);
+    background-size: 400% 400%;
+    animation: gradientBG 12s ease infinite;
+
     color: var(--text-color);
     line-height: 1.6;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
     -webkit-font-smoothing: antialiased;
+}
+
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 .container {
@@ -76,6 +101,9 @@ body {
     position: relative;
     border: 1px solid var(--border-color);
     animation: cardSlideIn 0.5s cubic-bezier(0.2, 0.0, 0, 1.0);
+
+    /* Ensure the card stands out against the animated background */
+    z-index: 10;
 }
 
 @keyframes cardSlideIn {
@@ -220,22 +248,25 @@ input:focus {
     top: 1.5rem;
     right: 1.5rem;
     width: 44px;
-    background: var(--surface-color);
-    border: 1px solid var(--button-border);
-    color: var(--text-secondary);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: var(--transition);
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--surface-color);
+    border: 1px solid var(--button-border);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 1.1rem;
     box-shadow: var(--shadow-lg);
+    z-index: 20;
 }
 
 .theme-toggle:hover {
     background: var(--primary-color);
-    color: #ffffff;
     border-color: var(--primary-color);
+    color: var(--bg-color);
     transform: translateY(-2px);
 }
 

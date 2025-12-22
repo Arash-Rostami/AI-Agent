@@ -158,7 +158,7 @@ export default class ChatHandler extends BaseHandler {
             });
             const data = await response.json();
             this.uiHandler.addMessage(data.response, 'ai');
-            this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn, this.logoutBtn);
+            this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn);
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
         } finally {
