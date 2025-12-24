@@ -30,6 +30,7 @@ export default class ChatHandler extends BaseHandler {
         this.setupEventListeners();
         void this.loadInitialGreeting();
         this.setupTextareaAutoResize();
+        this.uiHandler.initPromptSuggestions();
     }
 
     async handleClearChat() {

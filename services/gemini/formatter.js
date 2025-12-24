@@ -17,7 +17,7 @@ export function formatContents(conversationHistory, newMessage, fileData = null)
 }
 
 export function getAllowedTools(isRestrictedMode, useWebSearch, allTools, isBmsMode = false) {
-    const isWebSearchTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'getWebSearch');
+    const isWebSearchTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'getWebSearch' || fd.name === 'crawlWebPage');
     const isBmsTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'searchBmsDatabase');
 
     if (isBmsMode) {

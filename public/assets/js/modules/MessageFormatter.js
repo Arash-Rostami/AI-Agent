@@ -29,7 +29,7 @@ export default class MessageFormatter {
                 avatar.style.overflow = 'hidden';
 
                 const img = Object.assign(document.createElement('img'), {
-                    src: headerAvatar.src, alt: 'User Avatar',
+                    src: headerAvatar.src, alt: 'User Avatar', loading: 'lazy', decoding: 'async'
                 });
 
                 img.onerror = () => {

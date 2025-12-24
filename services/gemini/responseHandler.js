@@ -38,7 +38,7 @@ async function handleToolCall(
     console.log(`🤖 Gemini requested to call tool: ${toolName} with arguments:`, toolArgs);
 
     if (isRestrictedMode) {
-        const allowed = (toolName === 'searchBmsDatabase' && isBmsMode) || (toolName === 'getWebSearch' && useWebSearch);
+        const allowed = (toolName === 'searchBmsDatabase' && isBmsMode) || ((toolName === 'getWebSearch' || toolName === 'crawlWebPage') && useWebSearch);
 
         if (!allowed) {
             console.log(`🚫 Blocked tool call in restricted mode. isRestrictedMode=${isRestrictedMode}, useWebSearch=${useWebSearch}, toolName=${toolName}, isBmsMode=${isBmsMode}`);
@@ -57,6 +57,8 @@ async function handleToolCall(
         } else if (toolName === 'getWebSearch') {
             toolResult = await availableTools[toolName](toolArgs.query);
             if (toolResult?.sources) sources = toolResult.sources;
+        } else if (toolName === 'crawlWebPage') {
+            toolResult = await availableTools[toolName](toolArgs.url);
         } else if (toolName === 'getBusinessInfo') {
             toolResult = await availableTools[toolName]();
         } else if (toolName === 'searchBmsDatabase') {

@@ -31,7 +31,6 @@ export async function callGeminiAPI(
         const contents = formatter.formatContents(conversationHistory, message, fileData);
         const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode);
         let smartUrl = apiKey === GEMINI_API_KEY ? GEMINI_API_URL_PREMIUM : GEMINI_API_URL;
-        if (apiKey === GEMINI_API_KEY) console.log(smartUrl.split('/models/')[1]?.split(':')[0]);
 
         const requestBody = {
             contents,
@@ -39,9 +38,11 @@ export async function callGeminiAPI(
             tool_config: allowedTools ? {function_calling_config: {mode: "AUTO"}} : undefined,
             systemInstruction: {
                 parts: [{
-                    text: customSystemInstruction || (isRestrictedMode && !useWebSearch && !isBmsMode
-                        ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
-                        : (isBmsMode ? CX_BMS_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT))
+                    text: customSystemInstruction || (
+                        isRestrictedMode && !isBmsMode
+                            ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
+                            : (isBmsMode ? CX_BMS_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT)
+                    )
                 }]
             }
         };

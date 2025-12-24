@@ -75,6 +75,64 @@
     transform: scale(1.05);
 }
 
+.prompt-suggestions {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: scroll;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    z-index: 10;
+    max-width: 600px;
+    margin: 0 auto;
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    backdrop-filter: blur(5px);
+}
+
+.prompt-suggestions.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    pointer-events: none;
+}
+
+.prompt-suggestions::-webkit-scrollbar {
+    display: none;
+}
+
+.prompt-card {
+    background: rgba(var(--input-bg-rgb), 0.8);
+    padding: 10px 15px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+}
+
+.prompt-card:hover {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow);
+}
+
 .attachment-btn {
     position: absolute;
     left: 8px;
@@ -398,7 +456,6 @@
     width: 48px;
     background: var(--primary-color);
     color: var(--bg-color);
-    /*border-color: var(--primary-color);*/
     box-shadow: 0 8px 16px rgba(11, 87, 208, 0.3);
 }
 

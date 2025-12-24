@@ -15,10 +15,77 @@ export default class UIHandler {
         this.attachmentBtn = document.getElementById('attachment-btn');
         this.micBtn = document.getElementById('mic-btn');
         this.loader = document.getElementById('initial-loader');
+        this.promptSuggestions = document.getElementById('prompt-suggestions');
 
         this.selectedFile = null;
         this.selectedAudioBlob = null;
         this.isTyping = false;
+
+        this.prompts = [
+            { category: 'web_search', text: 'Search for the latest AI news.' },
+            { category: 'web_search', text: 'What is the capital of France?' },
+            { category: 'web_crawl', text: 'Crawl and summarize this page: [URL]' },
+            { category: 'weather', text: 'What\'s the weather like in [city]?' },
+            { category: 'weather', text: 'What\'s the temperature today?' }
+        ];
+
+    }
+
+    initPromptSuggestions() {
+        if (window.self !== window.top) return;
+
+        this.messageInput.addEventListener('mouseenter', () => this.showPromptSuggestions());
+        this.messageInput.addEventListener('mouseleave', () => this.hidePromptSuggestionsWithDelay());
+        this.messageInput.addEventListener('input', () => this.handlePromptSuggestionsVisibility());
+        this.promptSuggestions.addEventListener('mouseenter', () => this.showPromptSuggestions());
+        this.promptSuggestions.addEventListener('mouseleave', () => this.hidePromptSuggestionsWithDelay());
+
+        this.populatePromptSuggestions();
+    }
+
+    handlePromptSuggestionsVisibility() {
+        if (this.getMessageInputValue().length > 3) {
+            this.promptSuggestions.classList.add('hidden');
+        } else {
+            this.showPromptSuggestions();
+        }
+    }
+
+    populatePromptSuggestions() {
+        this.promptSuggestions.innerHTML = '';
+        this.prompts.forEach(prompt => {
+            const promptCard = document.createElement('div');
+            promptCard.className = 'prompt-card';
+            promptCard.textContent = prompt.text;
+            promptCard.dataset.prompt = prompt.text;
+            promptCard.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectPrompt(prompt.text);
+            });
+            this.promptSuggestions.appendChild(promptCard);
+        });
+    }
+
+    showPromptSuggestions() {
+        if (this.getMessageInputValue().length <= 3) {
+            this.promptSuggestions.classList.remove('hidden');
+            if (this.hideTimer) clearTimeout(this.hideTimer);
+        }
+    }
+
+    hidePromptSuggestionsWithDelay() {
+        if (this.hideTimer) clearTimeout(this.hideTimer);
+        this.hideTimer = setTimeout(() => {
+            if (!this.promptSuggestions.matches(':hover') && !this.messageInput.matches(':hover')) {
+                this.promptSuggestions.classList.add('hidden');
+            }
+        }, 50);
+    }
+
+    selectPrompt(promptText) {
+        this.messageInput.value = promptText;
+        this.messageInput.focus();
+        this.promptSuggestions.classList.add('hidden');
     }
 
     addMessage(content, sender, isError = false, sources = [], fileName = null) {
@@ -125,6 +192,7 @@ export default class UIHandler {
     resetMessageInput() {
         this.messageInput.value = '';
         this.messageInput.style.height = 'auto';
+        this.resetInputFade();
     }
 
     resetUI() {
@@ -205,8 +273,12 @@ export default class UIHandler {
         if (!isGemini && isWebSearchActive) toggleWebSearchCallback();
 
         const supportsAttachments = ['gemini', 'gpt-4o'].includes(service);
-        this.attachmentBtn.style.display = supportsAttachments ? 'inline-block' : 'none';
-        if (!supportsAttachments) this.clearFileSelection();
+        if (supportsAttachments) {
+            this.attachmentBtn.style.display = 'inline-block';
+        } else {
+            this.attachmentBtn.style.display = 'none';
+            this.clearFileSelection();
+        }
     }
 
     updateStatus(text, type) {

@@ -59,7 +59,12 @@
             <div class="user-menu-container">
                 <button class="user-menu-btn" id="user-menu-btn" title="User Menu">
                     <i id="header-avatar-icon" class="fas fa-user"></i>
-                    <img id="header-avatar" class="header-avatar hidden" alt="User Avatar" src="">
+                    <img id="header-avatar"
+                         class="header-avatar hidden"
+                         alt="User Avatar"
+                         loading="lazy"
+                         decoding="async"
+                         src="">
                 </button>
                 <div id="user-dropdown" class="user-dropdown hidden">
                     <button id="settings-btn" class="dropdown-item">
@@ -209,20 +214,23 @@
                         <i class="fas fa-microphone"></i>
                     </button>
 
-                    <!-- Message Input -->
-                    <textarea
-                            class="message-input"
-                            id="message-input"
-                            placeholder="Type your message..."
-                            rows="1"
-                            autocomplete="off"
-                    ></textarea>
+                <!-- Message Input -->
+                <textarea
+                        class="message-input"
+                        id="message-input"
+                        placeholder="Type your message..."
+                        rows="1"
+                        autocomplete="off"
+                ></textarea>
 
-                    <!-- Send Button -->
-                    <button type="submit" class="send-button" id="send-button" title="Submit Prompt">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
+                <!-- Prompt Suggestions -->
+                <div id="prompt-suggestions" class="prompt-suggestions hidden"></div>
+
+                <!-- Send Button -->
+                <button type="submit" class="send-button" id="send-button" title="Submit Prompt">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
 
                 <!-- Kebab Menu -->
                 <div class="kebab-menu-container">
