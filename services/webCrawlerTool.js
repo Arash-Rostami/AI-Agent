@@ -2,6 +2,7 @@ import { CheerioCrawler, Configuration } from 'crawlee';
 import * as cheerio from 'cheerio';
 import path from 'path';
 import fs from 'fs';
+import { CRAWLER_STORAGE_DIR } from '../config/index.js';
 
 
 export async function crawlWebPage(url) {
@@ -12,13 +13,13 @@ export async function crawlWebPage(url) {
     let pageTitle = '';
     let pageContent = '';
 
-    // Create a unique storage directory inside ./data/crawler
+    // Create a unique storage directory inside the configured crawler storage directory
     const uniqueId = Date.now().toString() + Math.random().toString(36).substring(7);
-    const storagePath = path.resolve('./data/crawler', uniqueId);
+    const storagePath = path.join(CRAWLER_STORAGE_DIR, uniqueId);
 
-    // Ensure the data directory exists
-    if (!fs.existsSync(path.resolve('./data'))) {
-        fs.mkdirSync(path.resolve('./data'));
+    // Ensure the base crawler storage directory exists
+    if (!fs.existsSync(CRAWLER_STORAGE_DIR)) {
+        fs.mkdirSync(CRAWLER_STORAGE_DIR, { recursive: true });
     }
 
     const config = new Configuration({
