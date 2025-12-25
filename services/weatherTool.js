@@ -1,17 +1,19 @@
 import axios from 'axios';
-import { WEATHER_API_KEY } from '../config/index.js';
+import {WEATHER_API_KEY} from '../config/index.js';
+
+
+const weatherRequest = (endpoint, params = {}) =>
+    axios.get(`https://api.openweathermap.org/data/2.5/${endpoint}`, {
+        params: {...params, appid: WEATHER_API_KEY}
+    });
 
 async function getCoordinates(location) {
     try {
-        const response = await axios.get(
-            `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${WEATHER_API_KEY}`
-        );
-        if (response.data.cod && response.data.cod !== 200) {
-             throw new Error(response.data.message);
-        }
-        return response.data.coord; // returns { lat, lon }
+        const {data} = await weatherRequest('weather', {q: location});
+        if (data.cod && data.cod !== 200) throw new Error(data.message);
+        return data.coord;
     } catch (error) {
-        if (error.response && error.response.status === 404) {
+        if (error.response?.status === 404) {
             throw new Error(`Could not find coordinates for "${location}".`);
         }
         throw error;
@@ -19,16 +21,13 @@ async function getCoordinates(location) {
 }
 
 export async function getCurrentWeather(location, unit = 'celsius') {
-    if (!location) {
-        throw new Error('Location is required to get weather information.');
-    }
+    if (!location) throw new Error('Location is required to get weather information.');
 
     try {
-        const unitsParam = unit === 'celsius' ? 'metric' : 'imperial';
-        const response = await axios.get(
-            `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${WEATHER_API_KEY}&units=${unitsParam}`
-        );
-        const data = response.data;
+        const {data} = await weatherRequest('weather', {
+            q: location,
+            units: unit === 'celsius' ? 'metric' : 'imperial'
+        });
 
         if (data.cod && data.cod !== 200) {
             throw new Error(data.message || `Error fetching weather for ${location}.`);
@@ -45,7 +44,7 @@ export async function getCurrentWeather(location, unit = 'celsius') {
         };
     } catch (error) {
         console.error('❌ Error fetching weather:', error.response?.data || error.message);
-        if (error.response && error.response.status === 404) {
+        if (error.response?.status === 404) {
             throw new Error(`Could not find weather data for "${location}". Please check the city name.`);
         }
         throw new Error(`Failed to retrieve weather for ${location}. Details: ${error.message}`);
@@ -53,31 +52,23 @@ export async function getCurrentWeather(location, unit = 'celsius') {
 }
 
 export async function getWeatherForecast(location, unit = 'celsius') {
-    if (!location) {
-        throw new Error('Location is required to get weather forecast.');
-    }
+    if (!location) throw new Error('Location is required to get weather forecast.');
 
     try {
-        const unitsParam = unit === 'celsius' ? 'metric' : 'imperial';
-        const response = await axios.get(
-            `https://api.openweathermap.org/data/2.5/forecast?q=${location}&appid=${WEATHER_API_KEY}&units=${unitsParam}`
-        );
-        const data = response.data;
+        const {data} = await weatherRequest('forecast', {
+            q: location,
+            units: unit === 'celsius' ? 'metric' : 'imperial'
+        });
 
-        if (data.cod && data.cod !== "200") { // API returns string "200" for forecast
-            throw new Error(data.message || `Error fetching forecast for ${location}.`);
-        }
+        if (data.cod && data.cod !== "200") throw new Error(data.message || `Error fetching forecast for ${location}.`);
 
-        // Filter for one reading per day (approx) or return a summarized list
-        // Returning the first 5 days (40 3-hour chunks total, usually)
-        // Let's return a simplified daily summary to save tokens
         const dailyForecasts = {};
 
         data.list.forEach(item => {
             const date = item.dt_txt.split(' ')[0];
             if (!dailyForecasts[date]) {
                 dailyForecasts[date] = {
-                    date: date,
+                    date,
                     temp_min: item.main.temp_min,
                     temp_max: item.main.temp_max,
                     conditions: item.weather[0].description
@@ -90,7 +81,7 @@ export async function getWeatherForecast(location, unit = 'celsius') {
 
         return {
             location: data.city.name,
-            forecast: Object.values(dailyForecasts).slice(0, 5) // Return first 5 days
+            forecast: Object.values(dailyForecasts).slice(0, 7)
         };
 
     } catch (error) {
@@ -100,37 +91,23 @@ export async function getWeatherForecast(location, unit = 'celsius') {
 }
 
 export async function getAirQuality(location) {
-    if (!location) {
-        throw new Error('Location is required to get air quality.');
-    }
+    if (!location) throw new Error('Location is required to get air quality.');
 
     try {
-        const { lat, lon } = await getCoordinates(location);
+        const {lat, lon} = await getCoordinates(location);
+        const {data} = await weatherRequest('air_pollution', {lat, lon});
 
-        const response = await axios.get(
-            `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${WEATHER_API_KEY}`
-        );
-        const data = response.data;
+        if (!data.list?.length) throw new Error(`No air quality data found for ${location}.`);
 
-        if (!data.list || data.list.length === 0) {
-            throw new Error(`No air quality data found for ${location}.`);
-        }
 
-        const aqiMap = {
-            1: "Good",
-            2: "Fair",
-            3: "Moderate",
-            4: "Poor",
-            5: "Very Poor"
-        };
-
+        const aqiMap = {1: "Good", 2: "Fair", 3: "Moderate", 4: "Poor", 5: "Very Poor"};
         const result = data.list[0];
 
         return {
-            location: location,
+            location,
             aqi: result.main.aqi,
             quality: aqiMap[result.main.aqi] || "Unknown",
-            components: result.components // co, no, no2, o3, so2, pm2_5, pm10, nh3
+            components: result.components
         };
 
     } catch (error) {

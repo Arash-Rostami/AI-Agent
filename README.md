@@ -12,18 +12,22 @@ Built to adapt to any task using the best-in-class models from leading providers
 *   **OpenRouter & Groq:** High-speed inference using **Grok 4.1 Fast** and **Qwen 2.5** for cost-effective scaling.
 *   **Context Aware:** Maintains deep conversation history with intelligent summarization and "sticky" sessions for seamless continuity.
 
-### 2. Live Web Intelligence
-Breaking the knowledge cutoff with Gemini's Grounding.
+### 2. Live Web Intelligence & Tools
+Breaking the knowledge cutoff with advanced tools and grounding.
 *   **Real-Time Search:** Accesses live web data for up-to-the-minute answers on news, markets, and events.
+*   **Web Crawling:** Reads and summarizes content from any specific URL provided by the user (e.g., "Summarize https://example.com").
+*   **Time Awareness:** Instantly provides current time across global timezones (e.g., "What time is it in Tokyo?").
+*   **Weather Intelligence:**
+    *   **Current Conditions:** Real-time weather updates for any city.
+    *   **5-Day Forecast:** Planning-focused weather summaries.
+    *   **Air Quality:** Detailed pollution metrics (AQI) for health-conscious decision-making.
 *   **Verified Citations:** Every claim is backed by clickable source links, ensuring trust and traceability.
-*   **Smart Synthesis:** Reads multiple sources to construct a comprehensive answer rather than just listing links.
 
-### 3. Enterprise Integrations & Tools
+### 3. Enterprise Integrations
 More than just a chatbot—it's a business tool.
 *   **RAG (Retrieval-Augmented Generation):** Ingests internal policy documents and uses **Vector Search** to answer employee queries with 100% accuracy.
 *   **BMS Connector:** Securely queries your **Business Management System (BMS)** to retrieve real-time data on contracts, shipments, and payments (Restricted Access).
 *   **File Analysis:** Upload Images or PDFs for instant analysis, OCR, and data extraction.
-*   **Utilities:** Built-in tools for **Weather Forecasting**, **Time/Date** awareness.
 
 ### 4. Multimodal Audio & Visualization
 Interact naturally with voice.
