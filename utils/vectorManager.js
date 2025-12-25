@@ -3,35 +3,53 @@ import path from 'path';
 import Vector from '../models/Vector.js';
 import {getEmbeddings} from '../services/arvancloud/embeddings.js';
 import {ragDirectory} from '../config/index.js';
+import {Worker} from 'worker_threads';
+import {fileURLToPath} from 'url';
+import crypto from 'crypto';
 
+// Resolve directory for worker script
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const workerPath = path.join(__dirname, 'searchWorker.js');
 
-let vectorCache = [];
+let searchWorker = null;
+const requestMap = new Map();
 
-function cosineSimilarity(vecA, vecB) {
-    if (vecA.length !== vecB.length) return 0;
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-    for (let i = 0; i < vecA.length; i++) {
-        dotProduct += vecA[i] * vecB[i];
-        normA += vecA[i] * vecA[i];
-        normB += vecB[i] * vecB[i];
+function getWorker() {
+    if (!searchWorker) {
+        searchWorker = new Worker(workerPath);
+        searchWorker.on('message', (msg) => {
+            if (msg.type === 'init_done') {
+                console.log(`🧠 Worker loaded ${msg.count} document chunks.`);
+            } else if (msg.requestId) {
+                const resolver = requestMap.get(msg.requestId);
+                if (resolver) {
+                    if (msg.error) resolver.reject(new Error(msg.error));
+                    else resolver.resolve(msg.results);
+                    requestMap.delete(msg.requestId);
+                }
+            }
+        });
+        searchWorker.on('error', (err) => {
+            console.error('❌ Search Worker Error:', err);
+        });
     }
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    return searchWorker;
 }
 
 export async function initializeVectors() {
     try {
         const stored = await Vector.find({});
-        vectorCache = stored.map(doc => ({
-            id: doc._id,
+        const vectorCache = stored.map(doc => ({
+            id: doc._id.toString(), // Convert ObjectId to string for worker safety
             text: doc.text,
             vector: doc.vector,
             fileName: doc.fileName
         }));
-        console.log(`🧠 Loaded ${vectorCache.length} document chunks into memory.`);
+
+        getWorker().postMessage({ type: 'init', data: vectorCache });
+
     } catch (error) {
-        console.error('❌ Failed to initialize vector cache:', error);
+        console.error('❌ Failed to initialize vectors:', error);
     }
 }
 
@@ -45,13 +63,21 @@ function chunkText(text, maxChars = 2000) {
 
 export async function syncDocuments() {
     await Vector.deleteMany({});
-    vectorCache = [];
+
+    // Clear worker cache by sending empty init or handle re-init at end
+    // We will just re-init at the end
+
     console.log('🗑️ Cleared existing vector.');
 
     if (!fs.existsSync(ragDirectory)) throw new Error('Documents directory not found.');
 
     const files = fs.readdirSync(ragDirectory).filter(f => f.endsWith('.txt') || f.endsWith('.md'));
     let totalChunks = 0;
+
+    // Use a temp local cache to batch send to worker if needed,
+    // or just re-read from DB like initializeVectors does.
+    // Given the architecture, syncDocuments writes to DB.
+    // So we just call initializeVectors() at the end to reload the worker.
 
     for (const file of files) {
         const filePath = path.join(ragDirectory, file);
@@ -64,18 +90,11 @@ export async function syncDocuments() {
             try {
                 const vector = await getEmbeddings(chunk);
 
-                const doc = await Vector.create({
+                await Vector.create({
                     fileName: file,
                     chunkId: `${file}_${i}`,
                     text: chunk,
                     vector: vector
-                });
-
-                vectorCache.push({
-                    id: doc._id,
-                    text: doc.text,
-                    vector: doc.vector,
-                    fileName: doc.fileName
                 });
 
                 process.stdout.write(`✅ Processed ${file} chunk ${i + 1}/${chunks.length}\r`);
@@ -86,34 +105,40 @@ export async function syncDocuments() {
         totalChunks += chunks.length;
     }
     console.log(`\n✨ Sync complete. processed ${files.length} files into ${totalChunks} chunks.`);
+
+    // Reload worker
+    await initializeVectors();
+
     return {filesProcessed: files.length, totalChunks};
 }
 
 export async function searchVectors(query, topK = 3, filterFileName = null) {
     if (!query) return [];
-    if (vectorCache.length === 0) {
-        console.warn('⚠️ Vector cache is empty during search.');
-        return [];
-    }
 
     try {
         const queryVector = await getEmbeddings(query);
+        const requestId = crypto.randomUUID();
 
-        if (vectorCache.length > 0) {
-            const dimQuery = queryVector.length;
-            const dimCache = vectorCache[0].vector.length;
-            if (dimQuery !== dimCache) console.warn(`⚠️ DIMENSION MISMATCH: Query vector length (${dimQuery}) does not match cached vector length (${dimCache}). Similarity will be 0.`);
-        }
+        return new Promise((resolve, reject) => {
+            requestMap.set(requestId, { resolve, reject });
 
-        const scored = vectorCache
-            .filter(item => !filterFileName || item.fileName === filterFileName)
-            .map(item => ({
-                ...item, score: cosineSimilarity(queryVector, item.vector)
-            }));
-        scored.sort((a, b) => b.score - a.score);
-        const topResults = scored.slice(0, topK);
+            // Timeout to prevent hanging promises
+            setTimeout(() => {
+                if (requestMap.has(requestId)) {
+                    requestMap.delete(requestId);
+                    reject(new Error('Vector search timed out'));
+                }
+            }, 5000);
 
-        return topResults.filter(item => item.score > 0.15);
+            getWorker().postMessage({
+                type: 'search',
+                queryVector,
+                topK,
+                filterFileName,
+                requestId
+            });
+        });
+
     } catch (error) {
         console.error('❌ Vector search error:', error);
         return [];

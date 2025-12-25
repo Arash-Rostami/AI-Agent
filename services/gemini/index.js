@@ -1,4 +1,5 @@
 import axios from "axios";
+import https from "https";
 import {
     CX_BMS_INSTRUCTION,
     GEMINI_API_KEY,
@@ -11,6 +12,8 @@ import * as formatter from './formatter.js';
 import * as responseHandler from './responseHandler.js';
 import * as errorHandler from './errorHandler.js';
 import * as permissions from './permissions.js';
+
+const keepAliveAgent = new https.Agent({ keepAlive: true });
 
 export async function callGeminiAPI(
     message,
@@ -49,7 +52,8 @@ export async function callGeminiAPI(
 
         const response = await axios.post(`${smartUrl}?key=${apiKey}`, requestBody, {
             headers: {'Content-Type': 'application/json'},
-            timeout: 60000
+            timeout: 60000,
+            httpsAgent: keepAliveAgent
         });
 
         return await responseHandler.handle(response.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
