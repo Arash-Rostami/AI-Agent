@@ -1,5 +1,5 @@
-export const webCrawlerDefinition = {
-    function_declarations: [
+export const webCrawlerToolDefinition = {
+    functionDeclarations: [
         {
             name: "crawlWebPage",
             description: "Crawls a specific URL to extract its main text content. Use this when you need deep information from a specific website or when a search result snippet is not enough.",
