@@ -26,7 +26,9 @@ export default class UIHandler {
             { category: 'web_search', text: 'What is the capital of France?' },
             { category: 'web_crawl', text: 'Crawl and summarize this page: [URL]' },
             { category: 'weather', text: 'What\'s the weather like in [city]?' },
-            { category: 'weather', text: 'What\'s the temperature today?' }
+            { category: 'weather', text: 'Forecast for [city] for the next 5 days.' },
+            { category: 'weather', text: 'Check air quality in [city].' },
+            { category: 'time', text: 'What time is it in [city]?' }
         ];
 
     }
