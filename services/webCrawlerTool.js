@@ -11,7 +11,19 @@ export async function crawlWebPage(url) {
     let pageContent = '';
 
     const crawler = new CheerioCrawler({
-        maxRequestsPerCrawl: 1, 
+        maxRequestsPerCrawl: 1,
+        maxRequestRetries: 1,
+        requestHandlerTimeoutSecs: 15,
+        ignoreSslErrors: true,
+        additionalMimeTypes: ['text/html', 'application/xhtml+xml'],
+        preNavigationHooks: [
+            async ({ request, page, session }) => {
+                request.headers = {
+                    ...request.headers,
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                };
+            }
+        ],
         requestHandler: async ({ $, request }) => {
             pageTitle = $('title').text().trim();
             
@@ -32,11 +44,13 @@ export async function crawlWebPage(url) {
     try {
         await crawler.run([url]);
         
+        // If content is empty or crawler got blocked (0 finished requests implies it didn't even parse)
         if (!pageContent || pageContent.length < 50) {
+            // Check if we suspect a block or simple empty content
             return {
                 url,
-                title: pageTitle || 'Unknown Title',
-                content: "Warning: The crawler successfully accessed the URL but found very little text. This site may be a Single Page Application (SPA) requiring JavaScript, which is not supported by this tool. The AI should inform the user about this technical limitation."
+                title: pageTitle || 'Access Issue',
+                content: "Warning: The crawler could not extract content. The site might be blocking automated access (WAF), requires JavaScript (SPA), or refused the connection. Suggest the user to copy-paste the content."
             };
         }
 
