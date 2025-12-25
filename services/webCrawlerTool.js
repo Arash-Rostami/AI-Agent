@@ -1,5 +1,7 @@
-import { CheerioCrawler } from 'crawlee';
+import { CheerioCrawler, Configuration } from 'crawlee';
 import * as cheerio from 'cheerio';
+import path from 'path';
+import fs from 'fs';
 
 
 export async function crawlWebPage(url) {
@@ -10,8 +12,25 @@ export async function crawlWebPage(url) {
     let pageTitle = '';
     let pageContent = '';
 
+    // Create a unique storage directory inside ./data/crawler
+    const uniqueId = Date.now().toString() + Math.random().toString(36).substring(7);
+    const storagePath = path.resolve('./data/crawler', uniqueId);
+
+    // Ensure the data directory exists
+    if (!fs.existsSync(path.resolve('./data'))) {
+        fs.mkdirSync(path.resolve('./data'));
+    }
+
+    const config = new Configuration({
+        persistStorage: false,
+        storageClientOptions: {
+            storageDir: storagePath,
+        },
+        purgeOnStart: true,
+    });
+
     const crawler = new CheerioCrawler({
-        maxRequestsPerCrawl: 1,
+        maxRequestsPerCrawl: 2,
         maxRequestRetries: 1,
         requestHandlerTimeoutSecs: 15,
         ignoreSslErrors: true,
@@ -39,11 +58,20 @@ export async function crawlWebPage(url) {
         failedRequestHandler: ({ request }) => {
             console.error(`❌ Crawling failed for ${request.url}`);
         },
-    });
+    }, config);
 
     try {
         await crawler.run([url]);
         
+        // Clean up storage after run
+        try {
+            if (fs.existsSync(storagePath)) {
+                fs.rmSync(storagePath, { recursive: true, force: true });
+            }
+        } catch (cleanupError) {
+            console.warn(`Warning: Failed to clean up crawler storage at ${storagePath}:`, cleanupError.message);
+        }
+
         // If content is empty or crawler got blocked (0 finished requests implies it didn't even parse)
         if (!pageContent || pageContent.length < 50) {
             // Check if we suspect a block or simple empty content
