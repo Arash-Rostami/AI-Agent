@@ -72,6 +72,10 @@ async function handleToolCall(
     }
 
     console.log(`✅ Tool "${toolName}" executed successfully.`);
+    if (toolResult && typeof toolResult === 'object') {
+        const preview = JSON.stringify(toolResult).substring(0, 200);
+        console.log(`📄 Tool Result Preview: ${preview}...`);
+    }
 
     const newConversationHistory = [
         ...currentConversationHistory,
@@ -80,7 +84,15 @@ async function handleToolCall(
         {role: 'tool_response', name: toolName, content: toolResult}
     ];
 
-    const nextResponse = await callGeminiAPI("continue", newConversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
+    const nextResponse = await callGeminiAPI(
+        "Tool execution complete. Please analyze the tool_response provided above and answer the user's original request.",
+        newConversationHistory,
+        apiKey,
+        isRestrictedMode,
+        useWebSearch,
+        keyIdentifier,
+        isBmsMode
+    );
 
     return {
         text: nextResponse.text,
