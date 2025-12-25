@@ -1,4 +1,4 @@
-import {availableTools} from '../../tools/toolDefinitions.js';
+import {executeTool, safeParseArgs} from './toolHandler.js';
 import {callGeminiAPI} from './index.js';
 
 export async function handle(
@@ -32,10 +32,12 @@ async function handleToolCall(
     keyIdentifier,
     isBmsMode = false
 ) {
-    const {name: toolName, args: toolArgs} = functionCall;
+    const {name: toolName, args: rawArgs} = functionCall;
     let sources = [];
+    let toolArgs;
+    let toolResult;
 
-    console.log(`🤖 Gemini requested to call tool: ${toolName} with arguments:`, toolArgs);
+    console.log(`🤖 Gemini requested to call tool: ${toolName} with arguments:`, rawArgs);
 
     if (isRestrictedMode) {
         const allowed = (toolName === 'searchBmsDatabase' && isBmsMode) || ((toolName === 'getWebSearch' || toolName === 'crawlWebPage') && useWebSearch);
@@ -46,30 +48,15 @@ async function handleToolCall(
         }
     }
 
-    if (!availableTools[toolName]) {
-        throw new Error(`Tool "${toolName}" declared by Gemini is not found in your EXECUTING_TOOLS mapping.`);
-    }
-
-    let toolResult;
     try {
-        if (toolName === 'getCurrentWeather') {
-            toolResult = await availableTools[toolName](toolArgs.location, toolArgs.unit);
-        } else if (toolName === 'getWebSearch') {
-            toolResult = await availableTools[toolName](toolArgs.query);
-            if (toolResult?.sources) sources = toolResult.sources;
-        } else if (toolName === 'crawlWebPage') {
-            toolResult = await availableTools[toolName](toolArgs.url);
-        } else if (toolName === 'getBusinessInfo') {
-            toolResult = await availableTools[toolName]();
-        } else if (toolName === 'searchBmsDatabase') {
-            toolResult = await availableTools[toolName](toolArgs.query, toolArgs.entity_type);
-        } else {
-            toolResult = await availableTools[toolName](toolArgs);
-        }
+        toolArgs = safeParseArgs(rawArgs);
+        toolResult = await executeTool(toolName, toolArgs);
     } catch (error) {
         console.error(`❌ Tool "${toolName}" execution failed:`, error.message);
         toolResult = {error: `Error executing tool: ${error.message}`};
     }
+
+    if (toolName === 'getWebSearch' && toolResult?.sources) sources = toolResult.sources;
 
     console.log(`✅ Tool "${toolName}" executed successfully.`);
     if (toolResult && typeof toolResult === 'object') {
@@ -84,15 +71,24 @@ async function handleToolCall(
         {role: 'tool_response', name: toolName, content: toolResult}
     ];
 
-    const nextResponse = await callGeminiAPI(
-        "Tool execution complete. Please analyze the tool_response provided above and answer the user's original request.",
-        newConversationHistory,
-        apiKey,
-        isRestrictedMode,
-        useWebSearch,
-        keyIdentifier,
-        isBmsMode
-    );
+    let nextResponse = {text: '', sources: []};
+    try {
+        nextResponse = await callGeminiAPI(
+            "Tool execution complete. Please analyze the tool_response provided above and answer the user's original request.",
+            newConversationHistory,
+            apiKey,
+            isRestrictedMode,
+            useWebSearch,
+            keyIdentifier,
+            isBmsMode
+        ) || {text: '', sources: []};
+    } catch (e) {
+        console.error('❌ callGeminiAPI failed:', e?.message ?? e);
+        return {
+            text: "I executed the requested tool but failed to produce a follow-up explanation. Please try again.",
+            sources: sources
+        };
+    }
 
     return {
         text: nextResponse.text,
