@@ -32,11 +32,11 @@ export async function crawlWebPage(url) {
     try {
         await crawler.run([url]);
         
-        if (!pageContent) {
+        if (!pageContent || pageContent.length < 50) {
             return {
                 url,
-                title: pageTitle,
-                content: "Could not extract meaningful content from this page. It might be protected or require JavaScript rendering."
+                title: pageTitle || 'Unknown Title',
+                content: "Warning: The crawler successfully accessed the URL but found very little text. This site may be a Single Page Application (SPA) requiring JavaScript, which is not supported by this tool. The AI should inform the user about this technical limitation."
             };
         }
 
