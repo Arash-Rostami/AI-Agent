@@ -54,6 +54,12 @@ async function handleToolCall(
     try {
         if (toolName === 'getCurrentWeather') {
             toolResult = await availableTools[toolName](toolArgs.location, toolArgs.unit);
+        } else if (toolName === 'getWeatherForecast') {
+            toolResult = await availableTools[toolName](toolArgs.location, toolArgs.unit);
+        } else if (toolName === 'getAirQuality') {
+            toolResult = await availableTools[toolName](toolArgs.location);
+        } else if (toolName === 'getCurrentTime') {
+            toolResult = await availableTools[toolName](toolArgs.timezone);
         } else if (toolName === 'getWebSearch') {
             toolResult = await availableTools[toolName](toolArgs.query);
             if (toolResult?.sources) sources = toolResult.sources;

@@ -12,12 +12,45 @@ export const weatherToolDefinition = {
                     },
                     unit: {
                         type: "STRING",
-                        description: "The unit of temperature (e.g., 'celsius' or 'fahrenheit'). Defaults to 'celsius'. You do not need to ask about this. Always search the default one unless asked otherwise.",
+                        description: "The unit of temperature (e.g., 'celsius' or 'fahrenheit'). Defaults to 'celsius'.",
                         enum: ["celsius", "fahrenheit"],
                     },
                 },
                 required: ["location"],
             },
         },
+        {
+            name: "getWeatherForecast",
+            description: "Gets the 5-day weather forecast for a specified location. Use this when the user asks for future weather.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    location: {
+                        type: "STRING",
+                        description: "The city or location to get the forecast for.",
+                    },
+                    unit: {
+                        type: "STRING",
+                        description: "The unit of temperature (e.g., 'celsius' or 'fahrenheit'). Defaults to 'celsius'.",
+                        enum: ["celsius", "fahrenheit"],
+                    },
+                },
+                required: ["location"],
+            },
+        },
+        {
+            name: "getAirQuality",
+            description: "Gets the current air quality index (AQI) and pollution details for a specified location.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    location: {
+                        type: "STRING",
+                        description: "The city or location to get air quality for.",
+                    },
+                },
+                required: ["location"],
+            },
+        }
     ],
 };
