@@ -6,36 +6,73 @@ import {ConversationManager} from '../utils/conversationManager.js';
 export const getInteraction = async (req, res) => {
     try {
         const {userId} = req;
+        const {cursor, limit = 10} = req.query;
+
         if (!userId) return res.status(401).json({error: 'Unauthorized'});
 
-        const logs = await InteractionLog.find({userId})
-            .sort({createdAt: -1})
-            .select('sessionId createdAt messages');
+        const queryLimit = parseInt(limit, 10);
+        const matchStage = {
+            userId,
+            'messages.role': 'user' // Only fetch sessions that have user messages
+        };
 
-        const validLogs = [];
-        const idsToDelete = [];
+        if (cursor) {
+            matchStage.createdAt = {$lt: new Date(cursor)};
+        }
 
-        for (const log of logs) {
-            const userMsg = log.messages.find(m => m.role === 'user');
-            if (userMsg) {
-                validLogs.push({
-                    sessionId: log.sessionId,
-                    createdAt: log.createdAt,
-                    preview: userMsg.parts[0].text.length > 50
-                        ? userMsg.parts[0].text.substring(0, 50) + '...'
-                        : userMsg.parts[0].text
-                });
-            } else {
-                idsToDelete.push(log._id);
+        const logs = await InteractionLog.aggregate([
+            {$match: matchStage},
+            {$sort: {createdAt: -1}},
+            {$limit: queryLimit},
+            {
+                $project: {
+                    sessionId: 1,
+                    createdAt: 1,
+                    // Filter messages to get only user messages
+                    userMessages: {
+                        $filter: {
+                            input: "$messages",
+                            as: "msg",
+                            cond: {$eq: ["$$msg.role", "user"]}
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    sessionId: 1,
+                    createdAt: 1,
+                    // Extract the first user message object
+                    firstUserMsg: { $arrayElemAt: ["$userMessages", 0] }
+                }
+            },
+            {
+                $project: {
+                    sessionId: 1,
+                    createdAt: 1,
+                    // Extract the text from the first part of the first user message and substring it
+                    preview: {
+                        $substr: [
+                            { $arrayElemAt: ["$firstUserMsg.parts.text", 0] },
+                            0,
+                            50
+                        ]
+                    }
+                }
             }
-        }
+        ]);
 
-        if (idsToDelete.length > 0) {
-            InteractionLog.deleteMany({_id: {$in: idsToDelete}})
-                .catch(e => console.error('Cleanup error:', e));
-        }
+        const nextCursor = logs.length === queryLimit ? logs[logs.length - 1].createdAt : null;
 
-        res.json({history: validLogs});
+        res.json({
+            history: logs.map(log => ({
+                sessionId: log.sessionId,
+                createdAt: log.createdAt,
+                preview: log.preview ? (log.preview.length === 50 ? log.preview + '...' : log.preview) : ''
+            })),
+            nextCursor
+        });
+
     } catch (error) {
         console.error('Fetch history error:', error);
         res.status(500).json({error: 'Failed to fetch history'});
