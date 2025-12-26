@@ -18,6 +18,14 @@ export const getInteraction = async (req, res) => {
 
         if (cursor) {
             matchStage.createdAt = {$lt: new Date(cursor)};
+        } else {
+            // Automatic Deletion: On initial load (no cursor), clean up empty sessions.
+            // This restores the requested feature to prevent collection bloating.
+            // Fire-and-forget to avoid blocking the response.
+            InteractionLog.deleteMany({
+                userId,
+                'messages.role': {$ne: 'user'}
+            }).catch(err => console.error('Auto-cleanup error:', err));
         }
 
         const logs = await InteractionLog.aggregate([
@@ -52,7 +60,7 @@ export const getInteraction = async (req, res) => {
                     createdAt: 1,
                     // Extract the text from the first part of the first user message and substring it
                     preview: {
-                        $substr: [
+                        $substrCP: [
                             { $arrayElemAt: ["$firstUserMsg.parts.text", 0] },
                             0,
                             50
