@@ -3,6 +3,9 @@ import BaseHandler from './BaseHandler.js';
 export default class HistoryHandler extends BaseHandler {
     constructor() {
         super();
+        this.nextCursor = null;
+        this.isLoading = false;
+        this.observer = null;
         this.cacheDOMElements();
         this.init();
     }
@@ -46,6 +49,22 @@ export default class HistoryHandler extends BaseHandler {
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.closeHistory();
         });
+
+        this.initInfiniteScroll();
+    }
+
+    initInfiniteScroll() {
+        const options = {
+            root: this.listContainer,
+            rootMargin: '100px',
+            threshold: 0.1
+        };
+
+        this.observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !this.isLoading && this.nextCursor) {
+                this.loadHistoryList(true);
+            }
+        }, options);
     }
 
     toggleHistory() {
@@ -99,27 +118,66 @@ export default class HistoryHandler extends BaseHandler {
         });
     }
 
-    async loadHistoryList() {
-        this.listContainer.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+    async loadHistoryList(isAppend = false) {
+        if (this.isLoading) return;
+        this.isLoading = true;
+
+        if (!isAppend) {
+            this.listContainer.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            this.nextCursor = null;
+        } else {
+            this.updateSentinelState(true);
+        }
 
         try {
-            const response = await fetch('/api/history', {
+            const url = new URL('/api/history', window.location.origin);
+            if (isAppend && this.nextCursor) {
+                url.searchParams.append('cursor', this.nextCursor);
+            }
+
+            const response = await fetch(url, {
                 headers: { 'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin }
             });
 
             if (!response.ok) throw new Error('Failed to load history');
 
-            const { history } = await response.json();
+            const { history, nextCursor } = await response.json();
 
-            if (!history || history.length === 0) {
+            this.nextCursor = nextCursor;
+
+            if (!isAppend && (!history || history.length === 0)) {
                 this.listContainer.innerHTML = '<div class="history-item" style="cursor: default; text-align: center;">No history found.</div>';
+                this.isLoading = false;
                 return;
             }
 
-            this.renderList(history);
+            this.renderList(history, isAppend);
         } catch (error) {
             console.error('History load error:', error);
-            this.listContainer.innerHTML = '<div class="error-message">Failed to load history.</div>';
+            if (!isAppend) {
+                this.listContainer.innerHTML = '<div class="error-message">Failed to load history.</div>';
+            }
+        } finally {
+            this.isLoading = false;
+            this.updateSentinelState(false);
+        }
+    }
+
+    updateSentinelState(isLoading) {
+        let sentinel = this.listContainer.querySelector('.history-sentinel');
+        if (!sentinel) {
+            sentinel = document.createElement('div');
+            sentinel.className = 'history-sentinel';
+            this.listContainer.appendChild(sentinel);
+            this.observer.observe(sentinel);
+        }
+
+        if (isLoading) {
+             sentinel.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        } else if (this.nextCursor) {
+             sentinel.innerHTML = ''; // Clear spinner but keep sentinel for observation
+        } else {
+             sentinel.remove(); // No more data, remove sentinel
         }
     }
 
@@ -148,7 +206,7 @@ export default class HistoryHandler extends BaseHandler {
         this.modal.classList.remove('hidden');
         if (this.sidebarToggle) this.sidebarToggle.classList.add('active');
         this.showList();
-        await this.loadHistoryList();
+        await this.loadHistoryList(false);
     }
 
     closeHistory() {
@@ -234,17 +292,34 @@ export default class HistoryHandler extends BaseHandler {
         printWindow.close();
     }
 
-    renderList(history) {
-        this.listContainer.innerHTML = '';
+    renderList(history, isAppend = false) {
+        if (!isAppend) {
+            this.listContainer.innerHTML = '';
+        }
+
+        // Remove sentinel temporarily so we can append real items before it
+        const sentinel = this.listContainer.querySelector('.history-sentinel');
+        if (sentinel) sentinel.remove();
+
         const grouped = this.groupHistoryByDate(history);
         const fragment = document.createDocumentFragment();
 
+        // Check if the last rendered group matches the first new group
+        const existingHeaders = this.listContainer.querySelectorAll('.history-date-header');
+        const lastHeader = existingHeaders.length > 0 ? existingHeaders[existingHeaders.length - 1] : null;
+
         for (const [dateLabel, items] of Object.entries(grouped)) {
-            const groupHeader = document.createElement('div');
-            groupHeader.className = 'history-date-header';
-            groupHeader.style.cssText = 'padding: 0.5rem 0.5rem; color: var(--primary-color); font-weight: bold; font-size: 0.85rem;';
-            groupHeader.textContent = dateLabel;
-            fragment.appendChild(groupHeader);
+            let targetContainer = fragment; // Default to appending to main fragment
+
+            // Merge logic: if we are appending and the first group matches the last existing header
+            if (isAppend && lastHeader && lastHeader.textContent === dateLabel && targetContainer === fragment) {
+                 // Skip creating header, items will naturally fall under the previous one in the DOM order
+            } else {
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'history-date-header';
+                groupHeader.textContent = dateLabel;
+                fragment.appendChild(groupHeader);
+            }
 
             items.forEach(item => {
                 const el = document.createElement('div');
@@ -269,7 +344,13 @@ export default class HistoryHandler extends BaseHandler {
                 fragment.appendChild(el);
             });
         }
+
         this.listContainer.appendChild(fragment);
+
+        // Re-append sentinel if needed
+        if (this.nextCursor) {
+            this.updateSentinelState(false);
+        }
     }
 
     renderMessages(messages) {
