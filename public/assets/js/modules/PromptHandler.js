@@ -1,4 +1,5 @@
 export default class PromptSuggestionsHandler {
+
     constructor(messageInput, promptSuggestions) {
         this.messageInput = messageInput;
         this.promptSuggestions = promptSuggestions;
@@ -14,6 +15,8 @@ export default class PromptSuggestionsHandler {
             {category: 'weather', text: 'Check air quality in [city].'},
             {category: 'time', text: 'What time is it in [city]?'}
         ];
+
+        this.populate();
     }
 
     init() {
@@ -24,8 +27,6 @@ export default class PromptSuggestionsHandler {
         this.messageInput.addEventListener('input', () => this.handleVisibility());
         this.promptSuggestions.addEventListener('mouseenter', () => this.show());
         this.promptSuggestions.addEventListener('mouseleave', () => this.hideWithDelay());
-
-        this.populate();
     }
 
     handleVisibility() {
@@ -37,18 +38,17 @@ export default class PromptSuggestionsHandler {
     }
 
     populate() {
-        this.promptSuggestions.innerHTML = '';
+        this.promptSuggestions.innerHTML = ''
+        const fragment = document.createDocumentFragment();
         this.prompts.forEach(prompt => {
             const card = document.createElement('div');
             card.className = 'prompt-card';
             card.textContent = prompt.text;
             card.dataset.prompt = prompt.text;
-            card.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.select(prompt.text);
-            });
-            this.promptSuggestions.appendChild(card);
+            card.addEventListener('click', (e) => this.select(prompt.text, e));
+            fragment.appendChild(card);
         });
+        this.promptSuggestions.appendChild(fragment);
     }
 
     show() {
@@ -67,7 +67,8 @@ export default class PromptSuggestionsHandler {
         }, 50);
     }
 
-    select(promptText) {
+    select(promptText, e) {
+        e.stopPropagation();
         this.messageInput.value = promptText;
         this.messageInput.focus();
         this.promptSuggestions.classList.add('hidden');

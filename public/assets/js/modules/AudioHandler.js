@@ -22,17 +22,15 @@ export default class AudioHandler {
         } catch (error) {
             console.error('Error accessing microphone:', error);
             alert('Could not access microphone. Please check permissions.');
+            this.cleanup();
             return false;
         }
     }
 
     stopRecording() {
-        return new Promise((resolve) => {
-            if (!this.mediaRecorder) {
-                resolve(null);
-                return;
-            }
+        if (!this.mediaRecorder) return Promise.resolve(null);
 
+        return new Promise((resolve) => {
             this.mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(this.audioChunks, {type: this.mediaRecorder.mimeType || 'audio/webm'});
                 this.cleanup();
@@ -55,7 +53,7 @@ export default class AudioHandler {
     }
 
     cancelRecording() {
-        if (this.mediaRecorder && this.isRecording) this.mediaRecorder.stop();
+        if (this.isRecording) this.mediaRecorder.stop();
         this.cleanup();
     }
 }

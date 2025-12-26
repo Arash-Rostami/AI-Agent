@@ -3,7 +3,11 @@ import BaseHandler from './BaseHandler.js';
 export default class HistoryHandler extends BaseHandler {
     constructor() {
         super();
+        this.cacheDOMElements();
+        this.init();
+    }
 
+    cacheDOMElements() {
         this.historyBtn = document.getElementById('history-btn');
         this.sidebarToggle = document.getElementById('sidebar-toggle');
         this.modal = document.getElementById('history-modal');
@@ -14,8 +18,6 @@ export default class HistoryHandler extends BaseHandler {
         this.backBtn = document.getElementById('back-to-list-btn');
         this.pdfBtn = document.getElementById('pdf-btn');
         this.printBtn = document.getElementById('print-btn');
-
-        this.init();
     }
 
     init() {
@@ -26,7 +28,7 @@ export default class HistoryHandler extends BaseHandler {
         this.backBtn.addEventListener('click', () => this.showList());
 
         if (this.sidebarToggle) {
-            this.sidebarToggle.addEventListener('click', () => this.modal.classList.contains('hidden') ? this.openHistory() : this.closeHistory());
+            this.sidebarToggle.addEventListener('click', () => this.toggleHistory());
         }
 
         if (this.pdfBtn) {
@@ -34,15 +36,11 @@ export default class HistoryHandler extends BaseHandler {
             this.pdfBtn.title = 'Export as PDF';
             this.pdfBtn.addEventListener('click', () => this.exportToPDF());
         }
+
         if (this.printBtn) {
             this.printBtn.innerHTML = '<i class="fas fa-print"></i>';
             this.printBtn.title = 'Print History';
             this.printBtn.addEventListener('click', () => this.printHistory());
-        }
-
-        if (this.backBtn) {
-            this.backBtn.innerHTML = '<i class="fas fa-arrow-left"></i>';
-            this.backBtn.title = 'Back to List';
         }
 
         this.modal.addEventListener('click', (e) => {
@@ -50,15 +48,16 @@ export default class HistoryHandler extends BaseHandler {
         });
     }
 
+    toggleHistory() {
+        this.modal.classList.contains('hidden') ? this.openHistory() : this.closeHistory();
+    }
+
     async confirmDelete(sessionId, element) {
         if (confirm('⚠️ Are you sure you want to delete this chat session? This action cannot be undone.')) {
             try {
                 const response = await fetch(`/api/history/${sessionId}`, {
                     method: 'DELETE',
-                    headers: {
-                        'X-User-Id': this.userId,
-                        'X-Frame-Referer': this.parentOrigin
-                    }
+                    headers: { 'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin }
                 });
 
                 if (response.ok) {
@@ -88,9 +87,9 @@ export default class HistoryHandler extends BaseHandler {
         const opt = {
             margin: [10, 10, 10, 10],
             filename: `chat-history-${safeFilename}.pdf`,
-            image: {type: 'jpeg', quality: 0.98},
-            html2canvas: {scale: 2, useCORS: true, logging: false},
-            jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'}
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
         element.classList.add('pdf-mode');
@@ -105,15 +104,12 @@ export default class HistoryHandler extends BaseHandler {
 
         try {
             const response = await fetch('/api/history', {
-                headers: {
-                    'X-User-Id': this.userId,
-                    'X-Frame-Referer': this.parentOrigin
-                }
+                headers: { 'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin }
             });
 
             if (!response.ok) throw new Error('Failed to load history');
 
-            const {history} = await response.json();
+            const { history } = await response.json();
 
             if (!history || history.length === 0) {
                 this.listContainer.innerHTML = '<div class="history-item" style="cursor: default; text-align: center;">No history found.</div>';
@@ -134,15 +130,12 @@ export default class HistoryHandler extends BaseHandler {
 
         try {
             const response = await fetch(`/api/history/${sessionId}`, {
-                headers: {
-                    'X-User-Id': this.userId,
-                    'X-Frame-Referer': this.parentOrigin
-                }
+                headers: { 'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin }
             });
 
             if (!response.ok) throw new Error('Failed to load details');
 
-            const {messages} = await response.json();
+            const { messages } = await response.json();
             this.renderMessages(messages);
         } catch (error) {
             console.error('Details load error:', error);
@@ -170,19 +163,15 @@ export default class HistoryHandler extends BaseHandler {
 
     ensureHtml2Pdf() {
         if (this._html2pdfPromise) return this._html2pdfPromise;
-
         this._html2pdfPromise = new Promise((resolve, reject) => {
             if (window.html2pdf) return resolve(window.html2pdf);
-
             const s = document.createElement('script');
             s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
             s.async = true;
             s.onload = () => resolve(window.html2pdf);
             s.onerror = reject;
-
             document.head.appendChild(s);
         });
-
         return this._html2pdfPromise;
     }
 
@@ -202,7 +191,6 @@ export default class HistoryHandler extends BaseHandler {
             const date = new Date(item.createdAt).toDateString();
             let label = date;
             if (date === today) label = 'Today'; else if (date === yesterday) label = 'Yesterday';
-
             if (!groups[label]) groups[label] = [];
             groups[label].push(item);
         });
@@ -231,9 +219,7 @@ export default class HistoryHandler extends BaseHandler {
                     .message.ai .message-content { background: #e3f2fd; }
                     .message.user .message-content { background: #007bff; color: white; }
                     .rtl { direction: rtl; text-align: right; }
-                    @media print {
-                        body { padding: 0; }
-                    }
+                    @media print { body { padding: 0; } }
                 </style>
             </head>
             <body>
@@ -242,7 +228,6 @@ export default class HistoryHandler extends BaseHandler {
             </body>
             </html>
         `);
-
         printWindow.document.close();
         printWindow.focus();
         printWindow.print();
@@ -251,24 +236,21 @@ export default class HistoryHandler extends BaseHandler {
 
     renderList(history) {
         this.listContainer.innerHTML = '';
-
         const grouped = this.groupHistoryByDate(history);
+        const fragment = document.createDocumentFragment();
 
         for (const [dateLabel, items] of Object.entries(grouped)) {
             const groupHeader = document.createElement('div');
             groupHeader.className = 'history-date-header';
-            groupHeader.style.padding = '0.5rem 0.5rem';
-            groupHeader.style.color = 'var(--primary-color)';
-            groupHeader.style.fontWeight = 'bold';
-            groupHeader.style.fontSize = '0.85rem';
+            groupHeader.style.cssText = 'padding: 0.5rem 0.5rem; color: var(--primary-color); font-weight: bold; font-size: 0.85rem;';
             groupHeader.textContent = dateLabel;
-            this.listContainer.appendChild(groupHeader);
+            fragment.appendChild(groupHeader);
 
             items.forEach(item => {
                 const el = document.createElement('div');
                 el.className = 'history-item';
-                const time = new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-                let previewText = this.formatter.excludeQuotationMarks(item.preview || '');
+                const time = new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const previewText = this.formatter.excludeQuotationMarks(item.preview || '');
 
                 el.innerHTML = `
                     <div class="history-content-wrapper">
@@ -284,14 +266,16 @@ export default class HistoryHandler extends BaseHandler {
                     this.confirmDelete(item.sessionId, el);
                 });
                 el.addEventListener('click', () => this.loadSessionDetails(item.sessionId));
-                this.listContainer.appendChild(el);
+                fragment.appendChild(el);
             });
         }
+        this.listContainer.appendChild(fragment);
     }
 
     renderMessages(messages) {
         this.messagesContainer.innerHTML = '';
         this.messagesContainer.classList.add('messages');
+        const fragment = document.createDocumentFragment();
 
         messages.forEach(msg => {
             if (msg.role === 'system') return;
@@ -300,15 +284,12 @@ export default class HistoryHandler extends BaseHandler {
             msgEl.className = `message ${msg.role === 'user' ? 'user' : 'ai'}`;
 
             const avatar = this.formatter.createAvatar(msg.role === 'user' ? 'user' : 'ai');
-
             const contentWrapper = document.createElement('div');
             contentWrapper.className = 'message-wrapper';
-
             const contentEl = document.createElement('div');
             contentEl.className = 'message-content';
 
-            let text = this.formatter.excludeQuotationMarks(msg.parts && msg.parts[0] ? msg.parts[0].text : '');
-
+            const text = this.formatter.excludeQuotationMarks(msg.parts && msg.parts[0] ? msg.parts[0].text : '');
             contentEl.innerHTML = this.formatter.format(text);
 
             if (msg.role === 'model' || msg.role === 'assistant') {
@@ -321,8 +302,10 @@ export default class HistoryHandler extends BaseHandler {
             contentWrapper.appendChild(contentEl);
             msgEl.appendChild(avatar);
             msgEl.appendChild(contentWrapper);
-            this.messagesContainer.appendChild(msgEl);
+            fragment.appendChild(msgEl);
         });
+
+        this.messagesContainer.appendChild(fragment);
     }
 
     showDetails() {

@@ -1,51 +1,47 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    const [loginPage, chatPage] = ['login-form', 'messages'].map(id => document.getElementById(id));
-    try {
-        const {default: ThemeToggle} = await import('./modules/ThemeToggler.js');
+document.addEventListener('DOMContentLoaded', () => {
+    const loginPage = document.getElementById('login-form');
+    const chatPage = document.getElementById('messages');
 
-        // <=> LOGIN PAGE <=> //
-        if (loginPage) {
-            const {default: LoginHandler} = await import('./modules/LoginHandler.js');
-            new LoginHandler('login-form');
-            new ThemeToggle('theme-toggle');
-            return;
-        }
+    import('./modules/ThemeToggler.js')
+        .then(({default: ThemeToggle}) => new ThemeToggle('theme-toggle'))
+        .catch(err => console.error('ThemeToggler failed (App continuing):', err));
 
-        // <=> CHAT PAGE <=> //
-        if (chatPage) {
-            // Instant-loading
-            const [{default: ChatHandler}, {default: FontSizeHandler}] =
-                await Promise.all([import('./modules/ChatHandler.js'), import('./modules/FontSizeHandler.js')]);
-            new ChatHandler();
-            new FontSizeHandler();
-            new ThemeToggle('theme-toggle');
+    // <=> LOGIN PAGE <=>
+    if (loginPage) {
+        import('./modules/LoginHandler.js')
+            .then(({default: LoginHandler}) => new LoginHandler('login-form'))
+            .catch(err => console.error('CRITICAL: LoginHandler failed:', err));
+    }
 
-            // Lazy-loading
-            const idle = window.requestIdleCallback || (fn => setTimeout(fn, 500));
-            idle(async () => {
-                try {
-                    const [{default: HistoryHandler}, {default: LogoutHandler}, {default: SyncHandler}, {default: SettingsHandler}, {default: MenuHandler}, {default: PinHandler}] =
-                        await Promise.all([
-                            import('./modules/HistoryHandler.js'),
-                            import('./modules/LogoutHandler.js'),
-                            import('./modules/SyncHandler.js'),
-                            import('./modules/SettingsHandler.js'),
-                            import('./modules/MenuHandler.js'),
-                            import('./modules/PinHandler.js')
-                        ]);
+    // <=> CHAT PAGE <=>
+    if (chatPage) {
+        // Instant-loading Core Modules
+        Promise.all([
+            import('./modules/ChatHandler.js'),
+            import('./modules/FontSizeHandler.js')
+        ])
+            .then(([{default: ChatHandler}, {default: FontSizeHandler}]) => {
+                new ChatHandler();
+                new FontSizeHandler();
+            })
+            .catch(err => console.error('CRITICAL: Chat core failed:', err));
 
-                    new HistoryHandler();
-                    new LogoutHandler('logout-btn');
-                    new SyncHandler('sync-btn');
-                    new SettingsHandler();
-                    new MenuHandler();
-                    new PinHandler()
-                } catch (e) {
-                    console.error('Lazy module load failed:', e);
-                }
-            }, {timeout: 2000});
-        }
-    } catch (err) {
-        console.error('Module initialization error:', err);
+        // Lazy-loading Other Modules
+        const idle = window.requestIdleCallback || (fn => setTimeout(fn, 500));
+
+        idle(() => {
+            const loadModule = (path, ClassName, ...args) => {
+                import(path)
+                    .then(({default: Module}) => new Module(...args))
+                    .catch(err => console.error(`${ClassName} failed to load:`, err));
+            };
+
+            loadModule('./modules/HistoryHandler.js', 'HistoryHandler');
+            loadModule('./modules/LogoutHandler.js', 'LogoutHandler', 'logout-btn');
+            loadModule('./modules/SyncHandler.js', 'SyncHandler', 'sync-btn');
+            loadModule('./modules/SettingsHandler.js', 'SettingsHandler');
+            loadModule('./modules/MenuHandler.js', 'MenuHandler');
+            loadModule('./modules/PinHandler.js', 'PinHandler');
+        }, {timeout: 2000});
     }
 });

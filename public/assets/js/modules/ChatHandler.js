@@ -9,6 +9,11 @@ export default class ChatHandler extends BaseHandler {
         this.uiHandler = new UIHandler(this.formatter);
         this.audioHandler = new AudioHandler();
 
+        this.cacheDOMElements();
+        this.init();
+    }
+
+    cacheDOMElements() {
         this.kebabContainer = document.querySelector('.kebab-menu-container');
         this.kebabTrigger = document.getElementById('kebab-trigger');
         this.newChatAction = document.getElementById('new-chat-action');
@@ -22,8 +27,6 @@ export default class ChatHandler extends BaseHandler {
         this.removeFileBtn = document.getElementById('remove-file-btn');
         this.micBtn = document.getElementById('mic-btn');
         this.removeAudioBtn = document.getElementById('remove-audio-btn');
-
-        this.init();
     }
 
     init() {
@@ -36,7 +39,8 @@ export default class ChatHandler extends BaseHandler {
     async handleClearChat() {
         try {
             await fetch('/clear-chat', {
-                method: 'POST', headers: {'X-User-Id': this.userId}
+                method: 'POST',
+                headers: {'X-User-Id': this.userId}
             });
             this.uiHandler.resetUI();
             void this.loadInitialGreeting();
@@ -66,7 +70,8 @@ export default class ChatHandler extends BaseHandler {
     async handleNewChat() {
         try {
             await fetch('/new-chat', {
-                method: 'POST', headers: {'X-User-Id': this.userId}
+                method: 'POST',
+                headers: {'X-User-Id': this.userId}
             });
             this.uiHandler.resetUI();
             void this.loadInitialGreeting();
@@ -93,17 +98,22 @@ export default class ChatHandler extends BaseHandler {
 
         try {
             const serviceEndpoints = {
-                'groq': '/ask-groq', 'openrouter': '/ask-openrouter', 'gpt-4o': '/ask-arvan', 'deepseek': '/ask-arvan'
+                'groq': '/ask-groq',
+                'openrouter': '/ask-openrouter',
+                'gpt-4o': '/ask-arvan',
+                'deepseek': '/ask-arvan'
             };
             const modelMap = {
-                'gpt-4o': 'GPT-4o-mini-4193n', 'deepseek': 'DeepSeek-Chat-V3-0324-mbxyd'
+                'gpt-4o': 'GPT-4o-mini-4193n',
+                'deepseek': 'DeepSeek-Chat-V3-0324-mbxyd'
             };
 
             const endpoint = serviceEndpoints[selectedService] ?? '/ask';
 
             let body;
             const headers = {
-                'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin
+                'X-User-Id': this.userId,
+                'X-Frame-Referer': this.parentOrigin
             };
 
             if (selectedFile || selectedAudioBlob) {
@@ -124,7 +134,9 @@ export default class ChatHandler extends BaseHandler {
                 body = formData;
             } else {
                 body = JSON.stringify({
-                    message, useWebSearch, ...(modelMap[selectedService] && {model: modelMap[selectedService]})
+                    message,
+                    useWebSearch,
+                    ...(modelMap[selectedService] && {model: modelMap[selectedService]})
                 });
                 headers['Content-Type'] = 'application/json';
             }
@@ -133,7 +145,9 @@ export default class ChatHandler extends BaseHandler {
             this.uiHandler.clearAudioSelection();
 
             const response = await fetch(endpoint, {
-                method: 'POST', headers, body
+                method: 'POST',
+                headers,
+                body
             });
 
             if (!response.ok) throw new Error('Server error');
@@ -154,7 +168,8 @@ export default class ChatHandler extends BaseHandler {
         try {
             const response = await fetch('/initial-prompt', {
                 headers: {
-                    'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin
+                    'X-User-Id': this.userId,
+                    'X-Frame-Referer': this.parentOrigin
                 }
             });
             const data = await response.json();
@@ -168,11 +183,11 @@ export default class ChatHandler extends BaseHandler {
     }
 
     closeKebabMenu() {
-        if (this.kebabContainer) this.kebabContainer.classList.remove('active');
+        this.kebabContainer?.classList.remove('active');
     }
 
     handleFileSelect(e) {
-        if (e.target.files && e.target.files[0]) {
+        if (e.target.files?.[0]) {
             this.uiHandler.setFileSelection(e.target.files[0]);
         }
     }
@@ -192,17 +207,18 @@ export default class ChatHandler extends BaseHandler {
 
     setupEventListeners() {
         this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
-        if (this.newChatAction) this.newChatAction.addEventListener('click', () => this.handleNewChat().then(() => this.closeKebabMenu()));
-        if (this.clearChatAction) this.clearChatAction.addEventListener('click', () => this.handleClearChat().then(() => this.closeKebabMenu()));
-        if (this.kebabTrigger) {
-            this.kebabTrigger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.kebabContainer.classList.toggle('active');
-            });
-        }
+        this.newChatAction?.addEventListener('click', () => this.handleNewChat().then(() => this.closeKebabMenu()));
+        this.clearChatAction?.addEventListener('click', () => this.handleClearChat().then(() => this.closeKebabMenu()));
+
+        this.kebabTrigger?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.kebabContainer.classList.toggle('active');
+        });
+
         document.addEventListener('click', (e) => {
             if (this.kebabContainer && !this.kebabContainer.contains(e.target)) this.closeKebabMenu();
         });
+
         this.uiHandler.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
         this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
@@ -221,8 +237,7 @@ export default class ChatHandler extends BaseHandler {
             this.uiHandler.messageInput.style.height = 'auto';
             const newHeight = this.uiHandler.messageInput.scrollHeight;
             this.uiHandler.messageInput.style.height = newHeight + 'px';
-
-            (newHeight >= 160) ? this.uiHandler.messageInput.style.overflowY = 'auto' : this.uiHandler.messageInput.style.overflowY = 'hidden';
+            this.uiHandler.messageInput.style.overflowY = newHeight >= 160 ? 'auto' : 'hidden';
         });
     }
 

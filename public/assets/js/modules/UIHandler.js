@@ -3,7 +3,11 @@ import PromptHandler from './PromptHandler.js';
 export default class UIHandler {
     constructor(formatter) {
         this.formatter = formatter;
+        this.initElements();
+        this.promptHandler = new PromptHandler(this.messageInput, this.promptSuggestions);
+    }
 
+    initElements() {
         this.header = document.querySelector('.header');
         this.messages = document.getElementById('messages');
         this.messageInput = document.getElementById('message-input');
@@ -22,8 +26,6 @@ export default class UIHandler {
         this.selectedFile = null;
         this.selectedAudioBlob = null;
         this.isTyping = false;
-
-        this.promptHandler = new PromptHandler(this.messageInput, this.promptSuggestions);
     }
 
     initPromptSuggestions() {
@@ -31,20 +33,23 @@ export default class UIHandler {
     }
 
     addMessage(content, sender, isError = false, sources = [], fileName = null) {
-        const welcomeMessage = this.messages.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            welcomeMessage.remove();
+        if (this.messages.querySelector('.welcome-message')) {
+            this.messages.querySelector('.welcome-message').remove();
             this.header.classList.add('chat-active');
         }
 
+        const messageEl = this.createMessageElement(content, sender, isError, sources, fileName);
+        this.messages.appendChild(messageEl);
+        this.scrollToBottom();
+    }
+
+    createMessageElement(content, sender, isError, sources, fileName) {
         const messageEl = document.createElement('div');
         messageEl.className = `message ${sender}`;
 
         const avatar = this.formatter.createAvatar(sender);
-
         const contentWrapper = document.createElement('div');
         contentWrapper.className = 'message-wrapper';
-
         const contentEl = document.createElement('div');
         contentEl.className = 'message-content';
 
@@ -62,13 +67,11 @@ export default class UIHandler {
         if (isError) contentEl.style.color = '#dc2626';
 
         contentWrapper.appendChild(contentEl);
-
         if (sources?.length) contentWrapper.appendChild(this.formatter.createSourcesElement(sources));
 
         messageEl.appendChild(avatar);
         messageEl.appendChild(contentWrapper);
-        this.messages.appendChild(messageEl);
-        this.scrollToBottom();
+        return messageEl;
     }
 
     clearAudioSelection() {
@@ -101,13 +104,9 @@ export default class UIHandler {
     }
 
     handleInputFade() {
-        if (this.messageInput.value.trim().length > 0) {
-            this.attachmentBtn.classList.add('fade-out');
-            if (this.micBtn) this.micBtn.classList.add('fade-out');
-        } else {
-            this.attachmentBtn.classList.remove('fade-out');
-            if (this.micBtn) this.micBtn.classList.remove('fade-out');
-        }
+        const isInputNotEmpty = this.messageInput.value.trim().length > 0;
+        this.attachmentBtn.classList.toggle('fade-out', isInputNotEmpty);
+        this.micBtn?.classList.toggle('fade-out', isInputNotEmpty);
     }
 
     handleRestrictedUI(isRestrictedMode, isBmsMode, serviceSelect, webSearchBtn) {
@@ -120,15 +119,13 @@ export default class UIHandler {
     }
 
     hideLoader() {
-        if (this.loader) {
-            this.loader.classList.add('fade-out');
-            setTimeout(() => this.loader.remove(), 500);
-        }
+        this.loader?.classList.add('fade-out');
+        setTimeout(() => this.loader?.remove(), 500);
     }
 
     resetInputFade() {
         this.attachmentBtn.classList.remove('fade-out');
-        if (this.micBtn) this.micBtn.classList.remove('fade-out');
+        this.micBtn?.classList.remove('fade-out');
     }
 
     resetMessageInput() {
@@ -165,47 +162,45 @@ export default class UIHandler {
     }
 
     setMicRecording(isRecording) {
-        if (isRecording) {
-            this.micBtn.classList.add('recording');
-            this.micBtn.innerHTML = '<i class="fas fa-stop"></i>';
-            this.micBtn.title = "Stop Recording";
-            this.messageInput.placeholder = "Recording audio...";
-            this.messageInput.disabled = true;
-            this.attachmentBtn.style.display = 'none';
-        } else {
-            this.micBtn.classList.remove('recording');
-            this.micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-            this.micBtn.title = "Record Audio";
-            this.messageInput.placeholder = "Type your message...";
-            this.messageInput.disabled = false;
-            this.attachmentBtn.style.display = 'inline-block';
-        }
+        this.micBtn.classList.toggle('recording', isRecording);
+        this.micBtn.innerHTML = isRecording ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-microphone"></i>';
+        this.micBtn.title = isRecording ? 'Stop Recording' : 'Record Audio';
+        this.messageInput.placeholder = isRecording ? 'Recording audio...' : 'Type your message...';
+        this.messageInput.disabled = isRecording;
+        this.attachmentBtn.style.display = isRecording ? 'none' : 'inline-block';
     }
 
     setTyping(isTyping) {
         this.isTyping = isTyping;
         this.sendButton.disabled = isTyping;
+        this.toggleTypingIndicator(isTyping);
+    }
 
+    toggleTypingIndicator(isTyping) {
         const typingIndicator = this.messages.querySelector('.typing-indicator');
-
         if (isTyping && !typingIndicator) {
-            const typingEl = document.createElement('div');
-            typingEl.className = 'message ai';
-            typingEl.innerHTML = `
-                <div class="message-avatar"><i class="fas fa-robot"></i></div>
-                <div class="typing-indicator">
-                    <div class="typing-dots">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
-                </div>
-            `;
+            const typingEl = this.createTypingIndicator();
             this.messages.appendChild(typingEl);
             this.scrollToBottom();
         } else if (!isTyping && typingIndicator) {
             typingIndicator.closest('.message').remove();
         }
+    }
+
+    createTypingIndicator() {
+        const typingEl = document.createElement('div');
+        typingEl.className = 'message ai';
+        typingEl.innerHTML = `
+            <div class="message-avatar"><i class="fas fa-robot"></i></div>
+            <div class="typing-indicator">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+        `;
+        return typingEl;
     }
 
     updateServiceUI(service, webSearchBtn, isWebSearchActive, toggleWebSearchCallback) {
@@ -215,12 +210,8 @@ export default class UIHandler {
         if (!isGemini && isWebSearchActive) toggleWebSearchCallback();
 
         const supportsAttachments = ['gemini', 'gpt-4o'].includes(service);
-        if (supportsAttachments) {
-            this.attachmentBtn.style.display = 'inline-block';
-        } else {
-            this.attachmentBtn.style.display = 'none';
-            this.clearFileSelection();
-        }
+        this.attachmentBtn.style.display = supportsAttachments ? 'inline-block' : 'none';
+        if (!supportsAttachments) this.clearFileSelection();
     }
 
     updateStatus(text, type) {

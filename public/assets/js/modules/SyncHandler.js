@@ -5,8 +5,7 @@ export default class SyncHandler {
     }
 
     async init() {
-        const canSync = await this.checkVisibility();
-        if (canSync) {
+        if (await this.checkVisibility()) {
             this.button.addEventListener('click', () => this.handleSync());
         }
     }
@@ -15,34 +14,31 @@ export default class SyncHandler {
         try {
             const response = await fetch('/auth/admin');
             if (response.ok) {
-                const data = await response.json();
-                if (data.canSync) {
+                const {canSync} = await response.json();
+                if (canSync) {
                     this.button.style.display = 'inline-block';
                     return true;
                 }
             }
-        } catch (e) {
+        } catch (error) {
+            console.error('Visibility check failed:', error);
         }
 
         this.button.style.display = 'none';
         return false;
     }
 
-
     async handleSync() {
         if (!confirm('Are you sure you want to rebuild the knowledge base? This may take a moment.')) return;
 
         const originalIcon = this.button.innerHTML;
-        this.button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        this.button.disabled = true;
+        this.updateButtonState(true);
 
         try {
             const response = await fetch('/api/vector/sync', {
-                method: 'POST', headers: {
-                    'Content-Type': 'application/json'
-                }
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
             });
-
             const data = await response.json();
 
             if (data.success) {
@@ -54,8 +50,12 @@ export default class SyncHandler {
             console.error('Sync failed:', error);
             alert('Failed to connect to the server.');
         } finally {
-            this.button.innerHTML = originalIcon;
-            this.button.disabled = false;
+            this.updateButtonState(false, originalIcon);
         }
+    }
+
+    updateButtonState(isLoading, icon = '') {
+        this.button.innerHTML = isLoading ? '<i class="fas fa-spinner fa-spin"></i>' : icon;
+        this.button.disabled = isLoading;
     }
 }

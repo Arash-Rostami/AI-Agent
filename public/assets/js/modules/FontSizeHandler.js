@@ -1,7 +1,10 @@
-class FontSizeHandler {
+export default class FontSizeHandler {
     constructor() {
         this.scales = [0.85, 1, 1.15, 1.3];
         this.currentIndex = 1;
+
+        this.increaseBtn = document.getElementById('font-increase');
+        this.decreaseBtn = document.getElementById('font-decrease');
 
         this.init();
         this.setupListeners();
@@ -14,30 +17,23 @@ class FontSizeHandler {
             this.currentIndex = this.scales.indexOf(scale);
             if (this.currentIndex === -1) this.currentIndex = 1;
             this.applyScale(scale);
+        } else {
+            this.applyScale(this.scales[this.currentIndex]);
         }
         this.updateButtons();
     }
 
     setupListeners() {
-        const increaseBtn = document.getElementById('font-increase');
-        const decreaseBtn = document.getElementById('font-decrease');
-
-        increaseBtn?.addEventListener('click', () => this.increase());
-        decreaseBtn?.addEventListener('click', () => this.decrease());
+        if (this.increaseBtn) this.increaseBtn.addEventListener('click', () => this.increase());
+        if (this.decreaseBtn) this.decreaseBtn.addEventListener('click', () => this.decrease());
     }
 
     increase() {
-        if (this.currentIndex < this.scales.length - 1) {
-            this.currentIndex++;
-            this.applyScale(this.scales[this.currentIndex]);
-        }
+        if (this.currentIndex < this.scales.length - 1) this.applyScale(this.scales[++this.currentIndex]);
     }
 
     decrease() {
-        if (this.currentIndex > 0) {
-            this.currentIndex--;
-            this.applyScale(this.scales[this.currentIndex]);
-        }
+        if (this.currentIndex > 0) this.applyScale(this.scales[--this.currentIndex]);
     }
 
     applyScale(scale) {
@@ -47,12 +43,7 @@ class FontSizeHandler {
     }
 
     updateButtons() {
-        const increaseBtn = document.getElementById('font-increase');
-        const decreaseBtn = document.getElementById('font-decrease');
-
-        if (increaseBtn) increaseBtn.disabled = this.currentIndex >= this.scales.length - 1;
-        if (decreaseBtn) decreaseBtn.disabled = this.currentIndex <= 0;
+        if (this.increaseBtn) this.increaseBtn.disabled = this.currentIndex >= this.scales.length - 1;
+        if (this.decreaseBtn) this.decreaseBtn.disabled = this.currentIndex <= 0;
     }
 }
-
-export default FontSizeHandler;

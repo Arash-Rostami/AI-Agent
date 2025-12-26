@@ -9,29 +9,36 @@ export default class MenuHandler {
     }
 
     async init() {
+        this.addAvatarErrorHandler();
+        this.addMenuButtonEventListener();
+        this.addDocumentClickListener();
+        this.checkRestrictedMode();
+        await this.loadUserProfile();
+    }
+
+    addAvatarErrorHandler() {
         if (this.headerAvatar) {
             this.headerAvatar.addEventListener('error', () => {
-                this.headerAvatar.classList.add('hidden');
-                if (this.headerIcon) this.headerIcon.classList.remove('hidden');
+                this.toggleAvatarDisplay(false);
             });
         }
+    }
 
+    addMenuButtonEventListener() {
         if (this.menuBtn && this.dropdown) {
             this.menuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.toggleMenu();
             });
-
-            document.addEventListener('click', (e) => {
-                if (!this.dropdown.contains(e.target) && !this.menuBtn.contains(e.target)) {
-                    this.dropdown.classList.remove('active');
-                    this.dropdown.classList.add('hidden');
-                }
-            });
         }
+    }
 
-        this.checkRestrictedMode();
-        await this.loadUserProfile();
+    addDocumentClickListener() {
+        document.addEventListener('click', (e) => {
+            if (!this.dropdown.contains(e.target) && !this.menuBtn.contains(e.target)) {
+                this.closeMenu();
+            }
+        });
     }
 
     toggleMenu() {
@@ -42,11 +49,15 @@ export default class MenuHandler {
                 this.dropdown.classList.add('active');
             });
         } else {
-            this.dropdown.classList.remove('active');
-            setTimeout(() => {
-                this.dropdown.classList.add('hidden');
-            }, 300);
+            this.closeMenu();
         }
+    }
+
+    closeMenu() {
+        this.dropdown.classList.remove('active');
+        setTimeout(() => {
+            this.dropdown.classList.add('hidden');
+        }, 300);
     }
 
     checkRestrictedMode() {
@@ -60,20 +71,33 @@ export default class MenuHandler {
         try {
             const response = await fetch('/auth/admin');
             if (!response.ok) return;
+
             const data = await response.json();
 
             if (data.avatar) {
-                if (this.headerAvatar) {
-                    this.headerAvatar.src = data.avatar;
-                    this.headerAvatar.classList.remove('hidden');
-                }
-                if (this.headerIcon) this.headerIcon.classList.add('hidden');
+                this.updateAvatar(data.avatar);
             } else {
-                if (this.headerAvatar) this.headerAvatar.classList.add('hidden');
-                if (this.headerIcon) this.headerIcon.classList.remove('hidden');
+                this.toggleAvatarDisplay(false);
             }
         } catch (error) {
             console.error('Failed to load menu profile:', error);
+        }
+    }
+
+    updateAvatar(avatarUrl) {
+        if (this.headerAvatar) {
+            this.headerAvatar.src = avatarUrl;
+            this.headerAvatar.classList.remove('hidden');
+        }
+        this.toggleAvatarDisplay(true);
+    }
+
+    toggleAvatarDisplay(hasAvatar) {
+        if (this.headerAvatar) {
+            this.headerAvatar.classList.toggle('hidden', !hasAvatar);
+        }
+        if (this.headerIcon) {
+            this.headerIcon.classList.toggle('hidden', hasAvatar);
         }
     }
 }

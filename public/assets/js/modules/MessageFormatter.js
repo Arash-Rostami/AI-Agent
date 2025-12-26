@@ -3,17 +3,12 @@ export default class MessageFormatter {
         if (lines.length < 2) return lines.join('\n');
 
         const rows = lines.map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
-
         const [header, , ...body] = rows;
 
         let html = '<div class="table-wrapper"><table class="markdown-table"><thead><tr>';
-        header.forEach(cell => html += `<th>${cell}</th>`);
+        html += header.map(cell => `<th>${cell}</th>`).join('');
         html += '</tr></thead><tbody>';
-        body.forEach(row => {
-            html += '<tr>';
-            row.forEach(cell => html += `<td>${cell}</td>`);
-            html += '</tr>';
-        });
+        html += body.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
         html += '</tbody></table></div>';
 
         return html;
@@ -22,28 +17,35 @@ export default class MessageFormatter {
     createAvatar(sender) {
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
+        const img = sender === 'user' ? this.getUserAvatar() : this.getBotAvatar();
 
-        if (sender === 'user') {
-            const headerAvatar = document.getElementById('header-avatar');
-            if (headerAvatar && !headerAvatar.classList.contains('hidden') && headerAvatar.src) {
-                avatar.style.overflow = 'hidden';
+        if (img) avatar.appendChild(img);
+        return avatar;
+    }
 
-                const img = Object.assign(document.createElement('img'), {
-                    src: headerAvatar.src, alt: 'User Avatar', loading: 'lazy', decoding: 'async'
-                });
-
-                img.onerror = () => {
-                    avatar.style.overflow = '';
-                    avatar.innerHTML = '<i class="fas fa-user"></i>';
-                };
-
-                avatar.appendChild(img);
-                return avatar;
-            }
-            avatar.innerHTML = '<i class="fas fa-user"></i>';
-        } else {
-            avatar.innerHTML = '<i class="fas fa-robot"></i>';
+    getUserAvatar() {
+        const headerAvatar = document.getElementById('header-avatar');
+        if (headerAvatar && !headerAvatar.classList.contains('hidden') && headerAvatar.src) {
+            const img = document.createElement('img');
+            img.src = headerAvatar.src;
+            img.alt = 'User Avatar';
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.onerror = () => this.setDefaultAvatar();
+            return img;
         }
+        return this.setDefaultAvatar();
+    }
+
+    setDefaultAvatar() {
+        const avatar = document.createElement('div');
+        avatar.innerHTML = '<i class="fas fa-user"></i>';
+        return avatar;
+    }
+
+    getBotAvatar() {
+        const avatar = document.createElement('div');
+        avatar.innerHTML = '<i class="fas fa-robot"></i>';
         return avatar;
     }
 
@@ -53,27 +55,22 @@ export default class MessageFormatter {
         copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
         copyBtn.title = 'Copy message';
 
-        copyBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText(content).then(() => {
-                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-                setTimeout(() => copyBtn.innerHTML = '<i class="fas fa-copy"></i>', 2000);
-            });
-        });
-
+        copyBtn.addEventListener('click', () => this.copyText(content, copyBtn));
         return copyBtn;
     }
 
-    createFileAttachmentTag(fileName) {
-        const fileTag = Object.assign(document.createElement('div'), {
-            className: 'message-attachment-tag',
-            style: 'font-size:0.8em;margin-top:5px;opacity:0.8;'
+    copyText(content, copyBtn) {
+        navigator.clipboard.writeText(content).then(() => {
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => copyBtn.innerHTML = '<i class="fas fa-copy"></i>', 2000);
         });
+    }
 
-        fileTag.append(
-            Object.assign(document.createElement('i'), {className: 'fas fa-paperclip'}),
-            document.createTextNode(` ${fileName}`)
-        );
-
+    createFileAttachmentTag(fileName) {
+        const fileTag = document.createElement('div');
+        fileTag.className = 'message-attachment-tag';
+        fileTag.style = 'font-size:0.8em;margin-top:5px;opacity:0.8;';
+        fileTag.innerHTML = `<i class="fas fa-paperclip"></i> ${fileName}`;
         return fileTag;
     }
 
@@ -81,11 +78,11 @@ export default class MessageFormatter {
         const sourcesEl = document.createElement('div');
         sourcesEl.className = 'message-sources';
         sourcesEl.innerHTML = '<h4>🔗 Sources:</h4>' + sources.map(source => `
-        <div class="source-item">
-            <a href="${source.url}" target="_blank" rel="noopener noreferrer" title="${source.snippet || ''}">
-                <i>${source.title || source.url}</i>
-            </a>
-        </div>`).join('');
+            <div class="source-item">
+                <a href="${source.url}" target="_blank" rel="noopener noreferrer" title="${source.snippet || ''}">
+                    <i>${source.title || source.url}</i>
+                </a>
+            </div>`).join('');
         return sourcesEl;
     }
 
@@ -95,10 +92,7 @@ export default class MessageFormatter {
 
     escapeHtml(text) {
         if (!text) return '';
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
     excludeQuotationMarks(text) {
@@ -116,45 +110,45 @@ export default class MessageFormatter {
         let html = text.trim();
         html = html.replace(/\\n/g, '\n');
 
-        html = this.parseCodeBlocks(html);
-        html = this.parseTable(html);
-        html = this.parseListsAndBasicMarkdown(html);
+        const {text: codeBlockHtml, placeholders} = this.parseCodeBlocks(html);
+        html = this.parseTable(codeBlockHtml);
+        html = this.parseListsAndBasicMarkdown({text: html, placeholders});
         return html;
     }
 
     parseCodeBlocks(html) {
         const placeholders = [];
-        let replaced = html.replace(/```(?:\w+)?\n([\s\S]+?)\n```/g, (_, code) => {
-            const escaped = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const codeBlocks = html.replace(/```(?:\w+)?\n([\s\S]+?)\n```/g, (_, code) => {
+            const escaped = this.escapeHtml(code);
             placeholders.push(`<pre><code>${escaped}</code></pre>`);
             return `__CODE_BLOCK_${placeholders.length - 1}__`;
         });
 
-        replaced = replaced.replace(/`([^`]+)`/g, (_, code) => {
-            const escaped = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const inlineCode = codeBlocks.replace(/`([^`]+)`/g, (_, code) => {
+            const escaped = this.escapeHtml(code);
             placeholders.push(`<code>${escaped}</code>`);
             return `__CODE_BLOCK_${placeholders.length - 1}__`;
         });
 
-        return {text: replaced, placeholders};
+        return {text: inlineCode, placeholders};
     }
 
     parseListsAndBasicMarkdown(input) {
         let html = input.text;
         const placeholders = input.placeholders;
 
-        const lines = html.split('\n');
         let inList = null;
         const processed = [];
+        const lines = html.split('\n');
 
-        for (const line of lines) {
+        lines.forEach(line => {
             if (line.match(/__CODE_BLOCK_\d+__/)) {
                 if (inList) {
                     processed.push(`</${inList}>`);
                     inList = null;
                 }
                 processed.push(line);
-                continue;
+                return;
             }
 
             if (line.includes('<table') || line.includes('</table>')) {
@@ -163,7 +157,7 @@ export default class MessageFormatter {
                     inList = null;
                 }
                 processed.push(line);
-                continue;
+                return;
             }
 
             const ulMatch = line.match(/^(\s*)(?:[\*\-]|\*\*[\*\-]\*\*)\s+(.*)/);
@@ -190,7 +184,7 @@ export default class MessageFormatter {
                 }
                 processed.push(line);
             }
-        }
+        });
 
         if (inList) processed.push(`</${inList}>`);
         html = processed.join('\n');
@@ -221,22 +215,22 @@ export default class MessageFormatter {
         let tableLines = [];
         let inTable = false;
 
-        for (const line of lines) {
+        lines.forEach(line => {
             if (line.trim().match(/^\|(.+)\|$/)) {
                 if (!inTable) inTable = true;
                 tableLines.push(line);
             } else {
-                if (inTable && tableLines.length > 0) {
+                if (inTable && tableLines.length) {
                     result.push(this.buildTable(tableLines));
                     tableLines = [];
                     inTable = false;
                 }
                 result.push(line);
             }
-        }
+        });
 
-        if (inTable && tableLines.length > 0) result.push(this.buildTable(tableLines));
+        if (inTable && tableLines.length) result.push(this.buildTable(tableLines));
 
-        return {text: result.join('\n'), placeholders};
+        return result.join('\n');
     }
 }
