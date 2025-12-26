@@ -31,7 +31,12 @@ const interactionSchema = new mongoose.Schema({
     ]
 }, {timestamps: true});
 
+// Index 1: Fast lookup for specific sessions (e.g. clicking a chat)
 interactionSchema.index({userId: 1, sessionId: 1});
+
+// Index 2: Fast lookup for the History List (Infinite Scroll)
+// This makes "sort by createdAt" instant for old and new data.
+interactionSchema.index({userId: 1, createdAt: -1});
 
 const InteractionLog = mongoose.model('InteractionLog', interactionSchema);
 
