@@ -1,84 +1,77 @@
 import InteractionLog from '../models/InteractionLog.js';
-import {clearConversationHistory} from '../middleware/keySession.js';
-import {ConversationManager} from '../utils/conversationManager.js';
-
+import { clearConversationHistory } from '../middleware/keySession.js';
+import { ConversationManager } from '../utils/conversationManager.js';
 
 export const getInteraction = async (req, res) => {
     try {
-        const {userId} = req;
-        if (!userId) return res.status(401).json({error: 'Unauthorized'});
+        const { userId } = req;
+        const { cursor, limit = 10 } = req.query;
 
-        const logs = await InteractionLog.find({userId})
-            .sort({createdAt: -1})
-            .select('sessionId createdAt messages');
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        const validLogs = [];
-        const idsToDelete = [];
+        const queryLimit = parseInt(limit, 10);
 
-        for (const log of logs) {
-            const userMsg = log.messages.find(m => m.role === 'user');
-            if (userMsg) {
-                validLogs.push({
-                    sessionId: log.sessionId,
-                    createdAt: log.createdAt,
-                    preview: userMsg.parts[0].text.length > 50
-                        ? userMsg.parts[0].text.substring(0, 50) + '...'
-                        : userMsg.parts[0].text
-                });
-            } else {
-                idsToDelete.push(log._id);
-            }
+        if (!cursor) {
+            InteractionLog.deleteMany({ userId, 'messages.role': { $ne: 'user' } }).catch(() => {});
         }
 
-        if (idsToDelete.length > 0) {
-            InteractionLog.deleteMany({_id: {$in: idsToDelete}})
-                .catch(e => console.error('Cleanup error:', e));
-        }
+        const logs = await InteractionLog.fetchHistoryPreviews(userId, cursor, queryLimit);
 
-        res.json({history: validLogs});
+        const nextCursor = logs.length === queryLimit ? logs[logs.length - 1].createdAt : null;
+
+        res.json({
+            history: logs.map(log => ({
+                sessionId: log.sessionId,
+                createdAt: log.createdAt,
+                preview: log.preview ? (log.preview.length === 50 ? `${log.preview}...` : log.preview) : ''
+            })),
+            nextCursor
+        });
     } catch (error) {
         console.error('Fetch history error:', error);
-        res.status(500).json({error: 'Failed to fetch history'});
+        res.status(500).json({ error: 'Failed to fetch history' });
     }
 };
 
 export const getInteractionDetails = async (req, res) => {
     try {
-        const {userId} = req;
-        const {id: sessionId} = req.params;
+        const { userId } = req;
+        const { id: sessionId } = req.params;
 
-        if (!userId) return res.status(401).json({error: 'Unauthorized'});
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        const log = await InteractionLog.findOne({sessionId, userId}).select('messages');
+        const log = await InteractionLog.findOne({ sessionId, userId }).select('messages');
 
-        if (!log) return res.status(404).json({error: 'Session not found'});
+        if (!log) return res.status(404).json({ error: 'Session not found' });
 
-        res.json({messages: log.messages});
+        res.json({ messages: log.messages });
     } catch (error) {
         console.error('Fetch session details error:', error);
-        res.status(500).json({error: 'Failed to fetch session details'});
+        res.status(500).json({ error: 'Failed to fetch session details' });
     }
 };
 
 export const deleteInteraction = async (req, res) => {
     try {
-        const {userId} = req;
-        const {id: sessionId} = req.params;
-        if (!userId) return res.status(401).json({error: 'Unauthorized'});
+        const { userId } = req;
+        const { id: sessionId } = req.params;
 
-        const result = await InteractionLog.deleteMany({sessionId, userId});
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        if (result.deletedCount === 0) return res.status(404).json({error: 'Session not found or already deleted'});
-        res.json({success: true, message: 'Session deleted successfully'});
+        const result = await InteractionLog.deleteMany({ sessionId, userId });
+
+        if (result.deletedCount === 0) return res.status(404).json({ error: 'Session not found or already deleted' });
+
+        res.json({ success: true, message: 'Session deleted successfully' });
     } catch (error) {
         console.error('Delete session error:', error);
-        res.status(500).json({error: 'Failed to delete session'});
+        res.status(500).json({ error: 'Failed to delete session' });
     }
 };
 
 export const clearChat = (req, res) => {
     clearConversationHistory(req.sessionId);
-    res.json({success: true});
+    res.json({ success: true });
 };
 
 export const newChat = (req, res) => {
@@ -91,5 +84,5 @@ export const newChat = (req, res) => {
         sameSite: 'strict'
     });
 
-    res.json({sessionId: newSessionId});
+    res.json({ sessionId: newSessionId });
 };

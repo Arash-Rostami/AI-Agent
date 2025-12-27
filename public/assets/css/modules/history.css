@@ -294,3 +294,16 @@
 [data-theme="dark"] .sidebar-toggle.active:hover {
     color: #ffffff;
 }
+
+.history-date-header {
+    padding: 0.5rem 0.5rem;
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.history-sentinel {
+    text-align: center;
+    padding: 10px;
+    min-height: 40px;
+}
