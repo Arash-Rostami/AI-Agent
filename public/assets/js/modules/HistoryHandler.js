@@ -29,22 +29,10 @@ export default class HistoryHandler extends BaseHandler {
         this.historyBtn.addEventListener('click', () => this.openHistory());
         this.closeBtn.addEventListener('click', () => this.closeHistory());
         this.backBtn.addEventListener('click', () => this.showList());
+        this.sidebarToggle?.addEventListener('click', () => this.toggleHistory());
 
-        if (this.sidebarToggle) {
-            this.sidebarToggle.addEventListener('click', () => this.toggleHistory());
-        }
-
-        if (this.pdfBtn) {
-            this.pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i>';
-            this.pdfBtn.title = 'Export as PDF';
-            this.pdfBtn.addEventListener('click', () => this.exportToPDF());
-        }
-
-        if (this.printBtn) {
-            this.printBtn.innerHTML = '<i class="fas fa-print"></i>';
-            this.printBtn.title = 'Print History';
-            this.printBtn.addEventListener('click', () => this.printHistory());
-        }
+        this.setButtonActions(this.pdfBtn, this.exportToPDF, '<i class="fas fa-file-pdf"></i>', 'Export as PDF');
+        this.setButtonActions(this.printBtn, this.printHistory, '<i class="fas fa-print"></i>', 'Print History');
 
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.closeHistory();
@@ -53,18 +41,24 @@ export default class HistoryHandler extends BaseHandler {
         this.initInfiniteScroll();
     }
 
-    initInfiniteScroll() {
-        const options = {
-            root: this.listContainer,
-            rootMargin: '100px',
-            threshold: 0.1
-        };
+    setButtonActions(button, action, iconHTML, title) {
+        if (button) {
+            button.innerHTML = iconHTML;
+            button.title = title;
+            button.addEventListener('click', action.bind(this));
+        }
+    }
 
+    initInfiniteScroll() {
         this.observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && !this.isLoading && this.nextCursor) {
                 this.loadHistoryList(true);
             }
-        }, options);
+        }, {
+            root: this.listContainer,
+            rootMargin: '100px',
+            threshold: 0.1
+        });
     }
 
     toggleHistory() {
@@ -76,7 +70,7 @@ export default class HistoryHandler extends BaseHandler {
             try {
                 const response = await fetch(`/api/history/${sessionId}`, {
                     method: 'DELETE',
-                    headers: { 'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin }
+                    headers: {'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin}
                 });
 
                 if (response.ok) {
@@ -103,19 +97,15 @@ export default class HistoryHandler extends BaseHandler {
         const preview = this.getPreviewFromDOM() || this.currentSessionId || 'export';
         const safeFilename = preview.replace(/\W+/g, '_').toLowerCase();
 
-        const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `chat-history-${safeFilename}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
         element.classList.add('pdf-mode');
 
-        window.html2pdf().set(opt).from(element).save().finally(() => {
-            element.classList.remove('pdf-mode');
-        });
+        window.html2pdf().set({
+            margin: [10, 10, 10, 10],
+            filename: `chat-history-${safeFilename}.pdf`,
+            image: {type: 'jpeg', quality: 0.98},
+            html2canvas: {scale: 2, useCORS: true, logging: false},
+            jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'}
+        }).from(element).save().finally(() => element.classList.remove('pdf-mode'));
     }
 
     async loadHistoryList(isAppend = false) {
@@ -136,18 +126,16 @@ export default class HistoryHandler extends BaseHandler {
             }
 
             const response = await fetch(url, {
-                headers: { 'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin }
+                headers: {'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin}
             });
 
             if (!response.ok) throw new Error('Failed to load history');
 
-            const { history, nextCursor } = await response.json();
-
+            const {history, nextCursor} = await response.json();
             this.nextCursor = nextCursor;
 
-            if (!isAppend && (!history || history.length === 0)) {
+            if (!isAppend && (!history?.length)) {
                 this.listContainer.innerHTML = '<div class="history-item" style="cursor: default; text-align: center;">No history found.</div>';
-                this.isLoading = false;
                 return;
             }
 
@@ -165,6 +153,7 @@ export default class HistoryHandler extends BaseHandler {
 
     updateSentinelState(isLoading) {
         let sentinel = this.listContainer.querySelector('.history-sentinel');
+
         if (!sentinel) {
             sentinel = document.createElement('div');
             sentinel.className = 'history-sentinel';
@@ -173,11 +162,11 @@ export default class HistoryHandler extends BaseHandler {
         }
 
         if (isLoading) {
-             sentinel.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            sentinel.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         } else if (this.nextCursor) {
-             sentinel.innerHTML = ''; // Clear spinner but keep sentinel for observation
+            sentinel.innerHTML = '';
         } else {
-             sentinel.remove(); // No more data, remove sentinel
+            sentinel.remove();
         }
     }
 
@@ -188,12 +177,12 @@ export default class HistoryHandler extends BaseHandler {
 
         try {
             const response = await fetch(`/api/history/${sessionId}`, {
-                headers: { 'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin }
+                headers: {'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin}
             });
 
             if (!response.ok) throw new Error('Failed to load details');
 
-            const { messages } = await response.json();
+            const {messages} = await response.json();
             this.renderMessages(messages);
         } catch (error) {
             console.error('Details load error:', error);
@@ -204,14 +193,14 @@ export default class HistoryHandler extends BaseHandler {
     async openHistory() {
         this.modal.classList.add('active');
         this.modal.classList.remove('hidden');
-        if (this.sidebarToggle) this.sidebarToggle.classList.add('active');
+        this.sidebarToggle?.classList.add('active');
         this.showList();
         await this.loadHistoryList(false);
     }
 
     closeHistory() {
         this.modal.classList.remove('active');
-        if (this.sidebarToggle) this.sidebarToggle.classList.remove('active');
+        this.sidebarToggle?.classList.remove('active');
         setTimeout(() => {
             this.modal.classList.add('hidden');
             this.detailsContainer.classList.remove('active');
@@ -221,8 +210,10 @@ export default class HistoryHandler extends BaseHandler {
 
     ensureHtml2Pdf() {
         if (this._html2pdfPromise) return this._html2pdfPromise;
+
         this._html2pdfPromise = new Promise((resolve, reject) => {
             if (window.html2pdf) return resolve(window.html2pdf);
+
             const s = document.createElement('script');
             s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
             s.async = true;
@@ -230,6 +221,7 @@ export default class HistoryHandler extends BaseHandler {
             s.onerror = reject;
             document.head.appendChild(s);
         });
+
         return this._html2pdfPromise;
     }
 
@@ -237,7 +229,7 @@ export default class HistoryHandler extends BaseHandler {
         const firstUser = this.messagesContainer.querySelector('.message.user .message-content');
         if (!firstUser) return '';
         const text = firstUser.textContent.trim();
-        return text.substring(0, 50) + (text.length > 50 ? '...' : '');
+        return text.length > 50 ? text.substring(0, 50) + '...' : text;
     }
 
     groupHistoryByDate(history) {
@@ -247,11 +239,12 @@ export default class HistoryHandler extends BaseHandler {
 
         history.forEach(item => {
             const date = new Date(item.createdAt).toDateString();
-            let label = date;
-            if (date === today) label = 'Today'; else if (date === yesterday) label = 'Yesterday';
+            const label = date === today ? 'Today' : date === yesterday ? 'Yesterday' : date;
+
             if (!groups[label]) groups[label] = [];
             groups[label].push(item);
         });
+
         return groups;
     }
 
@@ -259,7 +252,6 @@ export default class HistoryHandler extends BaseHandler {
         const printWindow = window.open('', '_blank');
         const preview = this.getPreviewFromDOM() || this.currentSessionId || 'Export';
         const title = `Chat History - ${preview}`;
-        const content = this.messagesContainer.innerHTML;
 
         printWindow.document.write(`
             <!DOCTYPE html>
@@ -282,10 +274,11 @@ export default class HistoryHandler extends BaseHandler {
             </head>
             <body>
                 <h2>${title}</h2>
-                <div class="messages">${content}</div>
+                <div class="messages">${this.messagesContainer.innerHTML}</div>
             </body>
             </html>
         `);
+
         printWindow.document.close();
         printWindow.focus();
         printWindow.print();
@@ -293,28 +286,18 @@ export default class HistoryHandler extends BaseHandler {
     }
 
     renderList(history, isAppend = false) {
-        if (!isAppend) {
-            this.listContainer.innerHTML = '';
-        }
+        if (!isAppend) this.listContainer.innerHTML = '';
 
-        // Remove sentinel temporarily so we can append real items before it
         const sentinel = this.listContainer.querySelector('.history-sentinel');
-        if (sentinel) sentinel.remove();
+        sentinel?.remove();
 
         const grouped = this.groupHistoryByDate(history);
         const fragment = document.createDocumentFragment();
-
-        // Check if the last rendered group matches the first new group
         const existingHeaders = this.listContainer.querySelectorAll('.history-date-header');
-        const lastHeader = existingHeaders.length > 0 ? existingHeaders[existingHeaders.length - 1] : null;
+        const lastHeader = existingHeaders[existingHeaders.length - 1];
 
         for (const [dateLabel, items] of Object.entries(grouped)) {
-            let targetContainer = fragment; // Default to appending to main fragment
-
-            // Merge logic: if we are appending and the first group matches the last existing header
-            if (isAppend && lastHeader && lastHeader.textContent === dateLabel && targetContainer === fragment) {
-                 // Skip creating header, items will naturally fall under the previous one in the DOM order
-            } else {
+            if (!(isAppend && lastHeader?.textContent === dateLabel)) {
                 const groupHeader = document.createElement('div');
                 groupHeader.className = 'history-date-header';
                 groupHeader.textContent = dateLabel;
@@ -324,7 +307,7 @@ export default class HistoryHandler extends BaseHandler {
             items.forEach(item => {
                 const el = document.createElement('div');
                 el.className = 'history-item';
-                const time = new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const time = new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
                 const previewText = this.formatter.excludeQuotationMarks(item.preview || '');
 
                 el.innerHTML = `
@@ -335,11 +318,11 @@ export default class HistoryHandler extends BaseHandler {
                     <button class="delete-history-btn" title="Delete Chat"><i class="fas fa-trash"></i></button>
                 `;
 
-                const deleteBtn = el.querySelector('.delete-history-btn');
-                deleteBtn.addEventListener('click', (e) => {
+                el.querySelector('.delete-history-btn').addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.confirmDelete(item.sessionId, el);
                 });
+
                 el.addEventListener('click', () => this.loadSessionDetails(item.sessionId));
                 fragment.appendChild(el);
             });
@@ -347,7 +330,6 @@ export default class HistoryHandler extends BaseHandler {
 
         this.listContainer.appendChild(fragment);
 
-        // Re-append sentinel if needed
         if (this.nextCursor) {
             this.updateSentinelState(false);
         }
@@ -370,14 +352,12 @@ export default class HistoryHandler extends BaseHandler {
             const contentEl = document.createElement('div');
             contentEl.className = 'message-content';
 
-            const text = this.formatter.excludeQuotationMarks(msg.parts && msg.parts[0] ? msg.parts[0].text : '');
+            const text = this.formatter.excludeQuotationMarks(msg.parts?.[0]?.text || '');
             contentEl.innerHTML = this.formatter.format(text);
 
-            if (msg.role === 'model' || msg.role === 'assistant') {
-                if (/[\u0600-\u06FF]/.test(text)) {
-                    contentEl.classList.add('rtl');
-                    contentEl.dir = 'rtl';
-                }
+            if ((msg.role === 'model' || msg.role === 'assistant') && /[\u0600-\u06FF]/.test(text)) {
+                contentEl.classList.add('rtl');
+                contentEl.dir = 'rtl';
             }
 
             contentWrapper.appendChild(contentEl);
@@ -391,9 +371,7 @@ export default class HistoryHandler extends BaseHandler {
 
     showDetails() {
         this.detailsContainer.classList.remove('hidden');
-        requestAnimationFrame(() => {
-            this.detailsContainer.classList.add('active');
-        });
+        requestAnimationFrame(() => this.detailsContainer.classList.add('active'));
     }
 
     showList() {
