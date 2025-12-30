@@ -83,22 +83,20 @@ export const restoreInteraction = async (req, res) => {
         ConversationManager.mapUserToSession(userId, newSessionId);
 
         // Sanitize messages to ensure API compatibility and prevent errors
-        // Format: { role: string, parts: [{ text: string }] }
         const restoredMessages = log.messages.map(msg => {
             const role = msg.role === 'model' ? 'assistant' : msg.role;
             // Extract text from parts, defaulting to empty string if missing
-            const content = msg.parts?.map(p => p.text || '').join('').trim() || '[Restored Content]';
+            const content = (msg.parts || []).map(p => p.text || '').join('').trim();
 
-            // Return object compliant with both Gemini API (parts) and Frontend (msg.parts[0].text)
+            // Return object compliant with ConversationManager/formatter.js expectations
+            // formatter.js expects: { role, content } and constructs parts: [{text: content}]
             return {
                 role,
-                parts: [{ text: content }]
+                content: content || '[Restored Content]'
             };
         });
 
-        // Save sanitized messages to in-memory session
-        // Note: ConversationManager.saveHistory stores what is passed to it.
-        // It's crucial that this format matches what Gemini API expects for 'contents'.
+        // Save sanitized messages (as plain objects with role/content) to in-memory session
         ConversationManager.saveHistory(newSessionId, restoredMessages);
 
         res.cookie('session_id', newSessionId, {
@@ -107,7 +105,17 @@ export const restoreInteraction = async (req, res) => {
             sameSite: 'strict'
         });
 
-        res.json({ sessionId: newSessionId, messages: restoredMessages });
+        // The frontend expects `parts: [{text}]` for rendering, but the backend
+        // ConversationManager needs `content` for the API formatter.
+        // We can send a transformed version to the frontend or let the frontend adapt.
+        // Frontend code: `const text = msg.parts?.[0]?.text || '';`
+        // So we need to send `parts` to the frontend.
+        const frontendMessages = restoredMessages.map(msg => ({
+            role: msg.role,
+            parts: [{ text: msg.content }]
+        }));
+
+        res.json({ sessionId: newSessionId, messages: frontendMessages });
     } catch (error) {
         console.error('Restore session error:', error);
         res.status(500).json({ error: 'Failed to restore session' });
