@@ -341,7 +341,7 @@ export default class HistoryHandler extends BaseHandler {
                 const el = document.createElement('div');
                 el.className = 'history-item';
                 const time = new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-                const previewText = this.formatter.excludeQuotationMarks(item.preview || '');
+                const previewText = this.formatter.cleanText(item.preview || '');
 
                 el.innerHTML = `
                     <div class="history-content-wrapper">
