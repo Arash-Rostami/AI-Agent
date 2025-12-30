@@ -19,6 +19,7 @@ export default class HistoryHandler extends BaseHandler {
         this.detailsContainer = document.getElementById('history-details');
         this.messagesContainer = document.getElementById('history-messages');
         this.backBtn = document.getElementById('back-to-list-btn');
+        this.continueBtn = document.getElementById('continue-chat-btn');
         this.pdfBtn = document.getElementById('pdf-btn');
         this.printBtn = document.getElementById('print-btn');
     }
@@ -29,6 +30,7 @@ export default class HistoryHandler extends BaseHandler {
         this.historyBtn.addEventListener('click', () => this.openHistory());
         this.closeBtn.addEventListener('click', () => this.closeHistory());
         this.backBtn.addEventListener('click', () => this.showList());
+        this.continueBtn?.addEventListener('click', () => this.handleContinue(this.currentSessionId));
         this.sidebarToggle?.addEventListener('click', () => this.toggleHistory());
 
         this.setButtonActions(this.pdfBtn, this.exportToPDF, '<i class="fas fa-file-pdf"></i>', 'Export as PDF');
@@ -41,10 +43,10 @@ export default class HistoryHandler extends BaseHandler {
         this.initInfiniteScroll();
     }
 
-    setButtonActions(button, action, iconHTML, title) {
+    setButtonActions(button, action, iconHTML, label) {
         if (button) {
-            button.innerHTML = iconHTML;
-            button.title = title;
+            button.innerHTML = `${iconHTML} <span>${label}</span>`;
+            button.title = label;
             button.addEventListener('click', action.bind(this));
         }
     }
@@ -63,6 +65,32 @@ export default class HistoryHandler extends BaseHandler {
 
     toggleHistory() {
         this.modal.classList.contains('hidden') ? this.openHistory() : this.closeHistory();
+    }
+
+    async handleContinue(sessionId) {
+        if (!sessionId) return;
+
+        try {
+            const response = await fetch(`/api/history/${sessionId}/restore`, {
+                method: 'POST',
+                headers: {'X-User-Id': this.userId, 'X-Frame-Referer': this.parentOrigin}
+            });
+
+            if (!response.ok) throw new Error('Failed to restore session');
+
+            const { messages } = await response.json();
+
+            // Dispatch event to ChatHandler
+            const event = new CustomEvent('restore-chat', {
+                detail: { messages }
+            });
+            window.dispatchEvent(event);
+
+            this.closeHistory();
+        } catch (error) {
+            console.error('Restore error:', error);
+            alert('Failed to restore chat session.');
+        }
     }
 
     async confirmDelete(sessionId, element) {
@@ -263,13 +291,21 @@ export default class HistoryHandler extends BaseHandler {
                     body { font-family: system-ui, sans-serif; padding: 20px; line-height: 1.6; }
                     .message { margin-bottom: 20px; display: flex; }
                     .message.user { flex-direction: row-reverse; }
-                    .message-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color, #007bff); color: white; display: flex; align-items: center; justify-content: center; margin: 0 10px; flex-shrink: 0; }
+                    .message-avatar { width: 40px; height: 40px; border-radius: 50%; background: #ccc; color: white; display: flex; align-items: center; justify-content: center; margin: 0 10px; flex-shrink: 0; overflow: hidden; }
+                    .message-avatar img { width: 100%; height: 100%; object-fit: cover; }
                     .message-wrapper { max-width: 80%; }
                     .message-content { padding: 12px 16px; border-radius: 18px; background: #f0f0f0; }
                     .message.ai .message-content { background: #e3f2fd; }
                     .message.user .message-content { background: #007bff; color: white; }
                     .rtl { direction: rtl; text-align: right; }
-                    @media print { body { padding: 0; } }
+                    @media print {
+                        body { padding: 0; }
+                        .message-avatar { background: transparent !important; border: 1px solid #ddd; color: #333; }
+                        /* Ensure the image tag is visible if present, but background is clear */
+                        .message-avatar img { display: block; }
+                        .message.user .message-content { background: #eee !important; color: #000 !important; border: 1px solid #ccc; }
+                        .message.ai .message-content { background: #fff !important; border: 1px solid #ccc; }
+                    }
                 </style>
             </head>
             <body>

@@ -69,6 +69,51 @@ export const deleteInteraction = async (req, res) => {
     }
 };
 
+export const restoreInteraction = async (req, res) => {
+    try {
+        const { userId } = req;
+        const { id: oldSessionId } = req.params;
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const log = await InteractionLog.findOne({ sessionId: oldSessionId, userId }).select('messages');
+        if (!log) return res.status(404).json({ error: 'Session not found' });
+
+        const newSessionId = ConversationManager.getOrCreateSessionId(userId, req.userIp);
+        ConversationManager.mapUserToSession(userId, newSessionId);
+
+        // Sanitize messages to ensure API compatibility and prevent errors
+        // Format: { role: string, parts: [{ text: string }] }
+        const restoredMessages = log.messages.map(msg => {
+            const role = msg.role === 'model' ? 'assistant' : msg.role;
+            // Extract text from parts, defaulting to empty string if missing
+            const content = msg.parts?.map(p => p.text || '').join('').trim() || '[Restored Content]';
+
+            // Return object compliant with both Gemini API (parts) and Frontend (msg.parts[0].text)
+            return {
+                role,
+                parts: [{ text: content }]
+            };
+        });
+
+        // Save sanitized messages to in-memory session
+        // Note: ConversationManager.saveHistory stores what is passed to it.
+        // It's crucial that this format matches what Gemini API expects for 'contents'.
+        ConversationManager.saveHistory(newSessionId, restoredMessages);
+
+        res.cookie('session_id', newSessionId, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000,
+            sameSite: 'strict'
+        });
+
+        res.json({ sessionId: newSessionId, messages: restoredMessages });
+    } catch (error) {
+        console.error('Restore session error:', error);
+        res.status(500).json({ error: 'Failed to restore session' });
+    }
+};
+
 export const clearChat = (req, res) => {
     clearConversationHistory(req.sessionId);
     res.json({ success: true });

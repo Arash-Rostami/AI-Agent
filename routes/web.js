@@ -1,6 +1,6 @@
 import express from 'express';
 import upload from "../middleware/uploadHandler.js";
-import * as InteractionController from "../controllers/InteractionController.js";
+import * as InteractionController from "../controllers/InteractionControllerEnhanced.js";
 import * as VectorController from "../controllers/VectorController.js";
 import * as ChatController from "../controllers/ChatController.js";
 import * as PageController from "../controllers/PageController.js";
@@ -32,6 +32,8 @@ router.post('/new-chat', InteractionController.newChat);
 router.get('/api/history', InteractionController.getInteraction);
 
 router.get('/api/history/:id', InteractionController.getInteractionDetails);
+
+router.post('/api/history/:id/restore', InteractionController.restoreInteraction);
 
 router.delete('/api/history/:id', InteractionController.deleteInteraction);
 
