@@ -5,7 +5,9 @@ export async function syncToDatabase(sessionId, userId, history) {
 
         const validMessages = history.map(msg => ({
             role: msg.role === 'tool_request' || msg.role === 'tool_response' ? 'system' : msg.role,
-            parts: Array.isArray(msg.parts) ? msg.parts : [{text: JSON.stringify(msg.content || msg.args || "")}],
+            parts: Array.isArray(msg.parts) ? msg.parts : [{
+                text: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content || msg.args || "")
+            }],
             timestamp: new Date()
         }));
 
