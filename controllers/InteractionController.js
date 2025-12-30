@@ -85,10 +85,8 @@ export const restoreInteraction = async (req, res) => {
         const restoredMessages = log.messages.map(msg => {
             const role = msg.role === 'model' ? 'assistant' : msg.role;
             const content = msg.parts?.map(p => p.text || '').join('').trim() || '[Restored Content]';
-            return {
-                role,
-                parts: [{text: content}]
-            };
+
+            return {role, content};
         });
         ConversationManager.saveHistory(newSessionId, restoredMessages);
 

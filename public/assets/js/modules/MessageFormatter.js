@@ -105,9 +105,26 @@ export default class MessageFormatter {
         return cleaned;
     }
 
+    cleanText(text) {
+        if (!text || typeof text !== 'string') return '';
+        let cleaned = text.trim();
+
+        while (cleaned.length >= 2 && cleaned.startsWith('"') && cleaned.endsWith('"')) {
+            cleaned = cleaned.substring(1, cleaned.length - 1);
+        }
+
+        cleaned = cleaned.replace(/\\+(?=")/g, '');
+        cleaned = cleaned.replace(/\\+n/g, '\n');
+        cleaned = cleaned.replace(/\\\\/g, '\\');
+        cleaned = cleaned.replace(/\\+$/gm, '');
+
+        return cleaned;
+    }
+
     format(text) {
         if (!text) return '';
-        let html = text.trim();
+
+        let html = this.cleanText(text);
         html = html.replace(/\\n/g, '\n');
 
         const {text: codeBlockHtml, placeholders} = this.parseCodeBlocks(html);

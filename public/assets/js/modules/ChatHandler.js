@@ -241,7 +241,7 @@ export default class ChatHandler extends BaseHandler {
 
         messages.forEach(msg => {
             if (msg.role === 'system') return;
-            const text = msg.parts?.[0]?.text || '';
+            const text = msg.content || msg.parts?.[0]?.text || '';
             const sources = msg.sources || [];
             const role = (msg.role === 'model' || msg.role === 'assistant') ? 'ai' : 'user';
 
