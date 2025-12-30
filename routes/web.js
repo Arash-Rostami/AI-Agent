@@ -33,6 +33,8 @@ router.get('/api/history', InteractionController.getInteraction);
 
 router.get('/api/history/:id', InteractionController.getInteractionDetails);
 
+router.post('/api/history/:id/restore', InteractionController.restoreInteraction);
+
 router.delete('/api/history/:id', InteractionController.deleteInteraction);
 
 router.post('/api/vector/sync', VectorController.syncVectors);

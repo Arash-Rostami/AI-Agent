@@ -190,22 +190,74 @@
 
 .history-details-header button {
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     color: var(--text-secondary);
-    width: 40px;
     height: 40px;
-    border-radius: 50%;
+    padding: 0 16px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    gap: 8px;
+    transition: var(--transition);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.history-details-header button i {
     font-size: 1.1rem;
 }
 
 .history-details-header button:hover {
-    background: rgba(128, 128, 128, 0.1);
-    color: var(--primary-color);
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .history-details-header button:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.history-details-header button#continue-chat-btn {
+    background: var(--primary-color);
+    color: #ffffff;
+    box-shadow: var(--shadow);
+}
+
+.history-details-header button#continue-chat-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .history-details-header button#continue-chat-btn {
+    color: #000000;
+}
+
+.history-details-header button#back-to-list-btn,
+.history-details-header button#print-btn,
+.history-details-header button#pdf-btn {
+    /* Keeping consistent style for other buttons */
+}
+
+@media print {
+    body { padding: 0; }
+    .message-avatar {
+        background: transparent !important;
+        border: 1px solid #ddd;
+        color: #333;
+    }
+    .message-avatar img {
+        display: block;
+    }
+    .message.user .message-content {
+        background: #eee !important;
+        color: #000 !important;
+        border: 1px solid #ccc;
+    }
+    .message.ai .message-content {
+        background: #fff !important;
+        border: 1px solid #ccc;
+    }
 }
 
 .history-details .messages {

@@ -230,6 +230,25 @@ export default class ChatHandler extends BaseHandler {
         this.uiHandler.messageInput.addEventListener('input', () => this.uiHandler.handleInputFade());
         this.uiHandler.messageInput.addEventListener('focus', () => this.uiHandler.handleInputFade());
         this.uiHandler.messageInput.addEventListener('blur', () => this.uiHandler.resetInputFade());
+
+        window.addEventListener('restore-chat', (e) => this.restoreSession(e.detail.messages));
+    }
+
+    restoreSession(messages) {
+        if (!messages || !Array.isArray(messages)) return;
+
+        this.uiHandler.resetUI();
+
+        messages.forEach(msg => {
+            if (msg.role === 'system') return;
+            const text = msg.parts?.[0]?.text || '';
+            const sources = msg.sources || [];
+            const role = (msg.role === 'model' || msg.role === 'assistant') ? 'ai' : 'user';
+
+            this.uiHandler.addMessage(text, role, false, sources);
+        });
+
+        this.uiHandler.updateStatus('Online', 'success');
     }
 
     setupTextareaAutoResize() {
