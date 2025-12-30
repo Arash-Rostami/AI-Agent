@@ -190,17 +190,17 @@
 
 .history-details-header button {
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     color: var(--text-secondary);
     height: 40px;
     padding: 0 16px;
-    border-radius: 20px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: all 0.2s ease;
+    transition: var(--transition);
     font-size: 0.9rem;
     font-weight: 500;
 }
@@ -210,18 +210,27 @@
 }
 
 .history-details-header button:hover {
-    background: rgba(128, 128, 128, 0.08);
+    background: rgba(0, 0, 0, 0.05);
     color: var(--text-color);
 }
 
+[data-theme="dark"] .history-details-header button:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 .history-details-header button#continue-chat-btn {
-    color: var(--primary-color);
-    background: rgba(11, 87, 208, 0.08);
+    background: var(--primary-color);
+    color: #ffffff;
+    box-shadow: var(--shadow);
 }
 
 .history-details-header button#continue-chat-btn:hover {
-    background: var(--primary-color);
-    color: var(--bg-color);
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .history-details-header button#continue-chat-btn {
+    color: #000000;
 }
 
 .history-details-header button#back-to-list-btn,

@@ -300,11 +300,10 @@ export default class HistoryHandler extends BaseHandler {
                     .rtl { direction: rtl; text-align: right; }
                     @media print {
                         body { padding: 0; }
-                        .message-avatar { background: transparent !important; border: 1px solid #ddd; color: #333; }
-                        /* Ensure the image tag is visible if present, but background is clear */
-                        .message-avatar img { display: block; }
+                        .message-avatar { display: none !important; }
                         .message.user .message-content { background: #eee !important; color: #000 !important; border: 1px solid #ccc; }
                         .message.ai .message-content { background: #fff !important; border: 1px solid #ccc; }
+                        .message-wrapper { max-width: 100%; }
                     }
                 </style>
             </head>
