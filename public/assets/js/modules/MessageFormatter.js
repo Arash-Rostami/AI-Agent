@@ -105,9 +105,32 @@ export default class MessageFormatter {
         return cleaned;
     }
 
+    cleanText(text) {
+        if (!text || typeof text !== 'string') return '';
+        let cleaned = text.trim();
+
+        // Recursively remove outer quotes if they exist (e.g., "\"foo\"" -> "foo")
+        while (cleaned.length >= 2 && cleaned.startsWith('"') && cleaned.endsWith('"')) {
+            cleaned = cleaned.substring(1, cleaned.length - 1);
+        }
+
+        // Unescape internal escaped characters (like \" -> ", \\ -> \)
+        // We use a simple replace for common JSON-like escapes seen in the artifacts
+        cleaned = cleaned
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\');
+
+        // Remove trailing backslashes often left by bad splitting/escaping
+        // e.g., "includes:\" -> "includes:"
+        cleaned = cleaned.replace(/\\+$/gm, '');
+
+        return cleaned;
+    }
+
     format(text) {
         if (!text) return '';
-        let html = text.trim();
+
+        let html = this.cleanText(text);
         html = html.replace(/\\n/g, '\n');
 
         const {text: codeBlockHtml, placeholders} = this.parseCodeBlocks(html);
