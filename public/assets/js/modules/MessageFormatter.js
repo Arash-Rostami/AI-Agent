@@ -114,14 +114,19 @@ export default class MessageFormatter {
             cleaned = cleaned.substring(1, cleaned.length - 1);
         }
 
-        // Unescape internal escaped characters (like \" -> ", \\ -> \)
-        // We use a simple replace for common JSON-like escapes seen in the artifacts
-        cleaned = cleaned
-            .replace(/\\"/g, '"')
-            .replace(/\\\\/g, '\\');
+        // Robust strategy: Remove ALL backslashes that immediately precede a double quote
+        // This handles \", \\\", \\\\\\", etc., regardless of count.
+        cleaned = cleaned.replace(/\\+(?=")/g, '');
+
+        // Collapse multiple backslashes followed by 'n' into a single newline
+        // Handles \n, \\n, \\\n, \\\\n, etc.
+        cleaned = cleaned.replace(/\\+n/g, '\n');
+
+        // General unescape for other common sequences if needed, but the above covers the main artifacts.
+        // We still unescape \\ to \ for other non-quote contexts if they exist, but safely.
+        cleaned = cleaned.replace(/\\\\/g, '\\');
 
         // Remove trailing backslashes often left by bad splitting/escaping
-        // e.g., "includes:\" -> "includes:"
         cleaned = cleaned.replace(/\\+$/gm, '');
 
         return cleaned;
@@ -131,6 +136,8 @@ export default class MessageFormatter {
         if (!text) return '';
 
         let html = this.cleanText(text);
+
+        // Final pass for any remaining standard newlines not caught above
         html = html.replace(/\\n/g, '\n');
 
         const {text: codeBlockHtml, placeholders} = this.parseCodeBlocks(html);
