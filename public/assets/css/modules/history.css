@@ -192,20 +192,63 @@
     background: transparent;
     border: none;
     color: var(--text-secondary);
-    width: 40px;
     height: 40px;
-    border-radius: 50%;
+    padding: 0 16px;
+    border-radius: 20px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    gap: 8px;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.history-details-header button i {
     font-size: 1.1rem;
 }
 
 .history-details-header button:hover {
-    background: rgba(128, 128, 128, 0.1);
+    background: rgba(128, 128, 128, 0.08);
+    color: var(--text-color);
+}
+
+.history-details-header button#continue-chat-btn {
     color: var(--primary-color);
+    background: rgba(11, 87, 208, 0.08);
+}
+
+.history-details-header button#continue-chat-btn:hover {
+    background: var(--primary-color);
+    color: var(--bg-color);
+}
+
+.history-details-header button#back-to-list-btn,
+.history-details-header button#print-btn,
+.history-details-header button#pdf-btn {
+    /* Keeping consistent style for other buttons */
+}
+
+@media print {
+    body { padding: 0; }
+    .message-avatar {
+        background: transparent !important;
+        border: 1px solid #ddd;
+        color: #333;
+    }
+    .message-avatar img {
+        display: block;
+    }
+    .message.user .message-content {
+        background: #eee !important;
+        color: #000 !important;
+        border: 1px solid #ccc;
+    }
+    .message.ai .message-content {
+        background: #fff !important;
+        border: 1px solid #ccc;
+    }
 }
 
 .history-details .messages {
