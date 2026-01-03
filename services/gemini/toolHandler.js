@@ -8,7 +8,8 @@ export const TOOL_ARG_MAPPER = {
     getWebSearch: ({query} = {}) => [query],
     crawlWebPage: ({url} = {}) => [url],
     getBusinessInfo: () => [],
-    searchBmsDatabase: ({query, entity_type} = {}) => [query, entity_type]
+    searchBmsDatabase: ({query, entity_type} = {}) => [query, entity_type],
+    sendEmail: ({to, subject, text, html} = {}) => [to, subject, text, html]
 };
 
 export function safeParseArgs(args) {
