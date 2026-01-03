@@ -4,6 +4,7 @@ import {getBusinessInfo} from '../services/persolBSDocumentTool.js';
 import {getWebSearch} from '../services/webSearchTool.js';
 import {searchBmsDatabase} from '../services/bmsTool.js';
 import {crawlWebPage} from '../services/webCrawlerTool.js';
+import {sendEmail} from '../services/emailTool.js';
 
 
 import {weatherToolDefinition} from './weather/weatherDefinition.js';
@@ -12,6 +13,7 @@ import {persolBSDocumentDefinition} from "./documentReader/persolBSDocumentDefin
 import {webSearchToolDefinition} from "./webSearch/webSearchDefinition.js";
 import {bmsToolDefinition} from "./bms/bmsDefinition.js";
 import {webCrawlerToolDefinition} from "./webCrawler/webCrawlerDefinition.js";
+import {emailToolDefinition} from "./email/emailDefinition.js";
 
 
 //Lists of Tool Definitions/Annotations/Descriptions
@@ -22,6 +24,7 @@ export const allToolDefinitions = [
     webSearchToolDefinition,
     bmsToolDefinition,
     webCrawlerToolDefinition,
+    emailToolDefinition,
 ];
 
 // Lists of Tools
@@ -34,4 +37,5 @@ export const availableTools = {
     getWebSearch: getWebSearch,
     searchBmsDatabase: searchBmsDatabase,
     crawlWebPage: crawlWebPage,
+    sendEmail: sendEmail,
 };

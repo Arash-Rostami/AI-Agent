@@ -1,0 +1,84 @@
+# Email MCP Tool Integration
+
+This document outlines the implementation of the Email Sending capability (via Brevo) for the AI system.
+
+## 1. Folder Structure
+
+```
+/
+├── config/
+│   └── index.js             # Includes SMTP_* env var exports
+├── models/
+│   └── EmailLog.js          # Mongoose schema for audit logging
+├── services/
+│   ├── email/
+│   │   └── transport.js     # Nodemailer transport & raw send function
+│   └── emailTool.js         # MCP Handler (Validation, Logic, Logging)
+├── tools/
+│   └── email/
+│       └── emailDefinition.js # Gemini Tool Schema
+└── documents/
+    └── EMAIL_MCP.md         # This file
+```
+
+## 2. Code Overview
+
+### Email Service (`services/email/transport.js`)
+Handles the low-level connection to the SMTP server.
+*   **Safe Failures**: Logs warnings instead of crashing if config is missing.
+*   **Security**: Uses environment variables for credentials.
+
+### MCP Handler (`services/emailTool.js`)
+Acts as the middleware between the AI and the email service.
+*   **Validation**: Checks for valid email formats and required fields.
+*   **Rate Limiting**: Restricts users to ~5 emails/hour (configurable).
+*   **Logging**: Records every attempt (pending, success, failed) in MongoDB.
+
+### Tool Definition (`tools/email/emailDefinition.js`)
+Exposes the function to Gemini with strict typing.
+
+## 3. Example AI Output JSON
+
+When the AI decides to send an email, it generates a function call payload:
+
+```json
+{
+  "functionCall": {
+    "name": "sendEmail",
+    "args": {
+      "to": "user@example.com",
+      "subject": "Meeting Summary",
+      "text": "Here is the summary of our meeting...",
+      "html": "<p>Here is the <b>summary</b> of our meeting...</p>"
+    }
+  }
+}
+```
+
+## 4. Usage Examples
+
+### Example 1: Triggering via Chat
+**User**: "Please email a summary of this conversation to arash@example.com"
+**AI**: (Internal Thought: I need to use `sendEmail`) -> Calls Tool.
+**System**: Validates, Logs, Sends via Brevo, Logs Success.
+**AI**: "I have sent the email to arash@example.com."
+
+### Example 2: Programmatic Usage (Internal)
+```javascript
+import { sendEmail } from '../services/emailTool.js';
+
+await sendEmail(
+  'client@company.com',
+  'Weekly Report',
+  'Here is the report...',
+  '<h1>Weekly Report</h1>...'
+);
+```
+
+## 5. Security & Reliability Notes
+
+1.  **No Hardcoded Secrets**: All credentials (`SMTP_PASS`, `SMTP_USER`) are loaded from `.env`.
+2.  **Rate Limiting**: The system checks `EmailLog` counts before sending to prevent abuse.
+3.  **Input Validation**: `to` address is validated via Regex; subjects cannot be empty.
+4.  **Audit Trail**: Every email attempt is stored in MongoDB (`EmailLog`), allowing admins to audit sender, recipient, and status.
+5.  **Error Handling**: The system catches SMTP errors and returns a clean error message to the AI, preventing crash loops.
