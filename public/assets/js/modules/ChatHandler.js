@@ -17,6 +17,7 @@ export default class ChatHandler extends BaseHandler {
         this.kebabContainer = document.querySelector('.kebab-menu-container');
         this.kebabTrigger = document.getElementById('kebab-trigger');
         this.newChatAction = document.getElementById('new-chat-action');
+        this.emailChatAction = document.getElementById('email-chat-action');
         this.clearChatAction = document.getElementById('clear-chat-action');
         this.chatForm = document.getElementById('chat-form');
         this.serviceSelect = document.getElementById('service-select');
@@ -78,6 +79,46 @@ export default class ChatHandler extends BaseHandler {
         } catch (error) {
             console.error('New chat error:', error);
         }
+    }
+
+    async handleEmailChat() {
+        const sessionId = this.getCookie('session_id');
+        if (!sessionId) {
+            alert('No active chat session found.');
+            return;
+        }
+
+        const email = prompt("Please enter your email address:");
+        if (!email) return;
+
+        try {
+            const response = await fetch(`/api/history/${sessionId}/email`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Id': this.userId,
+                    'X-Frame-Referer': this.parentOrigin
+                },
+                body: JSON.stringify({ email })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert('Success: ' + result.message);
+            } else {
+                throw new Error(result.error || 'Failed to send email');
+            }
+        } catch (error) {
+            console.error('Email error:', error);
+            alert('Error: ' + error.message);
+        }
+    }
+
+    getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
     }
 
     async handleSubmit(e) {
@@ -208,6 +249,7 @@ export default class ChatHandler extends BaseHandler {
     setupEventListeners() {
         this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
         this.newChatAction?.addEventListener('click', () => this.handleNewChat().then(() => this.closeKebabMenu()));
+        this.emailChatAction?.addEventListener('click', () => this.handleEmailChat().then(() => this.closeKebabMenu()));
         this.clearChatAction?.addEventListener('click', () => this.handleClearChat().then(() => this.closeKebabMenu()));
 
         this.kebabTrigger?.addEventListener('click', (e) => {
