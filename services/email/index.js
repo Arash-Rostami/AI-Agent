@@ -29,9 +29,9 @@ export async function sendEmailInternal({to, subject, text, html}) {
 
     if (!mailTransport) throw new Error('Email service is not configured (missing SMTP config).');
 
-    const sender = EMAIL_FROM && EMAIL_FROM !== 'AI Assistant <noreply@ai-assistant.com>'
-        ? EMAIL_FROM
-        : (SMTP_USER || EMAIL_FROM);
+    // Use EMAIL_FROM if set (even if it's the default), otherwise fallback to SMTP_USER
+    // This ensures 'AI Assistant <noreply@...>' is used if configured, preventing raw SMTP_USER exposure
+    const sender = EMAIL_FROM || SMTP_USER;
 
     const mailOptions = {
         from: sender,
