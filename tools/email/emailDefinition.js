@@ -16,11 +16,15 @@ export const emailToolDefinition = {
                     },
                     text: {
                         type: "STRING",
-                        description: "The plain text body of the email. Auto-generate this from the conversation history if the user requests a summary or copy."
+                        description: "The plain text body of the email. Strictly contain ONLY the conversation transcript. Do NOT include introductory phrases like 'Here is the email you requested'. Start directly with the first message or summary."
                     },
                     html: {
                         type: "STRING",
-                        description: "The HTML body of the email. Auto-generate this from the conversation history if the user requests a summary or copy."
+                        description: "The HTML body of the email. Strictly contain ONLY the conversation transcript. Do NOT include introductory phrases like 'Here is the email you requested'. Use nice formatting."
+                    },
+                    userTime: {
+                        type: "STRING",
+                        description: "The user's local time string, if explicitly mentioned in the prompt (e.g., 'My local time is ...')."
                     }
                 },
                 required: ["to", "subject", "text"]

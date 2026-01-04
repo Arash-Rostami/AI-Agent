@@ -13,7 +13,8 @@ export default class PromptSuggestionsHandler {
             {category: 'weather', text: 'What\'s the temperature today?'},
             {category: 'weather', text: 'Forecast for [city] for the next 5 days.'},
             {category: 'weather', text: 'Check air quality in [city].'},
-            {category: 'time', text: 'What time is it in [city]?'}
+            {category: 'time', text: 'What time is it in [city]?'},
+            {category: 'email', text: 'Email this chat to me'}
         ];
 
         this.populate();
@@ -69,7 +70,15 @@ export default class PromptSuggestionsHandler {
 
     select(promptText, e) {
         e.stopPropagation();
-        this.messageInput.value = promptText;
+
+        // If email prompt, append user's local time for context
+        if (promptText === 'Email this chat to me') {
+            const userTime = new Date().toLocaleString();
+            this.messageInput.value = `${promptText} (My local time is ${userTime})`;
+        } else {
+            this.messageInput.value = promptText;
+        }
+
         this.messageInput.focus();
         this.promptSuggestions.classList.add('hidden');
     }
