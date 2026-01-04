@@ -37,6 +37,8 @@ router.post('/api/history/:id/restore', InteractionController.restoreInteraction
 
 router.delete('/api/history/:id', InteractionController.deleteInteraction);
 
+router.post('/api/history/:id/email', InteractionController.emailInteraction);
+
 router.post('/api/vector/sync', VectorController.syncVectors);
 
 router.post('/api/', ChatController.simpleApi);

@@ -1,3 +1,4 @@
+import { sendEmail } from '../services/emailTool.js';
 import InteractionLog from '../models/InteractionLog.js';
 import {clearConversationHistory} from '../middleware/keySession.js';
 import {ConversationManager} from '../utils/conversationManager.js';
