@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import {EMAIL_FROM, SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_USER} from '../../config/index.js';
+import {SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_USER} from '../../config/index.js';
 
 let transporter = null;
 
@@ -15,10 +15,7 @@ const createTransporter = () => {
         host: SMTP_HOST,
         port: Number(SMTP_PORT),
         secure: Number(SMTP_PORT) === 465,
-        auth: (SMTP_USER && SMTP_PASS) ? {
-            user: SMTP_USER,
-            pass: SMTP_PASS,
-        } : undefined,
+        auth: (SMTP_USER && SMTP_PASS) ? {user: SMTP_USER, pass: SMTP_PASS} : undefined,
     });
 
     return transporter;
@@ -29,12 +26,8 @@ export async function sendEmailInternal({to, subject, text, html}) {
 
     if (!mailTransport) throw new Error('Email service is not configured (missing SMTP config).');
 
-    const sender = EMAIL_FROM && EMAIL_FROM !== 'AI Assistant <noreply@ai-assistant.com>'
-        ? EMAIL_FROM
-        : (SMTP_USER || EMAIL_FROM);
-
     const mailOptions = {
-        from: sender,
+        from: SMTP_USER,
         to,
         subject,
         text,

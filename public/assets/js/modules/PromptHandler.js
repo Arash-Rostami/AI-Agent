@@ -13,7 +13,8 @@ export default class PromptSuggestionsHandler {
             {category: 'weather', text: 'What\'s the temperature today?'},
             {category: 'weather', text: 'Forecast for [city] for the next 5 days.'},
             {category: 'weather', text: 'Check air quality in [city].'},
-            {category: 'time', text: 'What time is it in [city]?'}
+            {category: 'time', text: 'What time is it in [city]?'},
+            {category: 'email', text: 'Email this chat to me.'}
         ];
 
         this.populate();

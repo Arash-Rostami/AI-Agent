@@ -30,7 +30,7 @@ export const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key_change_m
 export const CRAWLER_STORAGE_DIR = path.resolve(__dirname, '../data/crawler');
 
 // Email Configuration
-export const SMTP_HOST = process.env.SMTP_HOST || 'ai.noreply@team.persolco.com';
+export const SMTP_HOST = process.env.SMTP_HOST;
 export const SMTP_PORT = process.env.SMTP_PORT || 465;
 export const SMTP_USER = process.env.SMTP_USER;
 export const SMTP_PASS = process.env.SMTP_PASS;
