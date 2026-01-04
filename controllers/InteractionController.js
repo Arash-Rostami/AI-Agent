@@ -11,10 +11,9 @@ export const getInteraction = async (req, res) => {
 
         const queryLimit = parseInt(limit, 10);
 
-        if (!cursor) {
-            InteractionLog.deleteMany({userId, 'messages.role': {$ne: 'user'}}).catch(() => {
-            });
-        }
+        if (!cursor) InteractionLog.deleteMany({userId, 'messages.role': {$ne: 'user'}}).catch(() => {
+        });
+
 
         const logs = await InteractionLog.fetchHistoryPreviews(userId, cursor, queryLimit);
 
@@ -52,6 +51,34 @@ export const getInteractionDetails = async (req, res) => {
     }
 };
 
+export const restoreInteraction = async (req, res) => {
+    try {
+        const {userId} = req;
+        const {id: oldSessionId} = req.params;
+
+        if (!userId) return res.status(401).json({error: 'Unauthorized'});
+
+        const log = await InteractionLog.findOne({sessionId: oldSessionId, userId}).select('messages');
+        if (!log) return res.status(404).json({error: 'Session not found'});
+
+        const newSessionId = ConversationManager.getOrCreateSessionId(userId, req.userIp);
+        ConversationManager.mapUserToSession(userId, newSessionId);
+        const restoredMessages = restoreChat(log);
+        ConversationManager.saveHistory(newSessionId, restoredMessages);
+
+        res.cookie('session_id', newSessionId, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000,
+            sameSite: 'strict'
+        });
+
+        res.json({sessionId: newSessionId, messages: restoredMessages});
+    } catch (error) {
+        console.error('Restore session error:', error);
+        res.status(500).json({error: 'Failed to restore session'});
+    }
+};
+
 export const deleteInteraction = async (req, res) => {
     try {
         const {userId} = req;
@@ -69,40 +96,6 @@ export const deleteInteraction = async (req, res) => {
         res.status(500).json({error: 'Failed to delete session'});
     }
 };
-
-export const restoreInteraction = async (req, res) => {
-    try {
-        const {userId} = req;
-        const {id: oldSessionId} = req.params;
-
-        if (!userId) return res.status(401).json({error: 'Unauthorized'});
-
-        const log = await InteractionLog.findOne({sessionId: oldSessionId, userId}).select('messages');
-        if (!log) return res.status(404).json({error: 'Session not found'});
-
-        const newSessionId = ConversationManager.getOrCreateSessionId(userId, req.userIp);
-        ConversationManager.mapUserToSession(userId, newSessionId);
-        const restoredMessages = log.messages.map(msg => {
-            const role = msg.role === 'model' ? 'assistant' : msg.role;
-            const content = msg.parts?.map(p => p.text || '').join('').trim() || '[Restored Content]';
-
-            return {role, content};
-        });
-        ConversationManager.saveHistory(newSessionId, restoredMessages);
-
-        res.cookie('session_id', newSessionId, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000,
-            sameSite: 'strict'
-        });
-
-        res.json({sessionId: newSessionId, messages: restoredMessages});
-    } catch (error) {
-        console.error('Restore session error:', error);
-        res.status(500).json({error: 'Failed to restore session'});
-    }
-};
-
 export const clearChat = (req, res) => {
     clearConversationHistory(req.sessionId);
     res.json({success: true});
@@ -120,3 +113,12 @@ export const newChat = (req, res) => {
 
     res.json({sessionId: newSessionId});
 };
+
+export const restoreChat = (log) => {
+    return log.messages.map(msg => {
+        const role = msg.role === 'model' ? 'assistant' : msg.role;
+        const content = msg.parts?.map(p => p.text || '').join('').trim() || '[Restored Content]';
+
+        return {role, content};
+    });
+}
