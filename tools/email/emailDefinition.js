@@ -1,10 +1,8 @@
 export const emailToolDefinition = {
-    name: "sendEmail",
-    description: "Sends an email to a specified recipient. Use this tool when the user explicitly requests to send an email.",
     functionDeclarations: [
         {
             name: "sendEmail",
-            description: "Sends an email to a specified recipient.",
+            description: "Sends an email to a specified recipient. Use this tool when the user explicitly requests to send an email.",
             parameters: {
                 type: "OBJECT",
                 properties: {
