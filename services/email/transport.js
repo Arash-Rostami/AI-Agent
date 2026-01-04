@@ -41,8 +41,13 @@ export async function sendEmailInternal({ to, subject, text, html }) {
         throw new Error('Email service is not configured (missing SMTP config).');
     }
 
+    // Use configured EMAIL_FROM or fallback to SMTP_USER to ensure SPF/DKIM alignment
+    const sender = EMAIL_FROM && EMAIL_FROM !== 'AI Assistant <noreply@ai-assistant.com>'
+        ? EMAIL_FROM
+        : (SMTP_USER || EMAIL_FROM);
+
     const mailOptions = {
-        from: EMAIL_FROM,
+        from: sender,
         to,
         subject,
         text, // plain text body

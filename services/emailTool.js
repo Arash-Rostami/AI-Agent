@@ -38,18 +38,18 @@ async function checkRateLimit(userId) {
  * @param {string} subject - Email subject
  * @param {string} text - Plain text body
  * @param {string} html - HTML body (optional)
- * @returns {Promise<string>} - Result message
+ * @returns {Promise<Object>} - Result object (success/failure)
  */
 export async function sendEmail(to, subject, text, html) {
     // 1. Validation
     if (!to || !isValidEmail(to)) {
-        return JSON.stringify({ error: "Invalid recipient email address." });
+        return { error: "Invalid recipient email address." };
     }
     if (!subject) {
-        return JSON.stringify({ error: "Subject is required." });
+        return { error: "Subject is required." };
     }
     if (!text && !html) {
-        return JSON.stringify({ error: "Email body (text or html) is required." });
+        return { error: "Email body (text or html) is required." };
     }
 
     // Attempt to infer user ID from context if available (global variable or similar hack if not passed)
@@ -65,7 +65,7 @@ export async function sendEmail(to, subject, text, html) {
     const isAllowed = await checkRateLimit(userId);
     if (!isAllowed) {
         console.warn(`Rate limit exceeded for user ${userId}`);
-        return JSON.stringify({ error: "Rate limit exceeded. Please try again later." });
+        return { error: "Rate limit exceeded. Please try again later." };
     }
 
     // 3. Create Pending Log
@@ -87,11 +87,11 @@ export async function sendEmail(to, subject, text, html) {
         logEntry.metadata = { ...logEntry.metadata, messageId: info.messageId };
         await logEntry.save();
 
-        return JSON.stringify({
+        return {
             success: true,
             message: `Email sent successfully to ${to}`,
             messageId: info.messageId
-        });
+        };
 
     } catch (error) {
         // 5. Update Log (Failed)
@@ -99,9 +99,9 @@ export async function sendEmail(to, subject, text, html) {
         logEntry.error = error.message;
         await logEntry.save();
 
-        return JSON.stringify({
+        return {
             success: false,
             error: "Failed to send email. Please check the logs."
-        });
+        };
     }
 }
