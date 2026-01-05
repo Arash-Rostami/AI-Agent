@@ -84,8 +84,34 @@
         flex: 1;
     }
 
-    .web-search-btn {
-        flex: 0 0 auto;
+    .web-search-btn,
+    #thinking-mode-btn {
+        display: none; /* Hide main buttons on mobile */
+    }
+
+    /* Kebab Menu Mobile Styles */
+    .mobile-only-options {
+        display: block;
+    }
+
+    .mobile-only-options .kebab-item {
+        justify-content: space-between;
+    }
+
+    .mobile-only-options .check-icon {
+        opacity: 0;
+        color: var(--primary-color);
+        transition: opacity 0.2s;
+        margin-left: auto;
+    }
+
+    .mobile-only-options .kebab-item.active .check-icon {
+        opacity: 1;
+    }
+
+    /* Hide Email Chat on Mobile */
+    #email-chat-action {
+        display: none;
     }
 
     .sidebar-toggle {
