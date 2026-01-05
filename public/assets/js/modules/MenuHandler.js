@@ -4,7 +4,6 @@ export default class MenuHandler {
         this.dropdown = document.getElementById('user-dropdown');
         this.headerAvatar = document.getElementById('header-avatar');
         this.headerIcon = document.getElementById('header-avatar-icon');
-        this.emailChatBtn = document.getElementById('email-chat-btn');
 
         this.init();
     }
@@ -13,7 +12,6 @@ export default class MenuHandler {
         this.addAvatarErrorHandler();
         this.addMenuButtonEventListener();
         this.addDocumentClickListener();
-        this.addEmailChatListener();
         this.checkRestrictedMode();
         await this.loadUserProfile();
     }
@@ -41,53 +39,6 @@ export default class MenuHandler {
                 this.closeMenu();
             }
         });
-    }
-
-    addEmailChatListener() {
-        if (this.emailChatBtn) {
-            this.emailChatBtn.addEventListener('click', async () => {
-                this.closeMenu();
-                await this.handleEmailActiveChat();
-            });
-        }
-    }
-
-    async handleEmailActiveChat() {
-        const sessionId = this.getCookie('session_id');
-        if (!sessionId) {
-            alert('No active chat session found.');
-            return;
-        }
-
-        const email = prompt("Please enter your email address:");
-        if (!email) return;
-
-        try {
-            const response = await fetch(`/api/history/${sessionId}/email`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email })
-            });
-
-            const result = await response.json();
-            if (response.ok) {
-                alert('Success: ' + result.message);
-            } else {
-                throw new Error(result.error || 'Failed to send email');
-            }
-        } catch (error) {
-            console.error('Email error:', error);
-            alert('Error: ' + error.message);
-        }
-    }
-
-    getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-        return null;
     }
 
     toggleMenu() {
