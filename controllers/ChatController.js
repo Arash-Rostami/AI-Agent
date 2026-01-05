@@ -23,10 +23,25 @@ export const initialPrompt = async (req, res) => {
     }
 
     try {
+        // Fetch current thinkingMode status
+        let thinkingModeUsage = { count: 0, lastReset: null };
+        try {
+            if (userId?.match(/^[0-9a-fA-F]{24}$/)) {
+                const user = await User.findById(userId);
+                if (user && user.thinkingMode) {
+                    thinkingModeUsage = user.thinkingMode;
+                    const now = new Date();
+                    if (!thinkingModeUsage.lastReset || (now - new Date(thinkingModeUsage.lastReset) > 86400000)) {
+                         thinkingModeUsage.count = 0;
+                    }
+                }
+            }
+        } catch (e) { /* ignore user fetch errors */ }
+
         const systemInstruction = await constructSystemPrompt(req, prompt);
         const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, null, greeting);
-        res.json({response: greeting, isBmsMode, isRestrictedMode});
+        res.json({response: greeting, isBmsMode, isRestrictedMode, thinkingModeUsage});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
         const fallback = isRestrictedMode && !isBmsMode
@@ -45,6 +60,8 @@ export const ask = async (req, res) => {
     if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
     const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
+
+    let thinkingModeUsage = { count: 0, lastReset: null };
 
     if (useThinkingMode) {
         try {
@@ -66,9 +83,25 @@ export const ask = async (req, res) => {
                 user.thinkingMode = tm;
                 await user.save();
             }
+            thinkingModeUsage = user.thinkingMode;
         } catch {
             useThinkingMode = false;
         }
+    } else {
+        // Just fetch the status without incrementing if not using it, so the UI is up to date
+        try {
+            if (userId?.match(/^[0-9a-fA-F]{24}$/)) {
+                 const user = await User.findById(userId);
+                 if (user && user.thinkingMode) {
+                     thinkingModeUsage = user.thinkingMode;
+                     // Reset if expired for display purposes
+                     const now = new Date();
+                     if (!thinkingModeUsage.lastReset || (now - new Date(thinkingModeUsage.lastReset) > 86400000)) {
+                         thinkingModeUsage.count = 0;
+                     }
+                 }
+            }
+        } catch (e) {}
     }
 
     try {
@@ -81,7 +114,7 @@ export const ask = async (req, res) => {
             sources
         } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, responseText);
-        res.json({reply: responseText, sources});
+        res.json({reply: responseText, sources, thinkingModeUsage});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
         console.error('Chat error:', error.message);

@@ -27,6 +27,11 @@ export default class ChatHandler extends BaseHandler {
         this.serviceSelect = document.getElementById('service-select');
         this.webSearchBtn = document.getElementById('web-search-btn');
         this.thinkingModeBtn = document.getElementById('thinking-mode-btn');
+
+        // Mobile Toggle Elements
+        this.mobileWebSearchToggle = document.getElementById('mobile-web-search-toggle');
+        this.mobileThinkingModeToggle = document.getElementById('mobile-thinking-mode-toggle');
+
         this.logoutBtn = document.getElementById('logout-btn');
         this.attachmentBtn = document.getElementById('attachment-btn');
         this.fileInput = document.getElementById('file-input');
@@ -178,6 +183,9 @@ export default class ChatHandler extends BaseHandler {
             this.uiHandler.setTyping(false);
             this.uiHandler.addMessage(data.reply, 'ai', false, data.sources);
             this.uiHandler.updateStatus('Online', 'success');
+            if (data.thinkingModeUsage) {
+                this.updateThinkingModeTitle(data.thinkingModeUsage);
+            }
         } catch (error) {
             this.uiHandler.setTyping(false);
             this.uiHandler.addMessage('Sorry, I encountered an error. Please try again.', 'ai', true);
@@ -197,11 +205,20 @@ export default class ChatHandler extends BaseHandler {
             const data = await response.json();
             this.uiHandler.addMessage(data.response, 'ai');
             this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn);
+            if (data.thinkingModeUsage) {
+                this.updateThinkingModeTitle(data.thinkingModeUsage);
+            }
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
         } finally {
             this.uiHandler.hideLoader();
         }
+    }
+
+    updateThinkingModeTitle(usage) {
+        if (!this.thinkingModeBtn) return;
+        const count = usage.count || 0;
+        this.thinkingModeBtn.title = `Thinking Mode (${count}/2 used)`;
     }
 
     closeKebabMenu() {
@@ -240,6 +257,17 @@ export default class ChatHandler extends BaseHandler {
         this.newChatAction?.addEventListener('click', () => this.handleNewChat().then(() => this.closeKebabMenu()));
         this.emailChatAction?.addEventListener('click', () => this.handleEmailChat().then(() => this.closeKebabMenu()));
         this.clearChatAction?.addEventListener('click', () => this.handleClearChat().then(() => this.closeKebabMenu()));
+
+        // Mobile Toggles Listeners
+        this.mobileWebSearchToggle?.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent closing menu immediately
+            this.toggleWebSearch();
+        });
+
+        this.mobileThinkingModeToggle?.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent closing menu immediately
+            this.toggleThinkingMode();
+        });
 
         this.kebabTrigger?.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -295,11 +323,17 @@ export default class ChatHandler extends BaseHandler {
     toggleWebSearch() {
         this.isWebSearchActive = !this.isWebSearchActive;
         this.webSearchBtn.classList.toggle('active', this.isWebSearchActive);
+        if (this.mobileWebSearchToggle) {
+             this.mobileWebSearchToggle.classList.toggle('active', this.isWebSearchActive);
+        }
     }
     toggleThinkingMode() {
         this.isThinkingModeActive = !this.isThinkingModeActive;
         if (this.thinkingModeBtn) {
             this.thinkingModeBtn.classList.toggle('active', this.isThinkingModeActive);
+        }
+        if (this.mobileThinkingModeToggle) {
+            this.mobileThinkingModeToggle.classList.toggle('active', this.isThinkingModeActive);
         }
     }
 }

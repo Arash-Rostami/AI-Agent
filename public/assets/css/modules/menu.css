@@ -116,3 +116,8 @@
     color: var(--error-color);
 }
 
+
+/* Default state for mobile options - hidden on desktop */
+.mobile-only-options {
+    display: none;
+}
