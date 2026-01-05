@@ -85,7 +85,7 @@ export default class HistoryHandler extends BaseHandler {
 
             const {messages} = await response.json();
             const event = new CustomEvent('restore-chat', {
-                detail: {messages}
+                detail: {messages, sessionId}
             });
             window.dispatchEvent(event);
 
@@ -203,8 +203,8 @@ export default class HistoryHandler extends BaseHandler {
 
     async loadSessionDetails(sessionId) {
         this.currentSessionId = sessionId;
-        this.showDetails();
         this.messagesContainer.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading chat...</div>';
+        this.showDetails();
 
         try {
             const response = await fetch(`/api/history/${sessionId}`, {
@@ -410,7 +410,11 @@ export default class HistoryHandler extends BaseHandler {
 
     showDetails() {
         this.detailsContainer.classList.remove('hidden');
-        requestAnimationFrame(() => this.detailsContainer.classList.add('active'));
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                this.detailsContainer.classList.add('active');
+            });
+        });
     }
 
     showList() {

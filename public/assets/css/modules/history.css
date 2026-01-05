@@ -241,20 +241,26 @@
 }
 
 @media print {
-    body { padding: 0; }
+    body {
+        padding: 0;
+    }
+
     .message-avatar {
         background: transparent !important;
         border: 1px solid #ddd;
         color: #333;
     }
+
     .message-avatar img {
         display: block;
     }
+
     .message.user .message-content {
         background: #eee !important;
         color: #000 !important;
         border: 1px solid #ccc;
     }
+
     .message.ai .message-content {
         background: #fff !important;
         border: 1px solid #ccc;
@@ -360,6 +366,30 @@
     padding: 10px;
     min-height: 40px;
 }
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    gap: 10px;
+    width: 100%;
+    color: var(--text-secondary, #666);
+}
+
+.loading-spinner i.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 @media (max-width: 768px) {
     .history-modal-content {
         width: 100%;

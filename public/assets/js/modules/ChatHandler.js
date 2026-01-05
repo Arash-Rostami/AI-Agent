@@ -12,6 +12,7 @@ export default class ChatHandler extends BaseHandler {
         this.audioHandler = new AudioHandler();
         this.emailHandler = new EmailHandler();
 
+        this.currentSessionId = null;
         this.isThinkingModeActive = false;
         this.cacheDOMElements();
         this.init();
@@ -77,10 +78,12 @@ export default class ChatHandler extends BaseHandler {
 
     async handleNewChat() {
         try {
-            await fetch('/new-chat', {
+            const response = await fetch('/new-chat', {
                 method: 'POST',
                 headers: {'X-User-Id': this.userId}
             });
+            const data = await response.json();
+            if (data.sessionId) this.currentSessionId = data.sessionId;
             this.uiHandler.resetUI();
             void this.loadInitialGreeting();
         } catch (error) {
@@ -89,15 +92,7 @@ export default class ChatHandler extends BaseHandler {
     }
 
     async handleEmailChat() {
-        const sessionId = this.getCookie('session_id');
-        await this.emailHandler.sendEmail(sessionId);
-    }
-
-    getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-        return null;
+        await this.emailHandler.sendEmail(this.currentSessionId);
     }
 
     async handleSubmit(e) {
@@ -177,6 +172,7 @@ export default class ChatHandler extends BaseHandler {
             if (!response.ok) throw new Error('Server error');
 
             const data = await response.json();
+            if (data.sessionId) this.currentSessionId = data.sessionId;
             this.uiHandler.setTyping(false);
             this.uiHandler.addMessage(data.reply, 'ai', false, data.sources);
             this.uiHandler.updateStatus('Online', 'success');
@@ -197,6 +193,7 @@ export default class ChatHandler extends BaseHandler {
                 }
             });
             const data = await response.json();
+            if (data.sessionId) this.currentSessionId = data.sessionId;
             this.uiHandler.addMessage(data.response, 'ai');
             this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn);
         } catch (error) {
@@ -280,12 +277,13 @@ export default class ChatHandler extends BaseHandler {
         this.uiHandler.messageInput.addEventListener('focus', () => this.uiHandler.handleInputFade());
         this.uiHandler.messageInput.addEventListener('blur', () => this.uiHandler.resetInputFade());
 
-        window.addEventListener('restore-chat', (e) => this.restoreSession(e.detail.messages));
+        window.addEventListener('restore-chat', (e) => this.restoreSession(e.detail.messages, e.detail.sessionId));
     }
 
-    restoreSession(messages) {
+    restoreSession(messages, sessionId) {
         if (!messages || !Array.isArray(messages)) return;
 
+        this.currentSessionId = sessionId;
         this.uiHandler.resetUI();
 
         messages.forEach(msg => {
