@@ -1,0 +1,329 @@
+import AudioHandler from './AudioHandler.js';
+import BaseHandler from './BaseHandler.js';
+import UIHandler from './UIHandler.js';
+import EmailHandler from './EmailHandler.js';
+
+
+export default class ChatHandler extends BaseHandler {
+    constructor() {
+        super();
+
+        this.uiHandler = new UIHandler(this.formatter);
+        this.audioHandler = new AudioHandler();
+        this.emailHandler = new EmailHandler();
+
+        this.currentSessionId = null;
+        this.isThinkingModeActive = false;
+        this.cacheDOMElements();
+        this.init();
+    }
+
+    cacheDOMElements() {
+        this.kebabContainer = document.querySelector('.kebab-menu-container');
+        this.kebabTrigger = document.getElementById('kebab-trigger');
+        this.newChatAction = document.getElementById('new-chat-action');
+        this.emailChatAction = document.getElementById('email-chat-action');
+        this.clearChatAction = document.getElementById('clear-chat-action');
+        this.chatForm = document.getElementById('chat-form');
+        this.serviceSelect = document.getElementById('service-select');
+        this.webSearchBtn = document.getElementById('web-search-btn');
+        this.thinkingModeBtn = document.getElementById('thinking-mode-btn');
+        this.mobileWebSearchToggle = document.getElementById('mobile-web-search-toggle');
+        this.mobileThinkingModeToggle = document.getElementById('mobile-thinking-mode-toggle');
+        this.logoutBtn = document.getElementById('logout-btn');
+        this.attachmentBtn = document.getElementById('attachment-btn');
+        this.fileInput = document.getElementById('file-input');
+        this.removeFileBtn = document.getElementById('remove-file-btn');
+        this.micBtn = document.getElementById('mic-btn');
+        this.removeAudioBtn = document.getElementById('remove-audio-btn');
+    }
+
+    init() {
+        this.setupEventListeners();
+        void this.loadInitialGreeting();
+        this.setupTextareaAutoResize();
+        this.uiHandler.initPromptSuggestions();
+    }
+
+    async handleClearChat() {
+        try {
+            await fetch('/clear-chat', {
+                method: 'POST',
+                headers: {'X-User-Id': this.userId}
+            });
+            this.uiHandler.resetUI();
+            void this.loadInitialGreeting();
+        } catch (error) {
+            console.error('Clear chat error:', error);
+        }
+    }
+
+    async handleMicClick() {
+        if (!this.audioHandler.isRecording) {
+            const started = await this.audioHandler.startRecording();
+            if (started) {
+                this.uiHandler.setMicRecording(true);
+                this.uiHandler.clearFileSelection();
+            }
+        } else {
+            const audioBlob = await this.audioHandler.stopRecording();
+            this.uiHandler.setMicRecording(false);
+
+            if (audioBlob) {
+                this.uiHandler.setAudioSelection(audioBlob);
+                this.uiHandler.handleInputFade();
+            }
+        }
+    }
+
+    async handleNewChat() {
+        try {
+            const response = await fetch('/new-chat', {
+                method: 'POST',
+                headers: {'X-User-Id': this.userId}
+            });
+            const data = await response.json();
+            // ✏️ CHANGED: Capture new session ID from response
+            if (data.sessionId) this.currentSessionId = data.sessionId;
+            this.uiHandler.resetUI();
+            void this.loadInitialGreeting();
+        } catch (error) {
+            console.error('New chat error:', error);
+        }
+    }
+
+    async handleEmailChat() {
+        // ✏️ CHANGED: Use stored session ID instead of cookie
+        await this.emailHandler.sendEmail(this.currentSessionId);
+    }
+
+    async handleSubmit(e) {
+        e.preventDefault();
+        const message = this.uiHandler.getMessageInputValue();
+        const selectedService = this.serviceSelect.value;
+        const useWebSearch = this.isWebSearchActive;
+        const useThinkingMode = this.isThinkingModeActive;
+
+
+        if ((!message && !this.uiHandler.getSelectedAudioBlob()) || this.uiHandler.getIsTyping()) return;
+
+        const selectedFile = this.uiHandler.getSelectedFile();
+        const selectedAudioBlob = this.uiHandler.getSelectedAudioBlob();
+        const fileName = selectedFile ? selectedFile.name : (selectedAudioBlob ? 'Voice Message' : null);
+
+        this.uiHandler.addMessage(message, 'user', false, [], fileName);
+        this.uiHandler.resetMessageInput();
+        this.uiHandler.setTyping(true);
+
+        try {
+            const serviceEndpoints = {
+                'groq': '/ask-groq',
+                'openrouter': '/ask-openrouter',
+                'gpt-4o': '/ask-arvan',
+                'deepseek': '/ask-arvan'
+            };
+            const modelMap = {
+                'gpt-4o': 'GPT-4o-mini-4193n',
+                'deepseek': 'DeepSeek-Chat-V3-0324-mbxyd'
+            };
+
+            const endpoint = serviceEndpoints[selectedService] ?? '/ask';
+
+            let body;
+            const headers = {
+                'X-User-Id': this.userId,
+                'X-Frame-Referer': this.parentOrigin
+            };
+
+            if (selectedFile || selectedAudioBlob) {
+                const formData = new FormData();
+                formData.append('message', message || "Voice message");
+                formData.append('useWebSearch', useWebSearch);
+                formData.append('useThinkingMode', useThinkingMode);
+                if (modelMap[selectedService]) {
+                    formData.append('model', modelMap[selectedService]);
+                }
+
+                if (selectedFile) {
+                    formData.append('file', selectedFile);
+                } else if (selectedAudioBlob) {
+                    const ext = selectedAudioBlob.type.includes('webm') ? 'webm' : 'mp3';
+                    const audioFile = new File([selectedAudioBlob], `audio_message.${ext}`, {type: selectedAudioBlob.type});
+                    formData.append('file', audioFile);
+                }
+                body = formData;
+            } else {
+                body = JSON.stringify({
+                    message,
+                    useWebSearch,
+                    useThinkingMode,
+                    ...(modelMap[selectedService] && {model: modelMap[selectedService]})
+                });
+                headers['Content-Type'] = 'application/json';
+            }
+
+            this.uiHandler.clearFileSelection();
+            this.uiHandler.clearAudioSelection();
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers,
+                body
+            });
+
+            if (!response.ok) throw new Error('Server error');
+
+            const data = await response.json();
+            // ✏️ CHANGED: Update session ID from response
+            if (data.sessionId) this.currentSessionId = data.sessionId;
+            this.uiHandler.setTyping(false);
+            this.uiHandler.addMessage(data.reply, 'ai', false, data.sources);
+            this.uiHandler.updateStatus('Online', 'success');
+        } catch (error) {
+            this.uiHandler.setTyping(false);
+            this.uiHandler.addMessage('Sorry, I encountered an error. Please try again.', 'ai', true);
+            this.uiHandler.updateStatus('Error', 'error');
+            console.error('Chat error:', error);
+        }
+    }
+
+    async loadInitialGreeting() {
+        try {
+            // ✏️ CHANGED: Added timestamp query param to bust browser cache and get fresh session ID
+            const response = await fetch(`/initial-prompt?t=${Date.now()}`, {
+                headers: {
+                    'X-User-Id': this.userId,
+                    'X-Frame-Referer': this.parentOrigin
+                }
+            });
+            const data = await response.json();
+            // ✏️ CHANGED: Update session ID from response
+            if (data.sessionId) this.currentSessionId = data.sessionId;
+            this.uiHandler.addMessage(data.response, 'ai');
+            this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn);
+        } catch (error) {
+            console.error('Failed to load initial greeting:', error);
+        } finally {
+            this.uiHandler.hideLoader();
+        }
+    }
+
+    updateThinkingModeTitle(usage) {
+        if (!this.thinkingModeBtn) return;
+        const count = usage.count || 0;
+        this.thinkingModeBtn.title = `Thinking Mode (${count}/2 used)`;
+    }
+
+    closeKebabMenu() {
+        this.kebabContainer?.classList.remove('active');
+    }
+
+    handleFileSelect(e) {
+        if (e.target.files?.[0]) {
+            this.uiHandler.setFileSelection(e.target.files[0]);
+        }
+    }
+
+    handleKeydown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            void this.handleSubmit(e);
+        }
+    }
+
+    handleServiceChange() {
+        const service = this.serviceSelect.value;
+        this.uiHandler.updateServiceUI(
+            service,
+            this.webSearchBtn,
+            this.isWebSearchActive,
+            () => this.toggleWebSearch(),
+            this.thinkingModeBtn,
+            this.isThinkingModeActive,
+            () => this.toggleThinkingMode()
+        );
+        if (service !== 'gemini') this.uiHandler.clearAudioSelection();
+    }
+
+    setupEventListeners() {
+        this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
+        this.newChatAction?.addEventListener('click', () => this.handleNewChat().then(() => this.closeKebabMenu()));
+        this.emailChatAction?.addEventListener('click', () => this.handleEmailChat().then(() => this.closeKebabMenu()));
+        this.clearChatAction?.addEventListener('click', () => this.handleClearChat().then(() => this.closeKebabMenu()));
+
+        this.mobileWebSearchToggle?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleWebSearch();
+        });
+        this.mobileThinkingModeToggle?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleThinkingMode();
+        });
+
+        this.kebabTrigger?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.kebabContainer.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (this.kebabContainer && !this.kebabContainer.contains(e.target)) this.closeKebabMenu();
+        });
+
+        this.uiHandler.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
+        this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
+        this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
+        this.thinkingModeBtn.addEventListener('click', () => this.toggleThinkingMode());
+        this.attachmentBtn.addEventListener('click', () => this.fileInput.click());
+        this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        this.removeFileBtn.addEventListener('click', () => this.uiHandler.clearFileSelection());
+        this.micBtn.addEventListener('click', () => this.handleMicClick());
+        this.removeAudioBtn.addEventListener('click', () => this.uiHandler.clearAudioSelection());
+        this.uiHandler.messageInput.addEventListener('input', () => this.uiHandler.handleInputFade());
+        this.uiHandler.messageInput.addEventListener('focus', () => this.uiHandler.handleInputFade());
+        this.uiHandler.messageInput.addEventListener('blur', () => this.uiHandler.resetInputFade());
+
+        window.addEventListener('restore-chat', (e) => this.restoreSession(e.detail.messages, e.detail.sessionId));
+    }
+
+    restoreSession(messages, sessionId) {
+        if (!messages || !Array.isArray(messages)) return;
+
+        // ✏️ CHANGED: Capture restored session ID
+        this.currentSessionId = sessionId;
+        this.uiHandler.resetUI();
+
+        messages.forEach(msg => {
+            if (msg.role === 'system') return;
+            const text = msg.content || msg.parts?.[0]?.text || '';
+            const sources = msg.sources || [];
+            const role = (msg.role === 'model' || msg.role === 'assistant') ? 'ai' : 'user';
+
+            this.uiHandler.addMessage(text, role, false, sources);
+        });
+
+        this.uiHandler.updateStatus('Online', 'success');
+    }
+
+    setupTextareaAutoResize() {
+        this.uiHandler.messageInput.addEventListener('input', () => {
+            this.uiHandler.messageInput.style.height = 'auto';
+            const newHeight = this.uiHandler.messageInput.scrollHeight;
+            this.uiHandler.messageInput.style.height = newHeight + 'px';
+            this.uiHandler.messageInput.style.overflowY = newHeight >= 160 ? 'auto' : 'hidden';
+        });
+    }
+
+    toggleWebSearch() {
+        this.isWebSearchActive = !this.isWebSearchActive;
+        this.webSearchBtn.classList.toggle('active', this.isWebSearchActive);
+        if (this.mobileWebSearchToggle) {
+            this.mobileWebSearchToggle.classList.toggle('active', this.isWebSearchActive);
+        }
+    }
+
+    toggleThinkingMode() {
+        this.isThinkingModeActive = !this.isThinkingModeActive;
+        this.thinkingModeBtn?.classList.toggle('active', this.isThinkingModeActive);
+        this.mobileThinkingModeToggle?.classList.toggle('active', this.isThinkingModeActive);
+    }
+}

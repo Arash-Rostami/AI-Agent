@@ -1,0 +1,196 @@
+@import './settings.css';
+@import './menu.css';
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    /* ✏️ CHANGED: Restore Email Chat button visibility on mobile */
+    #email-chat-action {
+        display: flex;
+    }
+
+    .header-left .logo {
+        font-size: 1.2rem;
+    }
+
+    .logo i {
+        font-size: 1.1rem;
+    }
+
+    .theme-toggle,
+    .font-size-control,
+    .history-btn,
+    .sync-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+
+    .service-selector {
+        width: 100%;
+        /* ✏️ CHANGED: Centered selector content */
+        justify-content: center;
+        margin: 5px 0 0;
+        order: 2;
+        /* ✏️ CHANGED: Allow flexible width */
+        flex: 0 1 auto;
+    }
+
+    .input-wrapper {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .input-wrapper textarea {
+        order: 1;
+        width: 100%;
+        margin: 0;
+        min-height: 44px;
+    }
+
+    .attachment-btn,
+    .mic-btn,
+    .send-button {
+        order: 2;
+        width: 40px;
+        height: 40px;
+    }
+
+    .attachment-btn {
+        margin-left: 0;
+    }
+
+    .send-button {
+        margin-left: auto;
+    }
+
+    .mic-btn {
+        margin-left: 8px;
+    }
+
+    /* Hide desktop-only buttons */
+    .web-search-btn,
+    #thinking-mode-btn {
+        display: none !important;
+    }
+
+    /* Ensure Kebab Menu is visible */
+    .kebab-menu-container {
+        display: block;
+        order: 3;
+        margin-left: 8px;
+    }
+
+    .kebab-trigger {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+
+    .kebab-trigger:active {
+        background: var(--hover-bg);
+    }
+
+    /* Kebab Dropdown Styling */
+    .kebab-dropdown {
+        bottom: 60px;
+        right: 10px;
+        width: 220px;
+        transform-origin: bottom right;
+    }
+
+    .kebab-item {
+        padding: 12px 16px;
+        font-size: 0.95rem;
+    }
+
+    .kebab-item i {
+        width: 24px;
+        margin-right: 12px;
+        font-size: 1rem;
+    }
+
+    /* Mobile Only Options inside Kebab */
+    .mobile-only-options {
+        display: block;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+    }
+
+    .mobile-only-options .kebab-item {
+        display: flex;
+        align-items: center;
+        /* ✏️ CHANGED: Removed space-between to fix gap issue */
+        /* justify-content: space-between; */
+        width: 100%;
+        color: var(--text-primary);
+    }
+
+    /* ✏️ CHANGED: Hide the check icon (using carved look instead) */
+    .mobile-only-options .kebab-item .check-icon {
+        display: none;
+    }
+
+    /* ✏️ CHANGED: Carved/Engrossed look for active state */
+    .mobile-only-options .kebab-item.active {
+        background-color: rgba(0, 0, 0, 0.05);
+        color: var(--primary-color);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+        font-weight: 500;
+    }
+
+    /* Dark mode adjustment for active state */
+    [data-theme="dark"] .mobile-only-options .kebab-item.active {
+        background-color: rgba(255, 255, 255, 0.05);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Sidebar adjustments */
+    .history-modal-content {
+        width: 100%;
+        right: -100%;
+    }
+
+    .history-modal.active .history-modal-content {
+        transform: translateX(-100%);
+    }
+
+    .sidebar-toggle {
+        display: none;
+    }
+
+    /* Adjust Select for mobile */
+    .service-selector select {
+        font-size: 0.9rem;
+        padding: 6px 10px;
+        /* ✏️ CHANGED: Restrict width and add pill shape */
+        width: auto;
+        max-width: 100%;
+        border-radius: 28px;
+    }
+
+    .service-selector label {
+        display: none;
+    }
+}
+
+/* Small mobile tweaks */
+@media (max-width: 380px) {
+    .font-size-control {
+        display: none;
+    }
+
+    .logo {
+        font-size: 1rem;
+    }
+}
