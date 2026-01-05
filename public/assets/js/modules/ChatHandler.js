@@ -186,7 +186,7 @@ export default class ChatHandler extends BaseHandler {
 
     async loadInitialGreeting() {
         try {
-            const response = await fetch('/initial-prompt', {
+            const response = await fetch(`/initial-prompt?t=${Date.now()}`, {
                 headers: {
                     'X-User-Id': this.userId,
                     'X-Frame-Referer': this.parentOrigin

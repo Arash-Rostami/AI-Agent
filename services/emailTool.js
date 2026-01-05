@@ -34,14 +34,26 @@ function generateTimestamp(userTime) {
 function formatEmailBody(text, html, timestamp) {
     const headerText = `Requested Email - Sent: ${timestamp}\n----------------------------------------\n\n`;
     const headerHtml = `
-        <div style="font-family: sans-serif; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
-            <h2 style="margin: 0; color: #333;">Requested Email</h2>
-            <p style="margin: 5px 0 0; color: #666; font-size: 0.9em;">Sent: ${timestamp}</p>
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; padding: 20px; border-radius: 8px 8px 0 0; border-bottom: 3px solid #007bff; margin-bottom: 25px;">
+            <h2 style="margin: 0; color: #2c3e50; font-size: 24px;">Chat Transcript</h2>
+            <p style="margin: 8px 0 0; color: #7f8c8d; font-size: 0.95em;">Generated on: <strong>${timestamp}</strong></p>
         </div>
     `;
 
     const finalText = text ? (headerText + text) : text;
-    const finalHtml = html ? (headerHtml + html) : (html || finalText.replace(/\n/g, '<br>'));
+    // Wrap final HTML in a professional container
+    const contentHtml = html ? html : (finalText ? finalText.replace(/\n/g, '<br>') : '');
+    const finalHtml = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 0 auto; border: 1px solid #e1e4e8; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            ${headerHtml}
+            <div style="padding: 0 25px 25px;">
+                ${contentHtml}
+            </div>
+            <div style="background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 0.8em; color: #95a5a6; border-top: 1px solid #e1e4e8; border-radius: 0 0 8px 8px;">
+                AI Assistant | Confidential
+            </div>
+        </div>
+    `;
 
     return { finalText, finalHtml };
 }
