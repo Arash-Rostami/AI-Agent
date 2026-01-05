@@ -1,6 +1,7 @@
 import AudioHandler from './AudioHandler.js';
 import BaseHandler from './BaseHandler.js';
 import UIHandler from './UIHandler.js';
+import EmailHandler from './EmailHandler.js';
 
 export default class ChatHandler extends BaseHandler {
     constructor() {
@@ -8,6 +9,7 @@ export default class ChatHandler extends BaseHandler {
 
         this.uiHandler = new UIHandler(this.formatter);
         this.audioHandler = new AudioHandler();
+        this.emailHandler = new EmailHandler();
 
         this.cacheDOMElements();
         this.init();
@@ -83,35 +85,7 @@ export default class ChatHandler extends BaseHandler {
 
     async handleEmailChat() {
         const sessionId = this.getCookie('session_id');
-        if (!sessionId) {
-            alert('No active chat session found.');
-            return;
-        }
-
-        const email = prompt("Please enter your email address:");
-        if (!email) return;
-
-        try {
-            const response = await fetch(`/api/history/${sessionId}/email`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-User-Id': this.userId,
-                    'X-Frame-Referer': this.parentOrigin
-                },
-                body: JSON.stringify({ email })
-            });
-
-            const result = await response.json();
-            if (response.ok) {
-                alert('Success: ' + result.message);
-            } else {
-                throw new Error(result.error || 'Failed to send email');
-            }
-        } catch (error) {
-            console.error('Email error:', error);
-            alert('Error: ' + error.message);
-        }
+        await this.emailHandler.sendEmail(sessionId);
     }
 
     getCookie(name) {
