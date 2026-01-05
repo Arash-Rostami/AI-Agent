@@ -1,5 +1,11 @@
-export default class EmailHandler {
-    static async sendEmail(sessionId, userId, parentOrigin) {
+import BaseHandler from './BaseHandler.js';
+
+export default class EmailHandler extends BaseHandler {
+    constructor() {
+        super();
+    }
+
+    async sendEmail(sessionId) {
         if (!sessionId) {
             alert('No active chat session found.');
             return;
@@ -13,8 +19,8 @@ export default class EmailHandler {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-User-Id': userId,
-                    'X-Frame-Referer': parentOrigin
+                    'X-User-Id': this.userId,
+                    'X-Frame-Referer': this.parentOrigin
                 },
                 body: JSON.stringify({ email })
             });
