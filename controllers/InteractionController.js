@@ -1,6 +1,7 @@
 import InteractionLog from '../models/InteractionLog.js';
 import {clearConversationHistory} from '../middleware/keySession.js';
 import {ConversationManager} from '../utils/conversationManager.js';
+import {syncToDatabase} from '../utils/interactionLogManager.js';
 
 export const getInteraction = async (req, res) => {
     try {
@@ -66,6 +67,8 @@ export const restoreInteraction = async (req, res) => {
         const restoredMessages = restoreChat(log);
         ConversationManager.saveHistory(newSessionId, restoredMessages);
 
+        await syncToDatabase(newSessionId, userId, restoredMessages);
+
         res.cookie('session_id', newSessionId, {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000,
@@ -117,7 +120,8 @@ export const newChat = (req, res) => {
 export const restoreChat = (log) => {
     return log.messages.map(msg => {
         const role = msg.role === 'model' ? 'assistant' : msg.role;
-        const content = msg.parts?.map(p => p.text || '').join('').trim() || '[Restored Content]';
+        const fromParts = msg.parts?.map(p => p.text || '').join('').trim();
+        const content = fromParts || msg.content || '[Restored Content]';
 
         return {role, content};
     });
