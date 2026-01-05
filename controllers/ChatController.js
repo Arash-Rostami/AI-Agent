@@ -1,17 +1,51 @@
-import {callGeminiAPI, callSimpleGeminiAPI} from '../services/gemini/index.js';
-import {syncToDatabase} from '../utils/interactionLogManager.js';
-import {ConversationManager} from '../utils/conversationManager.js';
-import {constructSystemPrompt} from '../utils/promptManager.js';
+import { callGeminiAPI, callSimpleGeminiAPI } from '../services/gemini/index.js';
+import { syncToDatabase } from '../utils/interactionLogManager.js';
+import { ConversationManager } from '../utils/conversationManager.js';
+import { constructSystemPrompt } from '../utils/promptManager.js';
 import User from '../models/User.js';
 
-
 const syncToDB = (sessionId, userId, history) =>
-    syncToDatabase(sessionId, userId, history).catch(err => console.error('DB sync failed:', err.message));
+    syncToDatabase(sessionId, userId, history).catch(err => console.error(err.message));
 
 const validateMessage = (msg) => msg && typeof msg === 'string';
 
+const getFileData = (file) => file ? { mimeType: file.mimetype, data: file.buffer.toString('base64') } : null;
+
+const manageThinkingMode = async (userId, attemptConsume = false) => {
+    const defaultState = { count: 0, lastReset: null };
+    if (!userId?.match(/^[0-9a-fA-F]{24}$/)) return { allowed: false, usage: defaultState };
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) return { allowed: false, usage: defaultState };
+
+        let tm = user.thinkingMode || defaultState;
+        const now = new Date();
+
+        if (!tm.lastReset || (now - new Date(tm.lastReset) > 86400000)) {
+            tm = { count: 0, lastReset: now };
+        }
+
+        let allowed = true;
+        if (attemptConsume) {
+            if (tm.count >= 2) {
+                allowed = false;
+            } else {
+                tm.count++;
+                user.thinkingMode = tm;
+                await user.save();
+            }
+        }
+
+        return { allowed, usage: tm };
+    } catch {
+        return { allowed: false, usage: defaultState };
+    }
+};
+
 export const initialPrompt = async (req, res) => {
-    let {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
+    let { isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId } = req;
+
     const prompt = isRestrictedMode && !isBmsMode
         ? 'سلام! لطفاً خودتان را به عنوان یک دستیار هوش مصنوعی مفید به زبان فارسی و به صورت دوستانه و مختصر معرفی کنید.'
         : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way in English.';
@@ -23,122 +57,65 @@ export const initialPrompt = async (req, res) => {
     }
 
     try {
-        // Fetch current thinkingMode status
-        let thinkingModeUsage = { count: 0, lastReset: null };
-        try {
-            if (userId?.match(/^[0-9a-fA-F]{24}$/)) {
-                const user = await User.findById(userId);
-                if (user && user.thinkingMode) {
-                    thinkingModeUsage = user.thinkingMode;
-                    const now = new Date();
-                    if (!thinkingModeUsage.lastReset || (now - new Date(thinkingModeUsage.lastReset) > 86400000)) {
-                         thinkingModeUsage.count = 0;
-                    }
-                }
-            }
-        } catch (e) { /* ignore user fetch errors */ }
-
+        const { usage: thinkingModeUsage } = await manageThinkingMode(userId, false);
         const systemInstruction = await constructSystemPrompt(req, prompt);
-        const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction);
+        const { text: greeting } = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction);
+
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, null, greeting);
-        res.json({response: greeting, isBmsMode, isRestrictedMode, thinkingModeUsage});
+        res.json({ response: greeting, isBmsMode, isRestrictedMode, thinkingModeUsage });
         syncToDB(sessionId, userId, updated);
     } catch (error) {
         const fallback = isRestrictedMode && !isBmsMode
             ? 'سلام! من دستیار هوش مصنوعی شما هستم. چطور می‌توانم امروز به شما کمک کنم؟'
             : 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?';
-        res.json({response: fallback, isBmsMode, isRestrictedMode});
+        res.json({ response: fallback, isBmsMode, isRestrictedMode });
     }
 };
 
 export const ask = async (req, res) => {
-    let {message, useWebSearch, useThinkingMode} = req.body;
-    // Handle boolean string conversion if coming from FormData
-    if (useThinkingMode === 'true') useThinkingMode = true;
-    if (useThinkingMode === 'false') useThinkingMode = false;
+    let { message, useWebSearch, useThinkingMode } = req.body;
+    useThinkingMode = String(useThinkingMode) === 'true';
 
-    if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
+    if (!validateMessage(message)) return res.status(400).json({ error: 'Valid message is required' });
 
-    const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
+    const { isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId } = req;
 
-    let thinkingModeUsage = { count: 0, lastReset: null };
-
-    if (useThinkingMode) {
-        try {
-            const user = userId?.match(/^[0-9a-fA-F]{24}$/) ? await User.findById(userId) : null;
-            if (!user) throw 0;
-
-            const now = new Date();
-            const tm = user.thinkingMode || { count: 0, lastReset: null };
-
-            if (!tm.lastReset || (now - new Date(tm.lastReset) > 86400000)) {
-                tm.count = 0;
-                tm.lastReset = now;
-            }
-
-            if (tm.count >= 2) {
-                useThinkingMode = false;
-            } else {
-                tm.count++;
-                user.thinkingMode = tm;
-                await user.save();
-            }
-            thinkingModeUsage = user.thinkingMode;
-        } catch {
-            useThinkingMode = false;
-        }
-    } else {
-        // Just fetch the status without incrementing if not using it, so the UI is up to date
-        try {
-            if (userId?.match(/^[0-9a-fA-F]{24}$/)) {
-                 const user = await User.findById(userId);
-                 if (user && user.thinkingMode) {
-                     thinkingModeUsage = user.thinkingMode;
-                     // Reset if expired for display purposes
-                     const now = new Date();
-                     if (!thinkingModeUsage.lastReset || (now - new Date(thinkingModeUsage.lastReset) > 86400000)) {
-                         thinkingModeUsage.count = 0;
-                     }
-                 }
-            }
-        } catch (e) {}
-    }
+    const { allowed, usage } = await manageThinkingMode(userId, useThinkingMode);
+    if (useThinkingMode && !allowed) useThinkingMode = false;
 
     try {
         const systemInstruction = await constructSystemPrompt(req, message);
-        let fileData = null;
-        if (req.file) fileData = {mimeType: req.file.mimetype, data: req.file.buffer.toString('base64')};
+        const fileData = getFileData(req.file);
 
-        const {
-            text: responseText,
-            sources
-        } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode);
-        const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, responseText);
-        res.json({reply: responseText, sources, thinkingModeUsage});
+        const { text, sources } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode);
+
+        const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, text);
+        res.json({ reply: text, sources, thinkingModeUsage: usage });
         syncToDB(sessionId, userId, updated);
     } catch (error) {
-        console.error('Chat error:', error.message);
-        res.status(500).json({error: 'Sorry, I encountered an error. Please try again.', details: error.message});
+        console.error(error.message);
+        res.status(500).json({ error: 'Sorry, I encountered an error. Please try again.', details: error.message });
     }
 };
 
 export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
-    if (!apiCall) return res.status(501).json({error: `${apiName} service not available`});
+    if (!apiCall) return res.status(501).json({ error: `${apiName} service not available` });
 
-    const {message, model} = req.body;
-    if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
-    if (apiName === 'ArvanCloud' && !model) return res.status(400).json({error: 'Model is required'});
+    const { message, model } = req.body;
+    if (!validateMessage(message)) return res.status(400).json({ error: 'Valid message is required' });
+    if (apiName === 'ArvanCloud' && !model) return res.status(400).json({ error: 'Model is required' });
 
-    const {sessionId, conversationHistory, userId} = req;
+    const { sessionId, conversationHistory, userId } = req;
 
     try {
         const systemInstruction = await constructSystemPrompt(req, message);
-
         let fileData = null;
-        if (apiName === 'ArvanCloud' && req.file) {
-            const base64Data = req.file.buffer.toString('base64');
-            const mimeType = req.file.mimetype;
-            fileData = `data:${mimeType};base64,${base64Data}`;
+
+        if (req.file) {
+            const raw = getFileData(req.file);
+            fileData = apiName === 'ArvanCloud'
+                ? `data:${raw.mimeType};base64,${raw.data}`
+                : raw;
         }
 
         const response = apiName === 'ArvanCloud'
@@ -146,31 +123,30 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
             : await apiCall(message, conversationHistory, systemInstruction);
 
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, response);
-        res.json({reply: response});
+        res.json({ reply: response });
         syncToDB(sessionId, userId, updated);
     } catch (error) {
-        console.error(`${apiName} error:`, error.message);
-        res.status(500).json({error: 'Sorry, I encountered an error. Please try again.', details: error.message});
+        console.error(error.message);
+        res.status(500).json({ error: 'Sorry, I encountered an error. Please try again.', details: error.message });
     }
 };
 
-
 export const simpleApi = async (req, res) => {
-    if (!callSimpleGeminiAPI) return res.status(501).json({error: 'Simple API service not configured'});
+    if (!callSimpleGeminiAPI) return res.status(501).json({ error: 'Simple API service not configured' });
 
     const finalMessage = req.body
         ? (typeof req.body === 'string' ? req.body : (req.body.message ?? JSON.stringify(req.body)))
         : '';
 
     if (!finalMessage || typeof finalMessage !== 'string' || !finalMessage.trim()) {
-        return res.status(400).json({error: 'Empty or invalid content. Please send a body with your request (JSON, Text, or Form).'});
+        return res.status(400).json({ error: 'Empty or invalid content.' });
     }
 
     try {
         const response = await callSimpleGeminiAPI(finalMessage, req.geminiApiKey, req.keyIdentifier);
-        res.json({response});
+        res.json({ response });
     } catch (error) {
-        console.error('Simple API Error:', error.message);
-        res.status(500).json({error: 'Processing failed', details: error.message});
+        console.error(error.message);
+        res.status(500).json({ error: 'Processing failed', details: error.message });
     }
 };
