@@ -1,7 +1,6 @@
 import InteractionLog from '../models/InteractionLog.js';
 import {clearConversationHistory} from '../middleware/keySession.js';
 import {ConversationManager} from '../utils/conversationManager.js';
-import {syncToDatabase} from '../utils/interactionLogManager.js';
 
 export const getInteraction = async (req, res) => {
     try {
@@ -66,8 +65,6 @@ export const restoreInteraction = async (req, res) => {
         ConversationManager.mapUserToSession(userId, newSessionId);
         const restoredMessages = restoreChat(log);
         ConversationManager.saveHistory(newSessionId, restoredMessages);
-
-        await syncToDatabase(newSessionId, userId, restoredMessages);
 
         res.cookie('session_id', newSessionId, {
             httpOnly: true,

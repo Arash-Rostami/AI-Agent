@@ -1,5 +1,6 @@
 import {sendEmail} from '../services/emailTool.js';
 import InteractionLog from '../models/InteractionLog.js';
+import {ConversationManager} from '../utils/conversationManager.js';
 
 export const emailInteraction = async (req, res) => {
     try {
@@ -10,15 +11,34 @@ export const emailInteraction = async (req, res) => {
         if (!userId) return res.status(401).json({error: 'Unauthorized'});
         if (!email) return res.status(400).json({error: 'Email address is required'});
 
+        let messages = [];
         const log = await InteractionLog.findOne({sessionId, userId}).select('messages');
-        if (!log) return res.status(404).json({error: 'Session not found'});
+
+        if (log) {
+            messages = log.messages;
+        } else {
+            // Fallback to memory for unsaved/restored sessions
+            const memoryHistory = ConversationManager.getHistory(sessionId);
+            if (memoryHistory && memoryHistory.length > 0) {
+                messages = memoryHistory;
+            } else {
+                return res.status(404).json({error: 'Session not found'});
+            }
+        }
+
+        // Helper to extract text content regardless of source (DB vs Memory)
+        const getText = (msg) => {
+            if (msg.content) return msg.content;
+            if (msg.parts) return msg.parts.map(p => p.text || '').join('').trim();
+            return '';
+        };
 
         // Plain text transcript
-        const formattedTranscript = log.messages
+        const formattedTranscript = messages
             .filter(msg => msg.role !== 'system')
             .map(msg => {
-                const role = msg.role === 'user' ? 'User' : 'AI';
-                const content = msg.parts?.map(p => p.text || '').join('').trim();
+                const role = (msg.role === 'user' || msg.role === 'User') ? 'User' : 'AI';
+                const content = getText(msg);
                 return `[${role}]: ${content}`;
             })
             .join('\n\n');
@@ -27,11 +47,11 @@ export const emailInteraction = async (req, res) => {
         const isRTL = (text) => /[\u0600-\u06FF\u0590-\u05FF]/.test(text);
 
         // Rich HTML transcript with styles and RTL support
-        const formattedHtml = log.messages
+        const formattedHtml = messages
             .filter(msg => msg.role !== 'system')
             .map(msg => {
-                const role = msg.role === 'user' ? 'User' : 'AI';
-                const content = msg.parts?.map(p => p.text || '').join('').trim();
+                const role = (msg.role === 'user' || msg.role === 'User') ? 'User' : 'AI';
+                const content = getText(msg);
                 const hasRtl = isRTL(content);
                 const dir = hasRtl ? 'rtl' : 'ltr';
                 const align = hasRtl ? 'right' : 'left';
