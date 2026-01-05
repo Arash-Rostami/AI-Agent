@@ -2,6 +2,7 @@ import {callGeminiAPI, callSimpleGeminiAPI} from '../services/gemini/index.js';
 import {syncToDatabase} from '../utils/interactionLogManager.js';
 import {ConversationManager} from '../utils/conversationManager.js';
 import {constructSystemPrompt} from '../utils/promptManager.js';
+import User from '../models/User.js';
 
 
 const syncToDB = (sessionId, userId, history) =>
@@ -36,10 +37,39 @@ export const initialPrompt = async (req, res) => {
 };
 
 export const ask = async (req, res) => {
-    const {message, useWebSearch} = req.body;
+    let {message, useWebSearch, useThinkingMode} = req.body;
+    // Handle boolean string conversion if coming from FormData
+    if (useThinkingMode === 'true') useThinkingMode = true;
+    if (useThinkingMode === 'false') useThinkingMode = false;
+
     if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
     const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
+
+    if (useThinkingMode) {
+        try {
+            const user = userId?.match(/^[0-9a-fA-F]{24}$/) ? await User.findById(userId) : null;
+            if (!user) throw 0;
+
+            const now = new Date();
+            const tm = user.thinkingMode || { count: 0, lastReset: null };
+
+            if (!tm.lastReset || (now - new Date(tm.lastReset) > 86400000)) {
+                tm.count = 0;
+                tm.lastReset = now;
+            }
+
+            if (tm.count >= 2) {
+                useThinkingMode = false;
+            } else {
+                tm.count++;
+                user.thinkingMode = tm;
+                await user.save();
+            }
+        } catch {
+            useThinkingMode = false;
+        }
+    }
 
     try {
         const systemInstruction = await constructSystemPrompt(req, message);
@@ -49,7 +79,7 @@ export const ask = async (req, res) => {
         const {
             text: responseText,
             sources
-        } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction);
+        } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, responseText);
         res.json({reply: responseText, sources});
         syncToDB(sessionId, userId, updated);

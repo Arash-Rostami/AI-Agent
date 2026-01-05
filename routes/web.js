@@ -1,6 +1,7 @@
 import express from 'express';
 import upload from "../middleware/uploadHandler.js";
 import * as InteractionController from "../controllers/InteractionController.js";
+import * as EmailController from "../controllers/EmailController.js";
 import * as VectorController from "../controllers/VectorController.js";
 import * as ChatController from "../controllers/ChatController.js";
 import * as PageController from "../controllers/PageController.js";
@@ -36,6 +37,8 @@ router.get('/api/history/:id', InteractionController.getInteractionDetails);
 router.post('/api/history/:id/restore', InteractionController.restoreInteraction);
 
 router.delete('/api/history/:id', InteractionController.deleteInteraction);
+
+router.post('/api/history/:id/email', EmailController.emailInteraction);
 
 router.post('/api/vector/sync', VectorController.syncVectors);
 

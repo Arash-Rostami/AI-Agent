@@ -233,6 +233,10 @@
     color: #000000;
 }
 
+.history-details-header button#email-btn {
+    background: transparent !important;
+}
+
 .history-details-header button#back-to-list-btn,
 .history-details-header button#print-btn,
 .history-details-header button#pdf-btn {

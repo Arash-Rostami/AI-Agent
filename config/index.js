@@ -16,6 +16,7 @@ export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const GEMINI_API_URL = process.env.GEMINI_API_URL;
 export const GEMINI_API_KEY = process.env.GEMINI_API_KEY_PREMIUM;
 export const GEMINI_API_URL_PREMIUM = process.env.GEMINI_API_URL_PREMIUM;
+export const GEMINI_API_URL_THINKING = process.env.GEMINI_API_URL_THINKING;
 export const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 export const GROK_API_KEY = process.env.GROK_API_KEY;
 export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;

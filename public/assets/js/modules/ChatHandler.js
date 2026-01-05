@@ -1,6 +1,8 @@
 import AudioHandler from './AudioHandler.js';
 import BaseHandler from './BaseHandler.js';
 import UIHandler from './UIHandler.js';
+import EmailHandler from './EmailHandler.js';
+
 
 export default class ChatHandler extends BaseHandler {
     constructor() {
@@ -8,7 +10,9 @@ export default class ChatHandler extends BaseHandler {
 
         this.uiHandler = new UIHandler(this.formatter);
         this.audioHandler = new AudioHandler();
+        this.emailHandler = new EmailHandler();
 
+        this.isThinkingModeActive = false;
         this.cacheDOMElements();
         this.init();
     }
@@ -17,10 +21,12 @@ export default class ChatHandler extends BaseHandler {
         this.kebabContainer = document.querySelector('.kebab-menu-container');
         this.kebabTrigger = document.getElementById('kebab-trigger');
         this.newChatAction = document.getElementById('new-chat-action');
+        this.emailChatAction = document.getElementById('email-chat-action');
         this.clearChatAction = document.getElementById('clear-chat-action');
         this.chatForm = document.getElementById('chat-form');
         this.serviceSelect = document.getElementById('service-select');
         this.webSearchBtn = document.getElementById('web-search-btn');
+        this.thinkingModeBtn = document.getElementById('thinking-mode-btn');
         this.logoutBtn = document.getElementById('logout-btn');
         this.attachmentBtn = document.getElementById('attachment-btn');
         this.fileInput = document.getElementById('file-input');
@@ -80,11 +86,25 @@ export default class ChatHandler extends BaseHandler {
         }
     }
 
+    async handleEmailChat() {
+        const sessionId = this.getCookie('session_id');
+        await this.emailHandler.sendEmail(sessionId);
+    }
+
+    getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
     async handleSubmit(e) {
         e.preventDefault();
         const message = this.uiHandler.getMessageInputValue();
         const selectedService = this.serviceSelect.value;
         const useWebSearch = this.isWebSearchActive;
+        const useThinkingMode = this.isThinkingModeActive;
+
 
         if ((!message && !this.uiHandler.getSelectedAudioBlob()) || this.uiHandler.getIsTyping()) return;
 
@@ -120,6 +140,7 @@ export default class ChatHandler extends BaseHandler {
                 const formData = new FormData();
                 formData.append('message', message || "Voice message");
                 formData.append('useWebSearch', useWebSearch);
+                formData.append('useThinkingMode', useThinkingMode);
                 if (modelMap[selectedService]) {
                     formData.append('model', modelMap[selectedService]);
                 }
@@ -136,6 +157,7 @@ export default class ChatHandler extends BaseHandler {
                 body = JSON.stringify({
                     message,
                     useWebSearch,
+                    useThinkingMode,
                     ...(modelMap[selectedService] && {model: modelMap[selectedService]})
                 });
                 headers['Content-Type'] = 'application/json';
@@ -201,13 +223,22 @@ export default class ChatHandler extends BaseHandler {
 
     handleServiceChange() {
         const service = this.serviceSelect.value;
-        this.uiHandler.updateServiceUI(service, this.webSearchBtn, this.isWebSearchActive, () => this.toggleWebSearch());
+        this.uiHandler.updateServiceUI(
+            service,
+            this.webSearchBtn,
+            this.isWebSearchActive,
+            () => this.toggleWebSearch(),
+            this.thinkingModeBtn,
+            this.isThinkingModeActive,
+            () => this.toggleThinkingMode()
+        );
         if (service !== 'gemini') this.uiHandler.clearAudioSelection();
     }
 
     setupEventListeners() {
         this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
         this.newChatAction?.addEventListener('click', () => this.handleNewChat().then(() => this.closeKebabMenu()));
+        this.emailChatAction?.addEventListener('click', () => this.handleEmailChat().then(() => this.closeKebabMenu()));
         this.clearChatAction?.addEventListener('click', () => this.handleClearChat().then(() => this.closeKebabMenu()));
 
         this.kebabTrigger?.addEventListener('click', (e) => {
@@ -222,6 +253,7 @@ export default class ChatHandler extends BaseHandler {
         this.uiHandler.messageInput.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
         this.webSearchBtn.addEventListener('click', () => this.toggleWebSearch());
+        this.thinkingModeBtn.addEventListener('click', () => this.toggleThinkingMode());
         this.attachmentBtn.addEventListener('click', () => this.fileInput.click());
         this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
         this.removeFileBtn.addEventListener('click', () => this.uiHandler.clearFileSelection());
@@ -263,5 +295,11 @@ export default class ChatHandler extends BaseHandler {
     toggleWebSearch() {
         this.isWebSearchActive = !this.isWebSearchActive;
         this.webSearchBtn.classList.toggle('active', this.isWebSearchActive);
+    }
+    toggleThinkingMode() {
+        this.isThinkingModeActive = !this.isThinkingModeActive;
+        if (this.thinkingModeBtn) {
+            this.thinkingModeBtn.classList.toggle('active', this.isThinkingModeActive);
+        }
     }
 }

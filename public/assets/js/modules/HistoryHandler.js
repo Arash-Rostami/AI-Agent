@@ -1,8 +1,11 @@
 import BaseHandler from './BaseHandler.js';
+import EmailHandler from './EmailHandler.js';
+
 
 export default class HistoryHandler extends BaseHandler {
     constructor() {
         super();
+        this.emailHandler = new EmailHandler();
         this.nextCursor = null;
         this.isLoading = false;
         this.observer = null;
@@ -22,6 +25,7 @@ export default class HistoryHandler extends BaseHandler {
         this.continueBtn = document.getElementById('continue-chat-btn');
         this.pdfBtn = document.getElementById('pdf-btn');
         this.printBtn = document.getElementById('print-btn');
+        this.emailBtn = document.getElementById('email-btn');
     }
 
     init() {
@@ -31,6 +35,7 @@ export default class HistoryHandler extends BaseHandler {
         this.closeBtn.addEventListener('click', () => this.closeHistory());
         this.backBtn.addEventListener('click', () => this.showList());
         this.continueBtn?.addEventListener('click', () => this.handleContinue(this.currentSessionId));
+        this.emailBtn?.addEventListener('click', () => this.handleEmailHistory(this.currentSessionId));
         this.sidebarToggle?.addEventListener('click', () => this.toggleHistory());
 
         this.setButtonActions(this.pdfBtn, this.exportToPDF, '<i class="fas fa-file-pdf"></i>', 'Export as PDF');
@@ -412,5 +417,8 @@ export default class HistoryHandler extends BaseHandler {
         this.detailsContainer.classList.remove('active');
         this.detailsContainer.classList.add('hidden');
         this.listContainer.classList.remove('hidden');
+    }
+    async handleEmailHistory(sessionId) {
+        await this.emailHandler.sendEmail(sessionId);
     }
 }

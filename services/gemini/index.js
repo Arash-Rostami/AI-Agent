@@ -4,6 +4,7 @@ import {
     GEMINI_API_KEY,
     GEMINI_API_URL,
     GEMINI_API_URL_PREMIUM,
+    GEMINI_API_URL_THINKING,
     SYSTEM_INSTRUCTION_TEXT
 } from "../../config/index.js";
 import {allToolDefinitions} from "../../tools/toolDefinitions.js";
@@ -21,7 +22,8 @@ export async function callGeminiAPI(
     keyIdentifier = null,
     isBmsMode = false,
     fileData = null,
-    customSystemInstruction = null
+    customSystemInstruction = null,
+    useThinkingMode = false
 ) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
@@ -30,7 +32,7 @@ export async function callGeminiAPI(
 
         const contents = formatter.formatContents(conversationHistory, message, fileData);
         const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode);
-        let smartUrl = apiKey === GEMINI_API_KEY ? GEMINI_API_URL_PREMIUM : GEMINI_API_URL;
+        const smartUrl = useThinkingMode ? GEMINI_API_URL_THINKING : (apiKey === GEMINI_API_KEY ? GEMINI_API_URL_PREMIUM : GEMINI_API_URL);
 
         const requestBody = {
             contents,
@@ -54,7 +56,7 @@ export async function callGeminiAPI(
 
         return await responseHandler.handle(response.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
     } catch (error) {
-        return errorHandler.handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, (msg, hist, key, restricted, search, id, bms) => callGeminiAPI(msg, hist, key, restricted, search, id, bms, fileData), isBmsMode);
+        return errorHandler.handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, (msg, hist, key, restricted, search, id, bms) => callGeminiAPI(msg, hist, key, restricted, search, id, bms, fileData, null, useThinkingMode), isBmsMode);
     }
 }
 
