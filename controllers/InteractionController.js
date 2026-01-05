@@ -117,7 +117,8 @@ export const newChat = (req, res) => {
 export const restoreChat = (log) => {
     return log.messages.map(msg => {
         const role = msg.role === 'model' ? 'assistant' : msg.role;
-        const content = msg.parts?.map(p => p.text || '').join('').trim() || '[Restored Content]';
+        const fromParts = msg.parts?.map(p => p.text || '').join('').trim();
+        const content = fromParts || msg.content || '[Restored Content]';
 
         return {role, content};
     });

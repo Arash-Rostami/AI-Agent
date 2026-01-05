@@ -83,9 +83,9 @@ export default class HistoryHandler extends BaseHandler {
 
             if (!response.ok) throw new Error('Failed to restore session');
 
-            const {messages} = await response.json();
+            const data = await response.json();
             const event = new CustomEvent('restore-chat', {
-                detail: {messages, sessionId}
+                detail: {messages: data.messages, sessionId: data.sessionId}
             });
             window.dispatchEvent(event);
 
