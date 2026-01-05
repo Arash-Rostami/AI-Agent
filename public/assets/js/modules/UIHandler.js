@@ -203,11 +203,14 @@ export default class UIHandler {
         return typingEl;
     }
 
-    updateServiceUI(service, webSearchBtn, isWebSearchActive, toggleWebSearchCallback) {
+    updateServiceUI(service, webSearchBtn, isWebSearchActive, toggleWebSearchCallback, thinkingModeBtn, isThinkingModeActive, toggleThinkingModeCallback) {
         const isGemini = service === 'gemini';
         webSearchBtn.classList.toggle('hidden', !isGemini);
+        if (thinkingModeBtn) thinkingModeBtn.classList.toggle('hidden', !isGemini);
         this.micBtn.classList.toggle('hidden', !isGemini);
+
         if (!isGemini && isWebSearchActive) toggleWebSearchCallback();
+        if (!isGemini && isThinkingModeActive && toggleThinkingModeCallback) toggleThinkingModeCallback();
 
         const supportsAttachments = ['gemini', 'gpt-4o'].includes(service);
         this.attachmentBtn.style.display = supportsAttachments ? 'inline-block' : 'none';

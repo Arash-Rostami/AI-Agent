@@ -20,6 +20,16 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    thinkingMode: {
+        count: {
+            type: Number,
+            default: 0
+        },
+        lastReset: {
+            type: Date,
+            default: null
+        }
+    },
     createdAt: {
         type: Date,
         default: Date.now

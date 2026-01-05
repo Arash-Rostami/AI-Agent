@@ -2,7 +2,7 @@ import {callGeminiAPI, callSimpleGeminiAPI} from '../services/gemini/index.js';
 import {syncToDatabase} from '../utils/interactionLogManager.js';
 import {ConversationManager} from '../utils/conversationManager.js';
 import {constructSystemPrompt} from '../utils/promptManager.js';
-
+import User from '../models/User.js';
 
 const syncToDB = (sessionId, userId, history) =>
     syncToDatabase(sessionId, userId, history).catch(err => console.error('DB sync failed:', err.message));
@@ -36,10 +36,72 @@ export const initialPrompt = async (req, res) => {
 };
 
 export const ask = async (req, res) => {
-    const {message, useWebSearch} = req.body;
+    let {message, useWebSearch, useThinkingMode} = req.body;
+    // Handle boolean string conversion if coming from FormData
+    if (useThinkingMode === 'true') useThinkingMode = true;
+    if (useThinkingMode === 'false') useThinkingMode = false;
+
     if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
     const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
+
+    // Thinking Mode Rate Limiting
+    if (useThinkingMode) {
+        try {
+            // userId here might be a composite ID from keySession.js, but we need the Mongo User document.
+            // However, the User model uses 'username' or '_id'.
+            // The userId in middleware/userIdentity.js is typically the user's ID or a composite string.
+            // If the user is authenticated via cookie, req.userId matches the JWT payload's id.
+            // If they are anonymous/iframe, req.userId is composite.
+
+            // We only enforce limits for authenticated users (who have a User doc).
+            // If req.user exists (populated by auth middleware?), we use it.
+            // Let's check if we can resolve a User document.
+            // If not authenticated, maybe we disable Thinking Mode or track by IP?
+            // The requirement was "each user".
+            // Assuming we can find a user by ID if it's a valid MongoID.
+
+            // NOTE: I need to know if req.user is available. Middleware 'userIdentity' sets req.userId.
+            // 'verifyToken' middleware (if used) sets req.user.
+            // Let's try to find the user if the ID looks like a MongoID.
+
+            let userDoc = null;
+            if (userId && userId.match(/^[0-9a-fA-F]{24}$/)) {
+                 userDoc = await User.findById(userId);
+            }
+
+            if (userDoc) {
+                const now = new Date();
+                const lastReset = userDoc.thinkingMode?.lastReset ? new Date(userDoc.thinkingMode.lastReset) : null;
+
+                // Initialize if missing
+                if (!userDoc.thinkingMode) {
+                    userDoc.thinkingMode = { count: 0, lastReset: null };
+                }
+
+                // Check 24h window
+                if (!lastReset || (now - lastReset > 24 * 60 * 60 * 1000)) {
+                    // Reset window
+                    userDoc.thinkingMode.count = 0;
+                    userDoc.thinkingMode.lastReset = now;
+                }
+
+                if (userDoc.thinkingMode.count >= 2) {
+                    useThinkingMode = false; // Fallback silently
+                } else {
+                    userDoc.thinkingMode.count += 1;
+                    // Only save if we are actually using it
+                    await userDoc.save();
+                }
+            } else {
+                // Non-authenticated or invalid user ID -> Default to standard model to prevent abuse
+                useThinkingMode = false;
+            }
+        } catch (err) {
+            console.error('Thinking Mode Check Error:', err);
+            useThinkingMode = false; // Fallback on error
+        }
+    }
 
     try {
         const systemInstruction = await constructSystemPrompt(req, message);
@@ -49,7 +111,7 @@ export const ask = async (req, res) => {
         const {
             text: responseText,
             sources
-        } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction);
+        } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, responseText);
         res.json({reply: responseText, sources});
         syncToDB(sessionId, userId, updated);
