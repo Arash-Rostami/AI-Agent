@@ -97,7 +97,7 @@
     }
 
     .mobile-only-options .kebab-item {
-        justify-content: space-between;
+        /* Align consistently with other items */
     }
 
     .mobile-only-options .check-icon {

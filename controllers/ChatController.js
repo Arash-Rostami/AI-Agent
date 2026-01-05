@@ -62,7 +62,7 @@ export const initialPrompt = async (req, res) => {
         const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction);
 
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, null, greeting);
-        res.json({response: greeting, isBmsMode, isRestrictedMode, thinkingModeUsage});
+        res.json({response: greeting, isBmsMode, isRestrictedMode, thinkingModeUsage, sessionId});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
         const fallback = isRestrictedMode && !isBmsMode
@@ -93,7 +93,7 @@ export const ask = async (req, res) => {
         } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode);
 
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, text);
-        res.json({reply: text, sources, thinkingModeUsage: usage});
+        res.json({reply: text, sources, thinkingModeUsage: usage, sessionId});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
         console.error(error.message);
@@ -126,7 +126,7 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
             : await apiCall(message, conversationHistory, systemInstruction);
 
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, response);
-        res.json({reply: response});
+        res.json({reply: response, sessionId});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
         console.error(error.message);

@@ -85,7 +85,7 @@ export default class HistoryHandler extends BaseHandler {
 
             const {messages} = await response.json();
             const event = new CustomEvent('restore-chat', {
-                detail: {messages}
+                detail: {messages, sessionId}
             });
             window.dispatchEvent(event);
 
