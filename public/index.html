@@ -216,23 +216,23 @@
                         <i class="fas fa-microphone"></i>
                     </button>
 
-                <!-- Message Input -->
-                <textarea
-                        class="message-input"
-                        id="message-input"
-                        placeholder="Type your message..."
-                        rows="1"
-                        autocomplete="off"
-                ></textarea>
+                    <!-- Message Input -->
+                    <textarea
+                            class="message-input"
+                            id="message-input"
+                            placeholder="Type your message..."
+                            rows="1"
+                            autocomplete="off"
+                    ></textarea>
 
-                <!-- Prompt Suggestions -->
-                <div id="prompt-suggestions" class="prompt-suggestions hidden"></div>
+                    <!-- Prompt Suggestions -->
+                    <div id="prompt-suggestions" class="prompt-suggestions hidden"></div>
 
-                <!-- Send Button -->
-                <button type="submit" class="send-button" id="send-button" title="Submit Prompt">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
+                    <!-- Send Button -->
+                    <button type="submit" class="send-button" id="send-button" title="Submit Prompt">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
 
                 <!-- Kebab Menu -->
                 <div class="kebab-menu-container">
@@ -240,6 +240,21 @@
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
                     <nav class="kebab-dropdown">
+                        <!-- Mobile Toggles -->
+                        <div class="mobile-only-options">
+                            <button type="button" class="kebab-item" id="mobile-web-search-toggle" title="Toggle Web Search">
+                                <i class="fas fa-globe"></i>
+                                <span>Web Search</span>
+                                <i class="fas fa-check check-icon"></i>
+                            </button>
+                            <button type="button" class="kebab-item" id="mobile-thinking-mode-toggle" title="Toggle Thinking Mode">
+                                <i class="fas fa-brain"></i>
+                                <span>Thinking Mode</span>
+                                <i class="fas fa-check check-icon"></i>
+                            </button>
+                            <div class="dropdown-divider"></div>
+                        </div>
+
                         <button type="button" class="kebab-item" id="new-chat-action" title="Start New Chat">
                             <i class="fas fa-plus"></i>
                             <span>New Chat</span>

@@ -4,14 +4,48 @@ import {ConversationManager} from '../utils/conversationManager.js';
 import {constructSystemPrompt} from '../utils/promptManager.js';
 import User from '../models/User.js';
 
-
 const syncToDB = (sessionId, userId, history) =>
-    syncToDatabase(sessionId, userId, history).catch(err => console.error('DB sync failed:', err.message));
+    syncToDatabase(sessionId, userId, history).catch(err => console.error(err.message));
 
 const validateMessage = (msg) => msg && typeof msg === 'string';
 
+const getFileData = (file) => file ? {mimeType: file.mimetype, data: file.buffer.toString('base64')} : null;
+
+const manageThinkingMode = async (userId, attemptConsume = false) => {
+    const defaultState = {count: 0, lastReset: null};
+    if (!userId?.match(/^[0-9a-fA-F]{24}$/)) return {allowed: false, usage: defaultState};
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) return {allowed: false, usage: defaultState};
+
+        let tm = user.thinkingMode || defaultState;
+        const now = new Date();
+
+        if (!tm.lastReset || (now - new Date(tm.lastReset) > 86400000)) {
+            tm = {count: 0, lastReset: now};
+        }
+
+        let allowed = true;
+        if (attemptConsume) {
+            if (tm.count >= 2) {
+                allowed = false;
+            } else {
+                tm.count++;
+                user.thinkingMode = tm;
+                await user.save();
+            }
+        }
+
+        return {allowed, usage: tm};
+    } catch {
+        return {allowed: false, usage: defaultState};
+    }
+};
+
 export const initialPrompt = async (req, res) => {
     let {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
+
     const prompt = isRestrictedMode && !isBmsMode
         ? 'سلام! لطفاً خودتان را به عنوان یک دستیار هوش مصنوعی مفید به زبان فارسی و به صورت دوستانه و مختصر معرفی کنید.'
         : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way in English.';
@@ -23,10 +57,12 @@ export const initialPrompt = async (req, res) => {
     }
 
     try {
+        const {usage: thinkingModeUsage} = await manageThinkingMode(userId, false);
         const systemInstruction = await constructSystemPrompt(req, prompt);
         const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction);
+
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, null, greeting);
-        res.json({response: greeting, isBmsMode, isRestrictedMode});
+        res.json({response: greeting, isBmsMode, isRestrictedMode, thinkingModeUsage});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
         const fallback = isRestrictedMode && !isBmsMode
@@ -38,53 +74,29 @@ export const initialPrompt = async (req, res) => {
 
 export const ask = async (req, res) => {
     let {message, useWebSearch, useThinkingMode} = req.body;
-    // Handle boolean string conversion if coming from FormData
-    if (useThinkingMode === 'true') useThinkingMode = true;
-    if (useThinkingMode === 'false') useThinkingMode = false;
+    useThinkingMode = String(useThinkingMode) === 'true';
 
     if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
     const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
 
-    if (useThinkingMode) {
-        try {
-            const user = userId?.match(/^[0-9a-fA-F]{24}$/) ? await User.findById(userId) : null;
-            if (!user) throw 0;
-
-            const now = new Date();
-            const tm = user.thinkingMode || { count: 0, lastReset: null };
-
-            if (!tm.lastReset || (now - new Date(tm.lastReset) > 86400000)) {
-                tm.count = 0;
-                tm.lastReset = now;
-            }
-
-            if (tm.count >= 2) {
-                useThinkingMode = false;
-            } else {
-                tm.count++;
-                user.thinkingMode = tm;
-                await user.save();
-            }
-        } catch {
-            useThinkingMode = false;
-        }
-    }
+    const {allowed, usage} = await manageThinkingMode(userId, useThinkingMode);
+    if (useThinkingMode && !allowed) useThinkingMode = false;
 
     try {
         const systemInstruction = await constructSystemPrompt(req, message);
-        let fileData = null;
-        if (req.file) fileData = {mimeType: req.file.mimetype, data: req.file.buffer.toString('base64')};
+        const fileData = getFileData(req.file);
 
         const {
-            text: responseText,
+            text,
             sources
         } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode);
-        const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, responseText);
-        res.json({reply: responseText, sources});
+
+        const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, text);
+        res.json({reply: text, sources, thinkingModeUsage: usage});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
-        console.error('Chat error:', error.message);
+        console.error(error.message);
         res.status(500).json({error: 'Sorry, I encountered an error. Please try again.', details: error.message});
     }
 };
@@ -100,12 +112,13 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
 
     try {
         const systemInstruction = await constructSystemPrompt(req, message);
-
         let fileData = null;
-        if (apiName === 'ArvanCloud' && req.file) {
-            const base64Data = req.file.buffer.toString('base64');
-            const mimeType = req.file.mimetype;
-            fileData = `data:${mimeType};base64,${base64Data}`;
+
+        if (req.file) {
+            const raw = getFileData(req.file);
+            fileData = apiName === 'ArvanCloud'
+                ? `data:${raw.mimeType};base64,${raw.data}`
+                : raw;
         }
 
         const response = apiName === 'ArvanCloud'
@@ -116,11 +129,10 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
         res.json({reply: response});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
-        console.error(`${apiName} error:`, error.message);
+        console.error(error.message);
         res.status(500).json({error: 'Sorry, I encountered an error. Please try again.', details: error.message});
     }
 };
-
 
 export const simpleApi = async (req, res) => {
     if (!callSimpleGeminiAPI) return res.status(501).json({error: 'Simple API service not configured'});
@@ -130,14 +142,14 @@ export const simpleApi = async (req, res) => {
         : '';
 
     if (!finalMessage || typeof finalMessage !== 'string' || !finalMessage.trim()) {
-        return res.status(400).json({error: 'Empty or invalid content. Please send a body with your request (JSON, Text, or Form).'});
+        return res.status(400).json({error: 'Empty or invalid content.'});
     }
 
     try {
         const response = await callSimpleGeminiAPI(finalMessage, req.geminiApiKey, req.keyIdentifier);
         res.json({response});
     } catch (error) {
-        console.error('Simple API Error:', error.message);
+        console.error(error.message);
         res.status(500).json({error: 'Processing failed', details: error.message});
     }
 };

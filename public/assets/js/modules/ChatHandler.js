@@ -27,6 +27,8 @@ export default class ChatHandler extends BaseHandler {
         this.serviceSelect = document.getElementById('service-select');
         this.webSearchBtn = document.getElementById('web-search-btn');
         this.thinkingModeBtn = document.getElementById('thinking-mode-btn');
+        this.mobileWebSearchToggle = document.getElementById('mobile-web-search-toggle');
+        this.mobileThinkingModeToggle = document.getElementById('mobile-thinking-mode-toggle');
         this.logoutBtn = document.getElementById('logout-btn');
         this.attachmentBtn = document.getElementById('attachment-btn');
         this.fileInput = document.getElementById('file-input');
@@ -204,6 +206,12 @@ export default class ChatHandler extends BaseHandler {
         }
     }
 
+    updateThinkingModeTitle(usage) {
+        if (!this.thinkingModeBtn) return;
+        const count = usage.count || 0;
+        this.thinkingModeBtn.title = `Thinking Mode (${count}/2 used)`;
+    }
+
     closeKebabMenu() {
         this.kebabContainer?.classList.remove('active');
     }
@@ -240,6 +248,15 @@ export default class ChatHandler extends BaseHandler {
         this.newChatAction?.addEventListener('click', () => this.handleNewChat().then(() => this.closeKebabMenu()));
         this.emailChatAction?.addEventListener('click', () => this.handleEmailChat().then(() => this.closeKebabMenu()));
         this.clearChatAction?.addEventListener('click', () => this.handleClearChat().then(() => this.closeKebabMenu()));
+
+        this.mobileWebSearchToggle?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleWebSearch();
+        });
+        this.mobileThinkingModeToggle?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleThinkingMode();
+        });
 
         this.kebabTrigger?.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -295,11 +312,14 @@ export default class ChatHandler extends BaseHandler {
     toggleWebSearch() {
         this.isWebSearchActive = !this.isWebSearchActive;
         this.webSearchBtn.classList.toggle('active', this.isWebSearchActive);
+        if (this.mobileWebSearchToggle) {
+            this.mobileWebSearchToggle.classList.toggle('active', this.isWebSearchActive);
+        }
     }
+
     toggleThinkingMode() {
         this.isThinkingModeActive = !this.isThinkingModeActive;
-        if (this.thinkingModeBtn) {
-            this.thinkingModeBtn.classList.toggle('active', this.isThinkingModeActive);
-        }
+        this.thinkingModeBtn?.classList.toggle('active', this.isThinkingModeActive);
+        this.mobileThinkingModeToggle?.classList.toggle('active', this.isThinkingModeActive);
     }
 }
