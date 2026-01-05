@@ -221,4 +221,11 @@ export default class UIHandler {
         this.statusText.textContent = text;
         document.querySelector('.status-dot').style.background = type === 'error' ? '#dc2626' : '#10b981';
     }
+
+    updateThinkingModeTitle(remainingCount, thinkingModeBtn) {
+        if (thinkingModeBtn) {
+            // "count of remaining use" as requested
+            thinkingModeBtn.title = `Toggle Thinking Mode (${remainingCount} remaining today)`;
+        }
+    }
 }

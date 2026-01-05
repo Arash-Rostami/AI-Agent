@@ -161,6 +161,11 @@ export default class ChatHandler extends BaseHandler {
             this.uiHandler.setTyping(false);
             this.uiHandler.addMessage(data.reply, 'ai', false, data.sources);
             this.uiHandler.updateStatus('Online', 'success');
+
+            if (data.remainingThinkingCount !== undefined) {
+                this.uiHandler.updateThinkingModeTitle(data.remainingThinkingCount, this.thinkingModeBtn);
+            }
+
         } catch (error) {
             this.uiHandler.setTyping(false);
             this.uiHandler.addMessage('Sorry, I encountered an error. Please try again.', 'ai', true);
@@ -180,6 +185,9 @@ export default class ChatHandler extends BaseHandler {
             const data = await response.json();
             this.uiHandler.addMessage(data.response, 'ai');
             this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn);
+            if (data.remainingThinkingCount !== undefined) {
+                this.uiHandler.updateThinkingModeTitle(data.remainingThinkingCount, this.thinkingModeBtn);
+            }
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
         } finally {

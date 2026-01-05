@@ -21,17 +21,33 @@ export const initialPrompt = async (req, res) => {
         conversationHistory = [];
     }
 
+    let remainingThinkingCount = 2; // Default if not authenticated
+    try {
+        if (userId && userId.match(/^[0-9a-fA-F]{24}$/)) {
+            const userDoc = await User.findById(userId);
+            if (userDoc && userDoc.thinkingMode) {
+                 const now = new Date();
+                 const lastReset = userDoc.thinkingMode.lastReset ? new Date(userDoc.thinkingMode.lastReset) : null;
+                 if (lastReset && (now - lastReset < 24 * 60 * 60 * 1000)) {
+                     remainingThinkingCount = Math.max(0, 2 - userDoc.thinkingMode.count);
+                 }
+            }
+        }
+    } catch (err) {
+        console.error('Initial prompt user fetch error:', err);
+    }
+
     try {
         const systemInstruction = await constructSystemPrompt(req, prompt);
         const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, null, greeting);
-        res.json({response: greeting, isBmsMode, isRestrictedMode});
+        res.json({response: greeting, isBmsMode, isRestrictedMode, remainingThinkingCount});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
         const fallback = isRestrictedMode && !isBmsMode
             ? 'سلام! من دستیار هوش مصنوعی شما هستم. چطور می‌توانم امروز به شما کمک کنم؟'
             : 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?';
-        res.json({response: fallback, isBmsMode, isRestrictedMode});
+        res.json({response: fallback, isBmsMode, isRestrictedMode, remainingThinkingCount});
     }
 };
 
@@ -45,62 +61,55 @@ export const ask = async (req, res) => {
 
     const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
 
+    let remainingThinkingCount = 2; // default
+
     // Thinking Mode Rate Limiting
-    if (useThinkingMode) {
-        try {
-            // userId here might be a composite ID from keySession.js, but we need the Mongo User document.
-            // However, the User model uses 'username' or '_id'.
-            // The userId in middleware/userIdentity.js is typically the user's ID or a composite string.
-            // If the user is authenticated via cookie, req.userId matches the JWT payload's id.
-            // If they are anonymous/iframe, req.userId is composite.
+    // We always calculate remaining count for the response, even if not using it this turn,
+    // so the UI can stay updated.
+    let userDoc = null;
+    try {
+        if (userId && userId.match(/^[0-9a-fA-F]{24}$/)) {
+             userDoc = await User.findById(userId);
+        }
 
-            // We only enforce limits for authenticated users (who have a User doc).
-            // If req.user exists (populated by auth middleware?), we use it.
-            // Let's check if we can resolve a User document.
-            // If not authenticated, maybe we disable Thinking Mode or track by IP?
-            // The requirement was "each user".
-            // Assuming we can find a user by ID if it's a valid MongoID.
+        if (userDoc) {
+            const now = new Date();
+            const lastReset = userDoc.thinkingMode?.lastReset ? new Date(userDoc.thinkingMode.lastReset) : null;
 
-            // NOTE: I need to know if req.user is available. Middleware 'userIdentity' sets req.userId.
-            // 'verifyToken' middleware (if used) sets req.user.
-            // Let's try to find the user if the ID looks like a MongoID.
-
-            let userDoc = null;
-            if (userId && userId.match(/^[0-9a-fA-F]{24}$/)) {
-                 userDoc = await User.findById(userId);
+            // Initialize if missing
+            if (!userDoc.thinkingMode) {
+                userDoc.thinkingMode = { count: 0, lastReset: null };
             }
 
-            if (userDoc) {
-                const now = new Date();
-                const lastReset = userDoc.thinkingMode?.lastReset ? new Date(userDoc.thinkingMode.lastReset) : null;
+            // Check 24h window (and reset if needed)
+            if (!lastReset || (now - lastReset > 24 * 60 * 60 * 1000)) {
+                userDoc.thinkingMode.count = 0;
+                userDoc.thinkingMode.lastReset = now;
+            }
 
-                // Initialize if missing
-                if (!userDoc.thinkingMode) {
-                    userDoc.thinkingMode = { count: 0, lastReset: null };
-                }
+            // Calculate remaining BEFORE incrementing if useThinkingMode is true
+            // actually logic is: check if allowed, then increment.
 
-                // Check 24h window
-                if (!lastReset || (now - lastReset > 24 * 60 * 60 * 1000)) {
-                    // Reset window
-                    userDoc.thinkingMode.count = 0;
-                    userDoc.thinkingMode.lastReset = now;
-                }
-
-                if (userDoc.thinkingMode.count >= 2) {
+            if (useThinkingMode) {
+                 if (userDoc.thinkingMode.count >= 2) {
                     useThinkingMode = false; // Fallback silently
                 } else {
                     userDoc.thinkingMode.count += 1;
                     // Only save if we are actually using it
                     await userDoc.save();
                 }
-            } else {
-                // Non-authenticated or invalid user ID -> Default to standard model to prevent abuse
-                useThinkingMode = false;
             }
-        } catch (err) {
-            console.error('Thinking Mode Check Error:', err);
-            useThinkingMode = false; // Fallback on error
+
+            // Calculate final remaining count to send back
+            remainingThinkingCount = Math.max(0, 2 - userDoc.thinkingMode.count);
+
+        } else if (useThinkingMode) {
+            // Non-authenticated or invalid user ID -> Default to standard model
+            useThinkingMode = false;
         }
+    } catch (err) {
+        console.error('Thinking Mode Check Error:', err);
+        if (useThinkingMode) useThinkingMode = false; // Fallback on error
     }
 
     try {
@@ -113,7 +122,7 @@ export const ask = async (req, res) => {
             sources
         } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode);
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, responseText);
-        res.json({reply: responseText, sources});
+        res.json({reply: responseText, sources, remainingThinkingCount});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
         console.error('Chat error:', error.message);
