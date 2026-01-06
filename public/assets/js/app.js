@@ -6,6 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(({default: ThemeToggle}) => new ThemeToggle('theme-toggle'))
         .catch(err => console.error('ThemeToggler failed (App continuing):', err));
 
+    // Initialize ModalHandler globally
+    import('./modules/ModalHandler.js')
+        .then(({default: ModalHandler}) => new ModalHandler()) // Init singleton
+        .catch(err => console.error('ModalHandler failed to load:', err));
+
     // <=> LOGIN PAGE <=>
     if (loginPage) {
         import('./modules/LoginHandler.js')

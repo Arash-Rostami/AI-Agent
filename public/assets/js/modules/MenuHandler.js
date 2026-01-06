@@ -1,3 +1,5 @@
+import ModalHandler from './ModalHandler.js';
+
 export default class MenuHandler {
     constructor() {
         this.menuBtn = document.getElementById('user-menu-btn');
@@ -56,11 +58,11 @@ export default class MenuHandler {
     async handleEmailActiveChat() {
         const sessionId = this.getCookie('session_id');
         if (!sessionId) {
-            alert('No active chat session found.');
+            await ModalHandler.alert('No active chat session found.');
             return;
         }
 
-        const email = prompt("Please enter your email address:");
+        const email = await ModalHandler.prompt("Please enter your email address:", "user@example.com");
         if (!email) return;
 
         try {
@@ -74,13 +76,13 @@ export default class MenuHandler {
 
             const result = await response.json();
             if (response.ok) {
-                alert('Success: ' + result.message);
+                await ModalHandler.alert('Success: ' + result.message);
             } else {
                 throw new Error(result.error || 'Failed to send email');
             }
         } catch (error) {
             console.error('Email error:', error);
-            alert('Error: ' + error.message);
+            await ModalHandler.alert('Error: ' + error.message);
         }
     }
 

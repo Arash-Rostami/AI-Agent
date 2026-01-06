@@ -1,0 +1,187 @@
+/* Custom Modal Styles (Full Page Expanding Line Animation) */
+
+/* The Modal Container (The expanding box itself) */
+.custom-modal {
+    background: var(--primary-color);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: hidden;
+    z-index: 10001; /* High z-index to cover everything */
+
+    /* CLOSED STATE */
+    width: 0;
+    height: 2px; /* Start as a thin line */
+
+    /* Closing Animation: Width waits 0.5s (shrinks last), Height shrinks immediately */
+    transition: width 0.5s ease 0.5s, height 0.5s ease;
+}
+
+/* OPEN STATE */
+.custom-modal.active {
+    width: 100%;
+    height: 100%;
+
+    /* Opening Animation: Width expands immediately, Height waits 0.5s (expands last) */
+    transition: width 0.5s ease, height 0.5s ease 0.5s;
+}
+
+/* Modal Content Container */
+.custom-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    text-align: center;
+    color: #ffffff; /* White text on primary background */
+
+    /* Content Fade Logic */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+}
+
+/* Content becomes visible ONLY after the box is fully open (1s total delay) */
+.custom-modal.active .custom-modal-content {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease 1s;
+}
+
+/* Typography */
+.modal-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-family: 'Vazirmatn', sans-serif;
+    color: #ffffff;
+}
+
+.modal-message {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Input Field Styling */
+.modal-input {
+    width: 100%;
+    max-width: 400px;
+    padding: 15px;
+    margin-bottom: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-md);
+    color: #ffffff;
+    font-size: 1.2rem;
+    text-align: center;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.modal-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.modal-input:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.modal-input.hidden {
+    display: none;
+}
+
+/* Action Buttons */
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.modal-btn {
+    padding: 12px 30px;
+    border-radius: var(--radius-pill);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    font-family: 'Vazirmatn', sans-serif;
+}
+
+.modal-btn-confirm {
+    background-color: #ffffff;
+    color: var(--primary-color);
+    border: 2px solid #ffffff;
+}
+
+.modal-btn-confirm:hover {
+    background-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+.modal-btn-cancel {
+    background-color: transparent;
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.modal-btn-cancel:hover {
+    border-color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.modal-btn.hidden {
+    display: none;
+}
+
+/* Close Icon (Top Right) */
+.modal-close-icon {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 10002;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.custom-modal.active .modal-close-icon {
+    opacity: 1;
+    transition: opacity 0.5s ease 1s; /* Appear with content */
+}
+
+.modal-close-icon::before,
+.modal-close-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #ffffff;
+    transform: rotate(45deg);
+    transition: transform 0.3s ease;
+}
+
+.modal-close-icon::after {
+    transform: rotate(-45deg);
+}
+
+.modal-close-icon:hover::before {
+    transform: rotate(135deg);
+}
+
+.modal-close-icon:hover::after {
+    transform: rotate(45deg);
+}
