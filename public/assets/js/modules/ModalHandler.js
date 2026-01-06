@@ -16,11 +16,11 @@ export default class ModalHandler {
     injectHTML() {
         if (document.getElementById('custom-modal')) return;
 
-        // No separate overlay div needed as the modal itself becomes full screen
         const html = `
             <div id="custom-modal" class="custom-modal">
                 <div class="modal-close-icon" id="modal-close-x"></div>
                 <div class="custom-modal-content">
+                    <div id="modal-spinner" class="modal-spinner hidden"></div>
                     <h3 id="modal-title" class="modal-title">Alert</h3>
                     <p id="modal-message" class="modal-message"></p>
                     <input type="text" id="modal-input" class="modal-input hidden" autocomplete="off">
@@ -42,8 +42,8 @@ export default class ModalHandler {
         this.input = document.getElementById('modal-input');
         this.cancelBtn = document.getElementById('modal-cancel-btn');
         this.confirmBtn = document.getElementById('modal-confirm-btn');
+        this.spinner = document.getElementById('modal-spinner');
 
-        // Cache for resolving promises
         this.resolve = null;
         this.reject = null;
     }
@@ -53,15 +53,15 @@ export default class ModalHandler {
         this.cancelBtn.addEventListener('click', () => this.handleCancel());
         this.closeX.addEventListener('click', () => this.handleCancel());
 
-        // Allow pressing Enter in input to confirm
         this.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') this.handleConfirm();
             if (e.key === 'Escape') this.handleCancel();
         });
 
-        // Close on escape key globally when active
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.modal.classList.contains('active')) {
+                // Prevent closing if loading
+                if (this.currentType === 'loading') return;
                 this.handleCancel();
             }
         });
@@ -73,7 +73,10 @@ export default class ModalHandler {
         this.input.value = '';
         this.input.classList.add('hidden');
         this.cancelBtn.classList.add('hidden');
+        this.confirmBtn.classList.remove('hidden');
         this.confirmBtn.textContent = 'OK';
+        this.spinner.classList.add('hidden');
+        this.closeX.classList.remove('hidden'); // Ensure close button is visible by default
         this.resolve = null;
         this.reject = null;
         this.currentType = null;
@@ -88,7 +91,6 @@ export default class ModalHandler {
 
             this.message.textContent = text;
 
-            // Configure based on type
             if (type === 'alert') {
                 this.title.textContent = 'Notification';
                 this.cancelBtn.classList.add('hidden');
@@ -105,15 +107,18 @@ export default class ModalHandler {
                 this.cancelBtn.classList.remove('hidden');
                 this.confirmBtn.textContent = 'Submit';
                 this.cancelBtn.textContent = 'Cancel';
+            } else if (type === 'loading') {
+                this.title.textContent = 'Processing';
+                this.spinner.classList.remove('hidden');
+                this.confirmBtn.classList.add('hidden');
+                this.cancelBtn.classList.add('hidden');
+                this.closeX.classList.add('hidden'); // Hide close button during loading
             }
 
-            // Trigger Animation (Add active class to the modal container directly)
-            // Use requestAnimationFrame to ensure DOM is ready for transition
             requestAnimationFrame(() => {
                  this.modal.classList.add('active');
             });
 
-            // Auto-focus input for prompt after animation (wait for 1s transition)
             if (type === 'prompt') {
                 setTimeout(() => this.input.focus(), 1100);
             }
@@ -122,7 +127,6 @@ export default class ModalHandler {
 
     close() {
         this.modal.classList.remove('active');
-        // CSS transition handles the closing animation (Height shrinks, then Width)
     }
 
     handleConfirm() {
@@ -132,13 +136,11 @@ export default class ModalHandler {
     }
 
     handleCancel() {
-        // Confirm returns false, Prompt returns null, Alert just closes
         const value = this.currentType === 'prompt' ? null : false;
         if (this.resolve) this.resolve(value);
         this.close();
     }
 
-    // Static API for easy replacement
     static alert(message) {
         return new ModalHandler().show('alert', message);
     }
@@ -149,5 +151,13 @@ export default class ModalHandler {
 
     static prompt(message, placeholder = '') {
         return new ModalHandler().show('prompt', message, placeholder);
+    }
+
+    static loading(message) {
+        return new ModalHandler().show('loading', message);
+    }
+
+    static close() {
+        new ModalHandler().close();
     }
 }

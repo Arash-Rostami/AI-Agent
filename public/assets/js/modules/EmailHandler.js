@@ -16,6 +16,8 @@ export default class EmailHandler extends BaseHandler {
         if (!email) return;
 
         try {
+            ModalHandler.loading('Sending email...');
+
             const response = await fetch(`/api/history/${sessionId}/email`, {
                 method: 'POST',
                 headers: {
