@@ -1,5 +1,7 @@
 import BaseHandler from './BaseHandler.js';
 import EmailHandler from './EmailHandler.js';
+import ModalHandler from './ModalHandler.js';
+
 
 
 export default class HistoryHandler extends BaseHandler {
@@ -92,12 +94,12 @@ export default class HistoryHandler extends BaseHandler {
             this.closeHistory();
         } catch (error) {
             console.error('Restore error:', error);
-            alert('Failed to restore chat session.');
+            await ModalHandler.alert('Failed to restore chat session.');
         }
     }
 
     async confirmDelete(sessionId, element) {
-        if (confirm('⚠️ Are you sure you want to delete this chat session? This action cannot be undone.')) {
+        if (await ModalHandler.confirm('Are you sure you want to delete this chat session? This action cannot be undone.')) {
             try {
                 const response = await fetch(`/api/history/${sessionId}`, {
                     method: 'DELETE',
@@ -111,11 +113,11 @@ export default class HistoryHandler extends BaseHandler {
                         this.currentSessionId = null;
                     }
                 } else {
-                    alert(`Failed to delete history. Status: ${response.status}`);
+                    await ModalHandler.alert(`Failed to delete history. Status: ${response.status}`);
                 }
             } catch (err) {
                 console.error('Delete error:', err);
-                alert('An error occurred while deleting.');
+                await ModalHandler.alert('An error occurred while deleting.');
             }
         }
     }

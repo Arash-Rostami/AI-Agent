@@ -1,3 +1,5 @@
+import ModalHandler from './ModalHandler.js';
+
 export default class SyncHandler {
     constructor(buttonId) {
         this.button = document.getElementById(buttonId);
@@ -29,7 +31,7 @@ export default class SyncHandler {
     }
 
     async handleSync() {
-        if (!confirm('Are you sure you want to rebuild the knowledge base? This may take a moment.')) return;
+        if (!await ModalHandler.confirm('Are you sure you want to rebuild the knowledge base? This may take a moment.')) return;
 
         const originalIcon = this.button.innerHTML;
         this.updateButtonState(true);
@@ -42,13 +44,13 @@ export default class SyncHandler {
             const data = await response.json();
 
             if (data.success) {
-                alert(`Success: ${data.message}\nProcessed: ${data.data.filesProcessed} files, ${data.data.totalChunks} chunks.`);
+                await ModalHandler.alert(`Success: ${data.message}\nProcessed: ${data.data.filesProcessed} files, ${data.data.totalChunks} chunks.`);
             } else {
-                alert(`Error: ${data.error || 'Unknown error occurred'}`);
+                await ModalHandler.alert(`Error: ${data.error || 'Unknown error occurred'}`);
             }
         } catch (error) {
             console.error('Sync failed:', error);
-            alert('Failed to connect to the server.');
+            await ModalHandler.alert('Failed to connect to the server.');
         } finally {
             this.updateButtonState(false, originalIcon);
         }

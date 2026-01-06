@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             loadModule('./modules/HistoryHandler.js', 'HistoryHandler');
+            loadModule('./modules/ModalHandler.js', 'ModalHandler');
             loadModule('./modules/LogoutHandler.js', 'LogoutHandler', 'logout-btn');
             loadModule('./modules/SyncHandler.js', 'SyncHandler', 'sync-btn');
             loadModule('./modules/SettingsHandler.js', 'SettingsHandler');

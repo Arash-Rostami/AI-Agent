@@ -1,3 +1,4 @@
+import ModalHandler from './ModalHandler.js';
 export default class AudioHandler {
     constructor() {
         this.mediaRecorder = null;
@@ -21,7 +22,7 @@ export default class AudioHandler {
             return true;
         } catch (error) {
             console.error('Error accessing microphone:', error);
-            alert('Could not access microphone. Please check permissions.');
+            await ModalHandler.alert('Could not access microphone. Please check permissions.');
             this.cleanup();
             return false;
         }

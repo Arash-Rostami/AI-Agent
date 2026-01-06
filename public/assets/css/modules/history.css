@@ -377,8 +377,9 @@
     color: var(--text-secondary, #666);
 }
 
-.loading-spinner i.fa-spin {
-    animation: fa-spin 2s infinite linear;
+.loading-spinner i.fa-spin,
+.history-sentinel i.fa-spin {
+    animation: fa-spin 1s infinite linear;
 }
 
 @keyframes fa-spin {

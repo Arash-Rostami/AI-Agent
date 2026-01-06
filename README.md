@@ -3,37 +3,59 @@
 > **Intelligent, Secure, and Connected.**
 > A production-ready AI agent designed for enterprise integration, featuring real-time web intelligence, deep business system connectivity, and military-grade security protocols.
 
+---
+
 ## 🧠 Core Capabilities
 
 ### 1. Multi-Model Cognitive Engine
-Built to adapt to any task using the best-in-class models from leading providers.
+Built to adapt to any task using a federated architecture of best-in-class models.
 *   **Google Gemini (Primary):** Powered by **Gemini 2.0 Flash** & **Gemini 1.5 Pro**. Supports native **Multimodal** input (Text, Images, Audio, PDFs) and **Function Calling**.
-*   **ArvanCloud Integration:** Access to **GPT-4o** (Multimodal) and **DeepSeek V3** via secure, localized routing.
-*   **OpenRouter & Groq:** High-speed inference using **Grok 4.1 Fast** and **Qwen 2.5** for cost-effective scaling.
-*   **Context Aware:** Maintains deep conversation history with intelligent summarization and "sticky" sessions for seamless continuity.
+*   **ArvanCloud Integration:** Secure, localized routing to **GPT-4o** (Multimodal) and **DeepSeek V3**.
+*   **OpenRouter & Groq:** High-speed inference using **Grok 4.1 Fast** (via OpenRouter) and **Qwen 2.5** (via Groq) for cost-effective scaling.
+*   **Thinking Mode:** Activates **Gemini 2.0 Flash Thinking** for complex reasoning tasks. *Note: Limited daily usage applies to manage computational resources.*
 
 ### 2. Live Web Intelligence & Tools
 Breaking the knowledge cutoff with advanced tools and grounding.
 *   **Real-Time Search:** Accesses live web data for up-to-the-minute answers on news, markets, and events.
-*   **Web Crawling:** Reads and summarizes content from any specific URL provided by the user (e.g., "Summarize https://example.com").
-*   **Time Awareness:** Instantly provides current time across global timezones (e.g., "What time is it in Tokyo?").
+*   **Web Crawling:** Reads and summarizes content from specific user-provided URLs.
+*   **Time Awareness:** Instantly provides current time across global timezones.
 *   **Weather Intelligence:**
-    *   **Current Conditions:** Real-time weather updates for any city.
-    *   **5-Day Forecast:** Planning-focused weather summaries.
+    *   **Current Conditions & Forecast:** Real-time updates and 5-day summaries.
     *   **Air Quality:** Detailed pollution metrics (AQI) for health-conscious decision-making.
-*   **Verified Citations:** Every claim is backed by clickable source links, ensuring trust and traceability.
+*   **Verified Citations:** Every claim is backed by clickable source links.
 
-### 3. Enterprise Integrations
+### 3. Communication Hub
+Seamlessly integrate AI insights into your workflow.
+*   **Smart Email Tool:**
+    *   **Context-Aware:** Auto-generates subjects and bodies based on the active conversation.
+    *   **Formatting Engine:** Intelligent HTML generation with automatic **RTL/LTR detection** for mixed-language content.
+    *   **Audit Logging:** Tracks every email sent for security and compliance.
+    *   **Timezone Smart:** Headers reflect the user's local time.
+
+### 4. Enterprise Integrations
 More than just a chatbot—it's a business tool.
-*   **RAG (Retrieval-Augmented Generation):** Ingests internal policy documents and uses **Vector Search** to answer employee queries with 100% accuracy.
+*   **High-Performance RAG:** Features an **In-Memory Vector Engine** for millisecond-latency searches across internal policy documents.
 *   **BMS Connector:** Securely queries your **Business Management System (BMS)** to retrieve real-time data on contracts, shipments, and payments (Restricted Access).
 *   **File Analysis:** Upload Images or PDFs for instant analysis, OCR, and data extraction.
 
-### 4. Multimodal Audio & Visualization
-Interact naturally with voice.
+### 5. Multimodal Interaction
 *   **Voice Input:** Record and send audio messages directly to supported models (Gemini, GPT-4o).
-*   **Audio Response:** AI generates natural speech playback.
-*   **Visualizer:** Interactive "wave" animation (`.audio-visualizer`) responds to audio playback in real-time.
+*   **Audio Response:** AI generates natural speech playback for a hands-free experience.
+
+---
+
+## 🎨 UI & User Experience
+
+*   **Google Material Design 3:** Modern, responsive interface with fluid animations and Dark/Light mode support.
+*   **User Profile Management:**
+    *   **Avatar System:** Upload/Remove profile pictures (synced across the UI).
+    *   **Security:** Change passwords securely via the settings interface.
+*   **History Management:**
+    *   **Sidebar Navigation:** Slide-out history panel with infinite scroll.
+    *   **Search & Filter:** Quickly find past conversations.
+    *   **Export Options:** "Print to PDF" or formatted print views for archiving.
+    *   **Sticky Sessions:** Smart session recovery for iframe users (via IP/Referer) even without cookies.
+*   **Mobile Optimized:** Fully responsive layout with mobile-specific navigation and "Kebab" menus for compact access to tools.
 
 ---
 
@@ -41,27 +63,13 @@ Interact naturally with voice.
 
 *   **Runtime:** Node.js (v18+)
 *   **Framework:** Express.js (Microservice Architecture)
-*   **Database:** MongoDB (Persistent Sessions, Vector Store, User Auth)
-*   **Frontend:** Vanilla JS (ES6 Modules) with **Google Material Design 3**.
+*   **Database:** MongoDB (Persistent Sessions, User Auth, Audit Logs)
+*   **Vector Engine:** Custom **In-Memory Vector Store** (initialized on startup from `documents/RAG`) for zero-latency context retrieval.
 *   **Security:**
     *   `frameGuard` Middleware (Iframe protection)
     *   `KeySessionManager` (API Key Rotation & Quota Management)
-    *   Input Sanitization & MIME Type Validation
-
----
-
-## 🎨 UI Features
-
-*   **Material Design 3:** Modern, responsive interface with Dark/Light mode support.
-*   **Chat History:**
-    *   **Sidebar Navigation:** Slide-out history panel (`left: 0`, `translateX(-100%)`).
-    *   **Sticky Sessions:** Smart session recovery for iframe users (via IP/Referer) even without cookies.
-    *   **Export to PDF:** Download full conversation transcripts with one click using `html2pdf.js`.
-    *   **Print View:** Clean, formatted print layout for archiving.
-    *   **Logout:** Secure session termination via the top-right menu.
-*   **Visual Attachments:** Drag-and-drop support for images and PDFs with client-side preview.
-*   **Admin Features:**
-    *   **Sync Knowledge Base:** Manual vector DB synchronization button (restricted to specific admin users configured in the backend).
+    *   `RestrictedMode` (Context-aware tool blocking)
+*   **Architecture Pattern:** Controller-Service-Repository pattern with "Memory-First" fallbacks for high availability.
 
 ---
 
@@ -70,7 +78,7 @@ Interact naturally with voice.
 ### Prerequisites
 *   Node.js (v18 or higher)
 *   MongoDB Instance (Local or Atlas)
-*   API Keys (Gemini, ArvanCloud, etc.)
+*   API Keys (Gemini, ArvanCloud, OpenRouter, Groq)
 
 ### 1. Installation
 
@@ -84,7 +92,7 @@ npm install
 ```
 
 ### 2. Configuration
-Create a `.env` file in the root directory. You can copy the structure below:
+Create a `.env` file in the root directory:
 
 ```env
 # --- Server Config ---
@@ -95,19 +103,16 @@ JWT_SECRET=your_super_secret_jwt_key
 SITE_URL=https://your-domain.com
 
 # --- AI Model Keys (Primary & Fallbacks) ---
-# The system automatically rotates keys for better reliability
 GEMINI_API_KEY_PREMIUM=your_google_gemini_key
 GROK_API_KEY=your_groq_key
 OPENROUTER_API_KEY=your_openrouter_key
 ARVANCLOUD_API_KEY=your_arvancloud_key
 
-# --- Service URLs ---
+# --- Service URLs & Tools ---
 GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
 ARVANCLOUD_CHATGPT_URL=https://napi.arvancloud.ir/paas/v1/chat/completions
 ARVANCLOUD_DEEPSEEK_URL=https://napi.arvancloud.ir/paas/v1/chat/completions
 OPENROUTER_API_URL=https://openrouter.ai/api/v1/chat/completions
-
-# --- Tool Integrations ---
 WEATHER_API_KEY=your_openweathermap_key
 AI_SERVICE_SECRET=your_bms_backend_secret
 BMS_API_URL=https://example.io/ai/query
@@ -138,7 +143,7 @@ npm start
 ## 🛡️ Security Features
 
 *   **Restricted Mode:** Automatically locks down sensitive tools (Web Search, BMS) when embedded in external websites. Detects origin via `Referer` or `X-Frame-Referer` headers.
-*   **Iframe Protection:** The `frameGuard` middleware validates origins against `ALLOWED_ORIGINS`.
+*   **Data Privacy:** "Restricted Mode" conversations are never stored in the vector database.
 *   **Key Rotation:** The `KeySessionManager` automatically rotates API keys to handle rate limits and ensure uptime.
 *   **Sanitized Inputs:** All inputs are validated against injection attacks before processing.
 *   **Access Control:** Strict separation between "Public" tools (Web Search, Weather) and "Private" tools (BMS, Internal Docs).

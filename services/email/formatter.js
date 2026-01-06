@@ -62,7 +62,7 @@ export function formatEmail(textBody, htmlBody, timestamp) {
     const dir = detectDirection((textBody || '') + (htmlBody || '').substring(0, 200));
     const {headerStyle, titleStyle, timeStyle, bodyStyle} = getTemplate(dir);
     const headerText = `Chat History Export\nSent: ${timestamp}\n${'='.repeat(30)}\n\n`;
-    const headerHtml = `<div style="${headerStyle}"><h2 style="${titleStyle}">Chat History Export</h2><p style="${timeStyle}">Sent: ${timestamp}</p></div>`;
+    const headerHtml = `<div style="${headerStyle}"><h2 style="${titleStyle}">Chat History</h2><p style="${timeStyle}">Sent: ${timestamp}</p></div>`;
     const finalText = textBody ? (headerText + textBody) : '';
     const finalHtml = htmlBody
         ? `<div style="${bodyStyle}">${headerHtml}${htmlBody}</div>`

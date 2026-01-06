@@ -11,16 +11,14 @@ export const emailInteraction = async (req, res) => {
         if (!userId) return res.status(401).json({error: 'Unauthorized'});
         if (!email) return res.status(400).json({error: 'Email address is required'});
 
-        let messages = [];
-        const log = await InteractionLog.findOne({sessionId, userId}).select('messages');
-        const history = sessionId ? ConversationManager.getHistory(sessionId) : null;
-        messages = log?.messages ?? (history?.length ? history : null);
-        if (!messages) return res.status(404).json({error: 'Session not found'});
-
+        const log = await InteractionLog.findOne({sessionId, userId}).select('messages').lean();
+        const messages = log?.messages || ConversationManager.getHistory(sessionId);
+        if (!messages || messages.length === 0) return res.status(404).json({error: 'Session not found'});
 
         const validMessages = messages.filter(msg => msg.role !== 'system');
-        const result = await sendChatHistory(email, 'Your Chat History', validMessages, null);
+        if (validMessages.length === 0) return res.status(400).json({error: 'No valid messages to send'});
 
+        const result = await sendChatHistory(email, 'Chat History', validMessages, null);
         if (result.error) return res.status(500).json({error: result.error});
 
         res.json({success: true, message: 'Email sent successfully'});

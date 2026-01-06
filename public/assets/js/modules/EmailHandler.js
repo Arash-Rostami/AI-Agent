@@ -1,4 +1,5 @@
 import BaseHandler from './BaseHandler.js';
+import ModalHandler from './ModalHandler.js';
 
 export default class EmailHandler extends BaseHandler {
     constructor() {
@@ -7,14 +8,16 @@ export default class EmailHandler extends BaseHandler {
 
     async sendEmail(sessionId) {
         if (!sessionId) {
-            alert('No active chat session found.');
+            await ModalHandler.alert('No active chat session found.');
             return;
         }
 
-        const email = prompt("Please enter your email address:");
+        const email = await ModalHandler.prompt("Please enter your email address:", "user@example.com");
         if (!email) return;
 
         try {
+            ModalHandler.loading('Sending email...');
+
             const response = await fetch(`/api/history/${sessionId}/email`, {
                 method: 'POST',
                 headers: {
@@ -27,13 +30,13 @@ export default class EmailHandler extends BaseHandler {
 
             const result = await response.json();
             if (response.ok) {
-                alert('Success: ' + result.message);
+                await ModalHandler.alert('Success: ' + result.message);
             } else {
                 throw new Error(result.error || 'Failed to send email');
             }
         } catch (error) {
             console.error('Email error:', error);
-            alert('Error: ' + error.message);
+            await ModalHandler.alert('Error: ' + error.message);
         }
     }
 }
