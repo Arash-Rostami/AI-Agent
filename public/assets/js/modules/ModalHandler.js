@@ -20,7 +20,9 @@ export default class ModalHandler {
             <div id="custom-modal" class="custom-modal">
                 <div class="modal-close-icon" id="modal-close-x"></div>
                 <div class="custom-modal-content">
-                    <div id="modal-spinner" class="modal-spinner hidden"></div>
+                    <div id="modal-spinner" class="loading-spinner hidden">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
                     <h3 id="modal-title" class="modal-title">Alert</h3>
                     <p id="modal-message" class="modal-message"></p>
                     <input type="text" id="modal-input" class="modal-input hidden" autocomplete="off">
