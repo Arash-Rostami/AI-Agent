@@ -1,0 +1,156 @@
+/* Custom Modal Styles (Pure CSS Animation Logic) */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+
+.custom-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* The expanding modal box */
+.custom-modal {
+    background: var(--surface-color);
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-lg);
+
+    /* Animation Initial State: centered line */
+    width: 0;
+    height: 2px;
+    opacity: 0;
+
+    /* Transition logic matches the request: Width expands first, then Height */
+    transition: width 0.4s ease, height 0.4s ease 0.4s, opacity 0.1s ease;
+}
+
+.custom-modal-overlay.active .custom-modal {
+    width: 400px; /* Max width */
+    height: auto; /* Allow auto height calculation via JS or min-height */
+    min-height: 200px; /* Prevent it from being too small */
+    opacity: 1;
+    /* When closing, height shrinks first, then width */
+    transition: height 0.4s ease, width 0.4s ease 0.4s, opacity 0.1s ease;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .custom-modal-overlay.active .custom-modal {
+        width: 90%;
+    }
+}
+
+/* Content Fade In */
+.custom-modal-content {
+    padding: 24px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease 0.8s, transform 0.3s ease 0.8s; /* Delayed until box opens */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    color: var(--text-color);
+}
+
+.custom-modal-overlay.active .custom-modal-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Typography & Elements */
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--primary-color);
+    font-family: 'Vazirmatn', sans-serif;
+}
+
+.modal-message {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+    white-space: pre-wrap; /* Handle newlines */
+}
+
+.modal-input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 24px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.modal-input:focus {
+    border-color: var(--primary-color);
+}
+
+.modal-input.hidden {
+    display: none;
+}
+
+/* Actions */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    justify-content: center;
+}
+
+.modal-btn {
+    padding: 10px 24px;
+    border-radius: var(--radius-pill);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+    font-family: 'Vazirmatn', sans-serif;
+}
+
+.modal-btn-confirm {
+    background-color: var(--primary-color);
+    color: #ffffff; /* Always white for contrast on primary */
+}
+
+.modal-btn-confirm:hover {
+    background-color: var(--primary-hover);
+    box-shadow: var(--shadow);
+}
+
+.modal-btn-cancel {
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.modal-btn-cancel:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.modal-btn.hidden {
+    display: none;
+}
