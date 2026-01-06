@@ -14,19 +14,19 @@ export default class ModalHandler {
     }
 
     injectHTML() {
-        if (document.getElementById('custom-modal-overlay')) return;
+        if (document.getElementById('custom-modal')) return;
 
+        // No separate overlay div needed as the modal itself becomes full screen
         const html = `
-            <div id="custom-modal-overlay" class="custom-modal-overlay">
-                <div class="custom-modal">
-                    <div class="custom-modal-content">
-                        <h3 id="modal-title" class="modal-title">Alert</h3>
-                        <p id="modal-message" class="modal-message"></p>
-                        <input type="text" id="modal-input" class="modal-input hidden" autocomplete="off">
-                        <div class="modal-actions">
-                            <button id="modal-cancel-btn" class="modal-btn modal-btn-cancel hidden">Cancel</button>
-                            <button id="modal-confirm-btn" class="modal-btn modal-btn-confirm">OK</button>
-                        </div>
+            <div id="custom-modal" class="custom-modal">
+                <div class="modal-close-icon" id="modal-close-x"></div>
+                <div class="custom-modal-content">
+                    <h3 id="modal-title" class="modal-title">Alert</h3>
+                    <p id="modal-message" class="modal-message"></p>
+                    <input type="text" id="modal-input" class="modal-input hidden" autocomplete="off">
+                    <div class="modal-actions">
+                        <button id="modal-cancel-btn" class="modal-btn modal-btn-cancel hidden">Cancel</button>
+                        <button id="modal-confirm-btn" class="modal-btn modal-btn-confirm">OK</button>
                     </div>
                 </div>
             </div>
@@ -35,8 +35,8 @@ export default class ModalHandler {
     }
 
     cacheElements() {
-        this.overlay = document.getElementById('custom-modal-overlay');
-        this.modal = this.overlay.querySelector('.custom-modal');
+        this.modal = document.getElementById('custom-modal');
+        this.closeX = document.getElementById('modal-close-x');
         this.title = document.getElementById('modal-title');
         this.message = document.getElementById('modal-message');
         this.input = document.getElementById('modal-input');
@@ -51,6 +51,7 @@ export default class ModalHandler {
     bindEvents() {
         this.confirmBtn.addEventListener('click', () => this.handleConfirm());
         this.cancelBtn.addEventListener('click', () => this.handleCancel());
+        this.closeX.addEventListener('click', () => this.handleCancel());
 
         // Allow pressing Enter in input to confirm
         this.input.addEventListener('keydown', (e) => {
@@ -58,9 +59,11 @@ export default class ModalHandler {
             if (e.key === 'Escape') this.handleCancel();
         });
 
-        // Close on overlay click (optional, behaves like cancel)
-        this.overlay.addEventListener('click', (e) => {
-            if (e.target === this.overlay) this.handleCancel();
+        // Close on escape key globally when active
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('active')) {
+                this.handleCancel();
+            }
         });
     }
 
@@ -74,10 +77,6 @@ export default class ModalHandler {
         this.resolve = null;
         this.reject = null;
         this.currentType = null;
-
-        // Reset manual height override if any
-        this.modal.style.height = '';
-        this.modal.style.width = '';
     }
 
     show(type, text, placeholder = '') {
@@ -108,20 +107,22 @@ export default class ModalHandler {
                 this.cancelBtn.textContent = 'Cancel';
             }
 
-            // Trigger Animation
-            this.overlay.classList.add('active');
+            // Trigger Animation (Add active class to the modal container directly)
+            // Use requestAnimationFrame to ensure DOM is ready for transition
+            requestAnimationFrame(() => {
+                 this.modal.classList.add('active');
+            });
 
-            // Auto-focus input for prompt after animation
+            // Auto-focus input for prompt after animation (wait for 1s transition)
             if (type === 'prompt') {
-                setTimeout(() => this.input.focus(), 800);
+                setTimeout(() => this.input.focus(), 1100);
             }
         });
     }
 
     close() {
-        this.overlay.classList.remove('active');
-        // Wait for animation to finish before resetting state fully is handled by CSS transitions
-        // We leave the content briefly while it closes
+        this.modal.classList.remove('active');
+        // CSS transition handles the closing animation (Height shrinks, then Width)
     }
 
     handleConfirm() {
