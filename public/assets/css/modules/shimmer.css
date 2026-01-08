@@ -1,56 +1,135 @@
-@keyframes shimmer-slide {
+@keyframes shimmer-spin {
     0% {
-        transform: translateX(-100%);
+        --shimmer-angle: 0deg;
     }
     100% {
-        transform: translateX(100%);
+        --shimmer-angle: 360deg;
     }
 }
 
-/* Apply shimmer only on non-mobile devices */
+/*
+   Property definition for CSS variable animation.
+   Browser support: Chrome, Edge, Opera, Firefox 118+
+*/
+@property --shimmer-angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+}
+
 @media (min-width: 769px) {
-    #web-search-btn,
-    #thinking-mode-btn,
-    #service-select {
+    /*
+       1. Thinking Mode Button Shimmer (Border Travel Effect)
+       Mimics Magic UI Shimmer Button
+    */
+    #thinking-mode-btn {
         position: relative;
-        overflow: hidden; /* Contains the shimmer within the border-radius */
+        background: var(--input-bg); /* Ensure solid bg */
+        overflow: hidden;
+        border: 1px solid transparent; /* Prepare for border override */
+        border-radius: 20px; /* Match existing radius */
+        z-index: 1; /* Ensure text is above */
     }
 
-    #web-search-btn::after,
-    #thinking-mode-btn::after,
-    #service-select::after {
-        content: '';
+    /* The "Track" */
+    #thinking-mode-btn::before {
+        content: "";
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-            110deg,
+        inset: -1px; /* Extend slightly outside */
+        z-index: -1;
+        border-radius: inherit;
+        padding: 1px; /* Border width */
+
+        /* The Conic Gradient Shimmer */
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 0%,
             transparent 30%,
-            rgba(255, 255, 255, 0.4) 50%,
-            transparent 70%
+            var(--primary-color) 45%,
+            var(--primary-color) 55%,
+            transparent 70%,
+            transparent 100%
         );
-        transform: translateX(-100%); /* Start off-screen */
-        animation: shimmer-slide 3s infinite;
-        pointer-events: none; /* Allows clicking through the shimmer */
-        z-index: 10; /* Sits on top of text/icon but below tooltips if any */
+
+        /* Masking to show only the border */
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+
+        /* Animation */
+        animation: shimmer-spin 3s linear infinite;
     }
 
-    /* Dark mode adjustment for subtlety */
-    [data-theme="dark"] #web-search-btn::after,
-    [data-theme="dark"] #thinking-mode-btn::after,
-    [data-theme="dark"] #service-select::after {
-        background: linear-gradient(
-            110deg,
+    /* Optional: Add a subtle inner glow/background shimmer behind the text?
+       User asked for "shimmer css" effect. The example they linked is a Border shimmer.
+       We will stick to the border effect as it is cleaner.
+    */
+
+    /*
+       2. Login Container Shimmer (Border Effect)
+       "main div of login page" -> .login-container
+    */
+    .login-container {
+        position: relative;
+        /* We keep the existing background and shadows from login.css */
+        z-index: 10;
+        /* Ensure border-radius clips the pseudo-element if needed,
+           but for border effect, we usually want it outside. */
+    }
+
+    /*
+       Since .login-container has a specific border-radius (24px) and existing border,
+       we will replace the static border with the shimmer border.
+    */
+    .login-container::after {
+        content: "";
+        position: absolute;
+        inset: -2px; /* Make it wrap around the existing border */
+        z-index: -1; /* Behind the card */
+        border-radius: 26px; /* slightly larger than 24px container */
+
+        /* The Shimmer Gradient */
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 20%,
+            var(--primary-color) 45%, /* Use primary color for brand consistency */
+            #ffffff 50%,              /* White spark center */
+            var(--primary-color) 55%,
+            transparent 80%
+        );
+
+        animation: shimmer-spin 4s linear infinite;
+        opacity: 0.6; /* Subtle glow */
+    }
+
+    /* Dark mode adjustments */
+    [data-theme="dark"] #thinking-mode-btn::before {
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 0%,
             transparent 30%,
-            rgba(255, 255, 255, 0.1) 50%,
-            transparent 70%
+            var(--primary-color) 45%,
+            #ffffff 50%,
+            var(--primary-color) 55%,
+            transparent 70%,
+            transparent 100%
         );
     }
 
-    /* Ensure the select arrow is not obscured if z-index issues arise,
-       though pointer-events: none usually handles the click.
-       The visual arrow is part of the background of the element,
-       so the semi-transparent shimmer overlaying it is the desired "shining" effect. */
+    [data-theme="dark"] .login-container::after {
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 20%,
+            var(--primary-color) 45%,
+            #ffffff 50%,
+            var(--primary-color) 55%,
+            transparent 80%
+        );
+        opacity: 0.8; /* More visible in dark mode */
+    }
 }
