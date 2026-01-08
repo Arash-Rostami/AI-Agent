@@ -17,30 +17,28 @@
     inherits: false;
 }
 
+/*
+   Shared Shimmer Mixin Logic via CSS Classes
+   We apply specific styles per element to handle different paddings/radii
+*/
+
 @media (min-width: 769px) {
     /*
        1. Thinking Mode Button Shimmer (Border Travel Effect)
-       Mimics Magic UI Shimmer Button
     */
     #thinking-mode-btn {
         position: relative;
-        background: var(--input-bg); /* Ensure solid bg */
-        overflow: hidden;
-        border: 1px solid transparent; /* Prepare for border override */
-        border-radius: 20px; /* Match existing radius */
-        z-index: 1; /* Ensure text is above */
+        z-index: 1;
     }
 
-    /* The "Track" */
     #thinking-mode-btn::before {
         content: "";
         position: absolute;
-        inset: -1px; /* Extend slightly outside */
-        z-index: -1;
+        inset: 0;
+        z-index: 2;
         border-radius: inherit;
-        padding: 1px; /* Border width */
+        padding: 1.5px; /* Border width */
 
-        /* The Conic Gradient Shimmer */
         background: conic-gradient(
             from var(--shimmer-angle),
             transparent 0%,
@@ -51,7 +49,6 @@
             transparent 100%
         );
 
-        /* Masking to show only the border */
         -webkit-mask:
             linear-gradient(#fff 0 0) content-box,
             linear-gradient(#fff 0 0);
@@ -61,54 +58,97 @@
         -webkit-mask-composite: xor;
         mask-composite: exclude;
 
-        /* Animation */
         animation: shimmer-spin 3s linear infinite;
+        pointer-events: none;
     }
 
-    /* Optional: Add a subtle inner glow/background shimmer behind the text?
-       User asked for "shimmer css" effect. The example they linked is a Border shimmer.
-       We will stick to the border effect as it is cleaner.
+    /*
+       2. Theme Toggle Shimmer (Same Effect)
+       Applies to both Login Page and Header
     */
+    .theme-toggle {
+        position: relative;
+        /* Ensure z-index is managed by parent CSS (usually 20 or similar) */
+    }
+
+    .theme-toggle::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        border-radius: inherit;
+        padding: 1.5px; /* Border width */
+
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 0%,
+            transparent 30%,
+            var(--primary-color) 45%,
+            var(--primary-color) 55%,
+            transparent 70%,
+            transparent 100%
+        );
+
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+
+        animation: shimmer-spin 3s linear infinite;
+        pointer-events: none;
+    }
 
     /*
-       2. Login Container Shimmer (Border Effect)
-       "main div of login page" -> .login-container
+       3. Login Container Shimmer (Border Effect)
+       Refactored to use MASK technique to prevent "spinner in middle"
     */
     .login-container {
         position: relative;
-        /* We keep the existing background and shadows from login.css */
-        z-index: 10;
-        /* Ensure border-radius clips the pseudo-element if needed,
-           but for border effect, we usually want it outside. */
+        /* z-index is handled in login.css (10) */
     }
 
-    /*
-       Since .login-container has a specific border-radius (24px) and existing border,
-       we will replace the static border with the shimmer border.
-    */
     .login-container::after {
         content: "";
         position: absolute;
-        inset: -2px; /* Make it wrap around the existing border */
-        z-index: -1; /* Behind the card */
-        border-radius: 26px; /* slightly larger than 24px container */
+        inset: 0; /* Match container exactly */
+        z-index: 2; /* On top of card background */
+        border-radius: inherit;
+        padding: 2px; /* Slightly thicker border for the large card */
 
-        /* The Shimmer Gradient */
+        /*
+           Using a more continuous gradient for the "Glow" feel
+           but masked to the border only.
+        */
         background: conic-gradient(
             from var(--shimmer-angle),
             transparent 20%,
-            var(--primary-color) 45%, /* Use primary color for brand consistency */
-            #ffffff 50%,              /* White spark center */
+            var(--primary-color) 45%,
+            #ffffff 50%,
             var(--primary-color) 55%,
             transparent 80%
         );
 
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+
         animation: shimmer-spin 4s linear infinite;
-        opacity: 0.6; /* Subtle glow */
+        pointer-events: none;
+        opacity: 0.8;
     }
 
     /* Dark mode adjustments */
-    [data-theme="dark"] #thinking-mode-btn::before {
+    [data-theme="dark"] #thinking-mode-btn::before,
+    [data-theme="dark"] .theme-toggle::before {
         background: conic-gradient(
             from var(--shimmer-angle),
             transparent 0%,
@@ -130,6 +170,6 @@
             var(--primary-color) 55%,
             transparent 80%
         );
-        opacity: 0.8; /* More visible in dark mode */
+        opacity: 1;
     }
 }
