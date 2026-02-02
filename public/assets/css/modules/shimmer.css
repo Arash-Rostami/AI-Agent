@@ -1,0 +1,175 @@
+@keyframes shimmer-spin {
+    0% {
+        --shimmer-angle: 0deg;
+    }
+    100% {
+        --shimmer-angle: 360deg;
+    }
+}
+
+/*
+   Property definition for CSS variable animation.
+   Browser support: Chrome, Edge, Opera, Firefox 118+
+*/
+@property --shimmer-angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+}
+
+/*
+   Shared Shimmer Mixin Logic via CSS Classes
+   We apply specific styles per element to handle different paddings/radii
+*/
+
+@media (min-width: 769px) {
+    /*
+       1. Thinking Mode Button Shimmer (Border Travel Effect)
+    */
+    #thinking-mode-btn {
+        position: relative;
+        z-index: 1;
+    }
+
+    #thinking-mode-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        border-radius: inherit;
+        padding: 1.5px; /* Border width */
+
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 0%,
+            transparent 30%,
+            var(--primary-color) 45%,
+            var(--primary-color) 55%,
+            transparent 70%,
+            transparent 100%
+        );
+
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+
+        animation: shimmer-spin 3s linear infinite;
+        pointer-events: none;
+    }
+
+    /*
+       2. Theme Toggle Shimmer (Same Effect)
+       Applies to both Login Page and Header
+    */
+    .theme-toggle {
+        position: relative;
+        /* Ensure z-index is managed by parent CSS (usually 20 or similar) */
+    }
+
+    .theme-toggle::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        border-radius: inherit;
+        padding: 1.5px; /* Border width */
+
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 0%,
+            transparent 30%,
+            var(--primary-color) 45%,
+            var(--primary-color) 55%,
+            transparent 70%,
+            transparent 100%
+        );
+
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+
+        animation: shimmer-spin 3s linear infinite;
+        pointer-events: none;
+    }
+
+    /*
+       3. Login Container Shimmer (Border Effect)
+       Refactored to use MASK technique to prevent "spinner in middle"
+    */
+    .login-container {
+        position: relative;
+        /* z-index is handled in login.css (10) */
+    }
+
+    .login-container::after {
+        content: "";
+        position: absolute;
+        inset: 0; /* Match container exactly */
+        z-index: 2; /* On top of card background */
+        border-radius: inherit;
+        padding: 2px; /* Slightly thicker border for the large card */
+
+        /*
+           Using a more continuous gradient for the "Glow" feel
+           but masked to the border only.
+        */
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 20%,
+            var(--primary-color) 45%,
+            #ffffff 50%,
+            var(--primary-color) 55%,
+            transparent 80%
+        );
+
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+
+        animation: shimmer-spin 4s linear infinite;
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    /* Dark mode adjustments */
+    [data-theme="dark"] #thinking-mode-btn::before,
+    [data-theme="dark"] .theme-toggle::before {
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 0%,
+            transparent 30%,
+            var(--primary-color) 45%,
+            #ffffff 50%,
+            var(--primary-color) 55%,
+            transparent 70%,
+            transparent 100%
+        );
+    }
+
+    [data-theme="dark"] .login-container::after {
+        background: conic-gradient(
+            from var(--shimmer-angle),
+            transparent 20%,
+            var(--primary-color) 45%,
+            #ffffff 50%,
+            var(--primary-color) 55%,
+            transparent 80%
+        );
+        opacity: 1;
+    }
+}

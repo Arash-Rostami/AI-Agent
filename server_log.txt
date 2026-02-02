@@ -1,0 +1,44 @@
+127.0.0.1 - - [08/Jan/2026 11:45:51] "GET /login.html HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:51] "GET /assets/css/login.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:51] "GET /assets/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:51] "GET /assets/css/font.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:51] "GET /assets/js/modules/ThemeToggler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:51] "GET /assets/js/modules/LoginHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/img/avatars/user.png HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/header.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/messages.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/history.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/menu.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/input.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/base.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/modal.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/responsive.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/settings.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/animations.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/shimmer.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/css/modules/loader.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/ChatHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/FontSizeHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/AudioHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/UIHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/BaseHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/EmailHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/MessageFormatter.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/ModalHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/PromptHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/SyncHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/SettingsHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/LogoutHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/HistoryHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/MenuHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /assets/js/modules/PinHandler.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] code 404, message File not found
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /initial-prompt?t=1767872753932 HTTP/1.1" 404 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] code 404, message File not found
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /auth/admin HTTP/1.1" 404 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] code 404, message File not found
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /auth/admin HTTP/1.1" 404 -
+127.0.0.1 - - [08/Jan/2026 11:45:53] code 404, message File not found
+127.0.0.1 - - [08/Jan/2026 11:45:53] "GET /auth/admin HTTP/1.1" 404 -

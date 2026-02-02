@@ -11,6 +11,7 @@
 
 /* Utility Styles */
 @import 'modules/animations.css';
+@import 'modules/shimmer.css';
 @import 'modules/loader.css';
 
 /* Responsive Styles */

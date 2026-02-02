@@ -14,10 +14,52 @@ export default class ThemeToggle {
         root.setAttribute('data-theme', savedTheme);
         this.updateIcon(savedTheme);
 
-        this.toggle.addEventListener('click', () => this.toggleTheme(root));
+        this.toggle.addEventListener('click', (e) => this.toggleTheme(root, e));
     }
 
-    toggleTheme(root) {
+    async toggleTheme(root, event) {
+        // Fallback for browsers without View Transition API
+        if (!document.startViewTransition) {
+            this.performThemeSwitch(root);
+            return;
+        }
+
+        // Get click coordinates
+        const x = event.clientX;
+        const y = event.clientY;
+
+        // Calculate radius to the furthest corner
+        const endRadius = Math.hypot(
+            Math.max(x, innerWidth - x),
+            Math.max(y, innerHeight - y)
+        );
+
+        // Start the view transition
+        const transition = document.startViewTransition(() => {
+            this.performThemeSwitch(root);
+        });
+
+        // Wait for the pseudo-elements to be created
+        await transition.ready;
+
+        // Animate the clip-path
+        document.documentElement.animate(
+            {
+                clipPath: [
+                    `circle(0px at ${x}px ${y}px)`,
+                    `circle(${endRadius}px at ${x}px ${y}px)`
+                ]
+            },
+            {
+                duration: 500,
+                easing: 'ease-in-out',
+                // Target the new view state (the expanding circle)
+                pseudoElement: '::view-transition-new(root)'
+            }
+        );
+    }
+
+    performThemeSwitch(root) {
         const currentTheme = root.getAttribute('data-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
