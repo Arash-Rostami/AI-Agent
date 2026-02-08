@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
     CX_BMS_INSTRUCTION,
+    ETEQ_INSTRUCTION,
     GEMINI_API_KEY,
     GEMINI_API_URL,
     GEMINI_API_URL_PREMIUM,
@@ -23,7 +24,8 @@ export async function callGeminiAPI(
     isBmsMode = false,
     fileData = null,
     customSystemInstruction = null,
-    useThinkingMode = false
+    useThinkingMode = false,
+    isEteqMode = false
 ) {
     if (!apiKey) throw new Error("API Key is missing in callGeminiAPI");
 
@@ -31,7 +33,7 @@ export async function callGeminiAPI(
         if (isRestrictedMode && permissions.hasUserGranted(conversationHistory)) isRestrictedMode = false;
 
         const contents = formatter.formatContents(conversationHistory, message, fileData);
-        const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode);
+        const allowedTools = formatter.getAllowedTools(isRestrictedMode, useWebSearch, allToolDefinitions, isBmsMode, isEteqMode);
         const smartUrl = useThinkingMode ? GEMINI_API_URL_THINKING : (apiKey === GEMINI_API_KEY ? GEMINI_API_URL_PREMIUM : GEMINI_API_URL);
 
         const requestBody = {
@@ -41,9 +43,9 @@ export async function callGeminiAPI(
             systemInstruction: {
                 parts: [{
                     text: customSystemInstruction || (
-                        isRestrictedMode && !isBmsMode
+                        isRestrictedMode && !isBmsMode && !isEteqMode
                             ? "You are a helpful AI assistant. Answer the user's questions concisely and politely in their own language."
-                            : (isBmsMode ? CX_BMS_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT)
+                            : (isBmsMode ? CX_BMS_INSTRUCTION : (isEteqMode ? ETEQ_INSTRUCTION : SYSTEM_INSTRUCTION_TEXT))
                     )
                 }]
             }
@@ -54,9 +56,9 @@ export async function callGeminiAPI(
             timeout: 60000
         });
 
-        return await responseHandler.handle(response.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode);
+        return await responseHandler.handle(response.data.candidates?.[0], message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, isEteqMode);
     } catch (error) {
-        return errorHandler.handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, (msg, hist, key, restricted, search, id, bms) => callGeminiAPI(msg, hist, key, restricted, search, id, bms, fileData, null, useThinkingMode), isBmsMode);
+        return errorHandler.handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, (msg, hist, key, restricted, search, id) => callGeminiAPI(msg, hist, key, restricted, search, id, isBmsMode, fileData, null, useThinkingMode, isEteqMode), isBmsMode);
     }
 }
 

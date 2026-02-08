@@ -44,9 +44,18 @@ const manageThinkingMode = async (userId, attemptConsume = false) => {
 };
 
 export const initialPrompt = async (req, res) => {
-    let {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
+    let {
+        isRestrictedMode,
+        isBmsMode,
+        isEteqMode,
+        geminiApiKey,
+        sessionId,
+        conversationHistory,
+        keyIdentifier,
+        userId
+    } = req;
 
-    const prompt = isRestrictedMode && !isBmsMode
+    const prompt = isRestrictedMode && !isBmsMode && !isEteqMode
         ? 'سلام! لطفاً خودتان را به عنوان یک دستیار هوش مصنوعی مفید به زبان فارسی و به صورت دوستانه و مختصر معرفی کنید.'
         : 'Hello! Please introduce yourself as a helpful AI assistant in a friendly, concise way in English.';
 
@@ -59,16 +68,16 @@ export const initialPrompt = async (req, res) => {
     try {
         const {usage: thinkingModeUsage} = await manageThinkingMode(userId, false);
         const systemInstruction = await constructSystemPrompt(req, prompt);
-        const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction);
+        const {text: greeting} = await callGeminiAPI(prompt, conversationHistory, geminiApiKey, isRestrictedMode, false, keyIdentifier, isBmsMode, null, systemInstruction, false, isEteqMode);
 
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, null, greeting);
-        res.json({response: greeting, isBmsMode, isRestrictedMode, thinkingModeUsage, sessionId});
+        res.json({response: greeting, isBmsMode, isRestrictedMode, isEteqMode, thinkingModeUsage, sessionId});
         syncToDB(sessionId, userId, updated);
     } catch (error) {
-        const fallback = isRestrictedMode && !isBmsMode
+        const fallback = isRestrictedMode && !isBmsMode && !isEteqMode
             ? 'سلام! من دستیار هوش مصنوعی شما هستم. چطور می‌توانم امروز به شما کمک کنم؟'
             : 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?';
-        res.json({response: fallback, isBmsMode, isRestrictedMode});
+        res.json({response: fallback, isBmsMode, isRestrictedMode, isEteqMode});
     }
 };
 
@@ -78,7 +87,16 @@ export const ask = async (req, res) => {
 
     if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
 
-    const {isRestrictedMode, isBmsMode, geminiApiKey, sessionId, conversationHistory, keyIdentifier, userId} = req;
+    const {
+        isRestrictedMode,
+        isBmsMode,
+        isEteqMode,
+        geminiApiKey,
+        sessionId,
+        conversationHistory,
+        keyIdentifier,
+        userId
+    } = req;
 
     const {allowed, usage} = await manageThinkingMode(userId, useThinkingMode);
     if (useThinkingMode && !allowed) useThinkingMode = false;
@@ -90,7 +108,7 @@ export const ask = async (req, res) => {
         const {
             text,
             sources
-        } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode);
+        } = await callGeminiAPI(message, conversationHistory, geminiApiKey, isRestrictedMode, useWebSearch, keyIdentifier, isBmsMode, fileData, systemInstruction, useThinkingMode, isEteqMode);
 
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, text);
         res.json({reply: text, sources, thinkingModeUsage: usage, sessionId});

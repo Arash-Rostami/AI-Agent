@@ -1,6 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import {CX_BMS_INSTRUCTION, PERSOL_BS_INSTRUCTION, ragDirectory, SYSTEM_INSTRUCTION_TEXT} from '../config/index.js';
+import {
+    CX_BMS_INSTRUCTION,
+    ETEQ_INSTRUCTION,
+    PERSOL_BS_INSTRUCTION,
+    ragDirectory,
+    SYSTEM_INSTRUCTION_TEXT
+} from '../config/index.js';
 import {searchVectors} from './vectorManager.js';
 
 const getRagFileContent = (filename) => {
@@ -20,6 +26,9 @@ const determineAppContext = (req) => {
     if (req.isBmsMode) {
         return 'BMS';
     }
+    if (req.isEteqMode) {
+        return 'ETEQ';
+    }
     if (req.isRestrictedMode) {
         return 'GENERIC'; // Other Apps (iframes) :not BMS
     }
@@ -35,6 +44,10 @@ export const constructSystemPrompt = async (req, message) => {
         case 'BMS':
             baseInstruction = CX_BMS_INSTRUCTION;
             ragFile = 'cxRag.txt';
+            break;
+        case 'ETEQ':
+            baseInstruction = ETEQ_INSTRUCTION;
+            ragFile = null;
             break;
         case 'MAIN':
             baseInstruction = PERSOL_BS_INSTRUCTION;

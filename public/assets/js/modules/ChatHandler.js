@@ -195,7 +195,7 @@ export default class ChatHandler extends BaseHandler {
             const data = await response.json();
             if (data.sessionId) this.currentSessionId = data.sessionId;
             this.uiHandler.addMessage(data.response, 'ai');
-            this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn);
+            this.uiHandler.handleRestrictedUI(data.isRestrictedMode, data.isBmsMode, this.serviceSelect, this.webSearchBtn, data.isEteqMode);
         } catch (error) {
             console.error('Failed to load initial greeting:', error);
         } finally {
