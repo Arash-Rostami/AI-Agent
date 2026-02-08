@@ -12,18 +12,19 @@ export default class BaseHandler {
     }
 
     getParentOrigin() {
-        const storageKey = `parentOrigin_${this.userId || 'default'}`;
-        const stored = sessionStorage.getItem(storageKey);
-        if (stored) return stored;
-
         try {
-            let origin = null;
+            // Prioritize live detection for embedded contexts to handle cross-site navigation correctly
             if (window.self !== window.top) {
-                origin = window.location.ancestorOrigins?.[0] || (document.referrer ? new URL(document.referrer).origin : null);
+                return window.location.ancestorOrigins?.[0] || (document.referrer ? new URL(document.referrer).origin : null) || window.location.origin;
             }
-            origin = origin || window.location.origin;
-            sessionStorage.setItem(storageKey, origin);
 
+            // Fallback to storage/defaults for standalone usage
+            const storageKey = `parentOrigin_${this.userId || 'default'}`;
+            const stored = sessionStorage.getItem(storageKey);
+            if (stored) return stored;
+
+            const origin = window.location.origin;
+            sessionStorage.setItem(storageKey, origin);
             return origin;
         } catch {
             return window.location.origin;
