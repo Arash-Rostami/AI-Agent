@@ -25,6 +25,7 @@
     --button-bg: #ffffff;
     --button-border: #e3e3e3;
     --user-msg-bg: #0b57d0;
+    --user-msg-text: #ffffff;
     --ai-msg-bg: #ffffff;
     --ai-msg-text: #1e1e1e;
     --header-bg: rgba(255, 255, 255, 0.95);
@@ -55,7 +56,8 @@
     --error-color: #f2b8b5;
     --button-bg: #1e1e1e;
     --button-border: #444746;
-    --user-msg-bg: #0842a0;
+    --user-msg-bg: #a8c7fa;
+    --user-msg-text: #000000;
     --ai-msg-bg: #1e1e1e;
     --ai-msg-text: #e3e3e3;
     --header-bg: rgba(20, 20, 20, 0.95);

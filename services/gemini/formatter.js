@@ -16,12 +16,18 @@ export function formatContents(conversationHistory, newMessage, fileData = null)
     return contents;
 }
 
-export function getAllowedTools(isRestrictedMode, useWebSearch, allTools, isBmsMode = false) {
+export function getAllowedTools(isRestrictedMode, useWebSearch, allTools, isBmsMode = false, isEteqMode = false) {
     const isWebSearchTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'getWebSearch' || fd.name === 'crawlWebPage');
     const isBmsTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'searchBmsDatabase');
+    const isEmailTool = (t) => t.functionDeclarations?.some(fd => fd.name === 'sendEmail');
+
 
     if (isBmsMode) {
         return allTools.filter(t => !isWebSearchTool(t));
+    }
+
+    if (isEteqMode) {
+        return allTools.filter(t => isEmailTool(t) || (useWebSearch && isWebSearchTool(t)));
     }
 
     if (isRestrictedMode) {

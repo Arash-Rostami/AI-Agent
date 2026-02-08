@@ -109,12 +109,24 @@ export default class UIHandler {
         this.micBtn?.classList.toggle('fade-out', isInputNotEmpty);
     }
 
-    handleRestrictedUI(isRestrictedMode, isBmsMode, serviceSelect, webSearchBtn) {
+    handleRestrictedUI(isRestrictedMode, isBmsMode, serviceSelect, webSearchBtn, isEteqMode) {
         if (isBmsMode) {
             if (serviceSelect) serviceSelect.style.display = 'none';
             const label = document.querySelector('label[for="service-select"]');
             if (label) label.style.display = 'none';
             if (webSearchBtn) webSearchBtn.style.display = 'none';
+        }
+
+        if (isEteqMode) {
+            if (serviceSelect) serviceSelect.style.display = 'none';
+            const label = document.querySelector('label[for="service-select"]');
+            if (label) label.style.display = 'none';
+
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            if (sidebarToggle) sidebarToggle.style.setProperty('display', 'none', 'important');
+
+            const headerHistoryBtn = document.getElementById('history-btn');
+            if (headerHistoryBtn) headerHistoryBtn.style.setProperty('display', 'none', 'important');
         }
     }
 

@@ -83,13 +83,9 @@
 
 .message.user .message-content {
     background: var(--user-msg-bg);
-    color: #ffffff;
+    color: var(--user-msg-text);
     border-bottom-right-radius: 4px;
     box-shadow: var(--shadow-lg);
-}
-
-[data-theme="dark"] .message.user .message-content {
-    color: #ffffff;
 }
 
 /* Message Content - Typography */
