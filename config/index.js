@@ -50,6 +50,9 @@ export const SYSTEM_INSTRUCTION_TEXT = fs.readFileSync(
 export const CX_BMS_INSTRUCTION = fs.readFileSync(
     path.resolve(__dirname, '..', 'documents', 'cxbms.txt'), 'utf-8'
 );
+export const ETEQ_INSTRUCTION = fs.readFileSync(
+    path.resolve(__dirname, '..', 'documents', 'eteq.txt'), 'utf-8'
+);
 export const PERSOL_BS_INSTRUCTION = fs.readFileSync(
     path.resolve(__dirname, '..', 'documents', 'persolbs.txt'), 'utf-8'
 );

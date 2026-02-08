@@ -1,0 +1,107 @@
+# ETEQ Knowledge Base: Brand, Services & Expertise
+
+## 1. Company Overview
+
+* **Company Name:** ETEQ
+* **Type:** Boutique Engineering Consulting Firm
+* **Core Focus:** Pharmaceutical, Life Sciences, and Food & Beverage Manufacturing.
+* **Mission:** Delivering senior engineering expertise directly to clients to achieve sustainability, operational excellence, and regulatory compliance.
+* **Brand Attributes:** Innovative, Sustainable, Forward-thinking, Dynamic, Modern.
+
+## 2. Founder Profile & Leadership
+
+* **Name:** Dariushi Rosutami
+* **Experience:**
+* 35+ years of operational engineering leadership.
+* 15+ years in senior leadership positions (Head of Engineering) at global companies.
+
+
+* **Key Past Roles:**
+* Takeda Pharmaceutical Company Limited (Head of Engineering)
+* DSM Japan (Director of Production Management, QA, SHE)
+* Danone Japan (Senior Operations Manager)
+
+
+* **Certifications:**
+* PMP (Project Management Professional)
+* Lean Six Sigma Green Belt
+* Certified Quality Auditor (ISO9001, ISO14001, FSSC22000)
+* LOTOTO Master (Safety Management)
+
+
+* **Languages:**
+* Japanese (Native level, Kanji Proficiency Level 2)
+* English (Business level)
+* French (Conversational)
+* German (Basic)
+
+
+
+## 3. Core Service Offerings
+
+*The chatbot should use these descriptions to explain what ETEQ does.*
+
+### Service 1: Engineering Strategy & Organizational Development
+
+* **Focus:** Transforming engineering capabilities and team structuring.
+* **Description (English):** Transform your engineering capabilities with comprehensive strategy development and organizational structuring. From building high-performing teams to optimizing cross-functional collaboration, we create frameworks that deliver measurable results across manufacturing, pharmaceutical, and life sciences operations.
+* **Description (Japanese):** 包括的な戦略立案と組織構築により、エンジニアリング能力を変革します。高パフォーマンスチームの構築から部門横断的な連携の最適化まで、製造、医薬品、ライフサイエンス業務全体で測定可能な成果をもたらすフレームワークを構築します。
+
+### Service 2: Net Zero & Environmental Roadmap Development
+
+* **Focus:** Sustainability, CO₂ reduction, and energy efficiency.
+* **Description (English):** Achieve ambitious sustainability targets with data-driven CO₂ Net Zero roadmaps tailored to your operations. We develop comprehensive environmental strategies from initial assessment through implementation, ensuring compliance while optimizing energy efficiency, reducing carbon footprint, and maximizing ROI on sustainability investments.
+* **Description (Japanese):** データに基づくCO₂ネットゼロロードマップにより、意欲的な持続可能性目標を達成します。初期評価から実施まで、包括的な環境戦略を策定し、エネルギー効率の最適化、炭素排出量の削減、持続可能性投資のROI最大化を実現しながら、コンプライアンスを確保します。
+
+### Service 3: Energy Optimization & Efficiency Solutions
+
+* **Focus:** Cost reduction and energy audits.
+* **Description (English):** Reduce operational costs and environmental impact through systematic energy audits and efficiency improvements. Our proven methodologies identify opportunities for optimization across facilities, from equipment-level interventions to facility-wide system upgrades, delivering measurable reductions in energy use per square meter.
+* **Description (Japanese):** 体系的なエネルギー監査と効率改善により、運営コストと環境影響を削減します。実績のある方法論により、設備レベルの介入から施設全体のシステムアップグレードまで、施設全体の最適化機会を特定し、1平方メートルあたりのエネルギー使用量の測定可能な削減を実現します。
+
+### Service 4: CAPEX Planning & Facility Installation Management
+
+* **Focus:** Capital projects, budget management, and facility upgrades.
+* **Description (English):** Navigate complex capital projects with confidence through expert CAPEX budget development and facility upgrade planning. We manage the entire lifecycle from feasibility studies and budget preparation to contractor selection and installation oversight, ensuring projects deliver on time, on budget, and aligned with your strategic objectives.
+* **Description (Japanese):** 専門的なCAPEX予算策定と施設アップグレード計画により、複雑な資本プロジェクトを確実に進めます。実現可能性調査と予算準備から、請負業者の選定と設置監督まで、プロジェクトのライフサイクル全体を管理し、戦略目標に沿って、期限内、予算内でプロジェクトを実現します。
+
+### Service 5: Workplace Safety & Regulatory Compliance
+
+* **Focus:** Risk reduction, safety culture, and global compliance.
+* **Description (English):** Protect your workforce and ensure regulatory compliance with comprehensive safety program development and implementation. Drawing on deep expertise in international safety standards and protocols, we create customized safety frameworks that reduce risk, improve safety culture, and maintain compliance across global operations.
+* **Description (Japanese):** 包括的な安全プログラムの策定と実施により、従業員を保護し、規制遵守を確保します。国際安全基準とプロトコルに関する深い専門知識を活用し、リスクを軽減し、安全文化を向上させ、グローバル事業全体でコンプライアンスを維持するカスタマイズされた安全フレームワークを構築します。
+
+## 4. Key Performance Indicators (Track Record)
+
+*Use these statistics to prove credibility when asked about results.*
+
+* **CO₂ Reduction:** 76% reduction achieved through decarbonization/electrification.
+* **Energy Savings:** 17% site-wide energy reduction.
+* **Productivity:** 15% improvement in production efficiency.
+* **Cost Reduction:** 20% annual operating cost reduction.
+* **Compliance:** Zero FDA and PMDA audit findings.
+* **Automation:** 7,400+ hours saved through Robotic Process Automation (RPA).
+* **Time Savings:** Unlocked 59 additional production days annually.
+
+## 5. Value Proposition (Why ETEQ?)
+
+* **Direct Senior Expertise:** Clients work directly with the founder (35+ years experience). No junior consultants or delegation.
+* **Boutique Agility:** Faster decisions and implementation compared to large firms. No "big firm" overhead.
+* **Proven in Regulation:** Strategies are tested in highly regulated environments (GMP, FDA, ISO).
+* **Cost-Efficiency:** Senior expertise without the inflated costs of large consulting agencies.
+* **Practicality:** Strategies are "hands-on" and implementable, not just theoretical models.
+
+## 6. Target Industries
+
+* Pharmaceutical Manufacturing (Biologics & Small Molecules)
+* Life Sciences & Biotechnology
+* Food & Beverage Manufacturing
+* Glass & Container Manufacturing
+* Process Industries
+
+## 7. Contact Information & Call to Action
+
+* **Primary CTA:** "Schedule a Strategic Consultation"
+* **Email:** info@eteq.jp
+* **Phone:** +81 90 9639 1856
+* **Location:** Tokyo, Japan
