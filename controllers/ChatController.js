@@ -120,15 +120,25 @@ export const ask = async (req, res) => {
 };
 
 export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
-    if (!apiCall) return res.status(501).json({error: `${apiName} service not available`});
+    console.log(`[DEBUG] handleAPIEndpoint called for: ${apiName}`);
+    if (!apiCall) {
+        console.error(`[DEBUG] apiCall function is missing for ${apiName}`);
+        return res.status(501).json({error: `${apiName} service not available`});
+    }
 
     const {message, model} = req.body;
-    if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
+    console.log(`[DEBUG] Request Body for ${apiName}:`, { message, model });
+
+    if (!validateMessage(message)) {
+        console.error(`[DEBUG] Message validation failed for ${apiName}`);
+        return res.status(400).json({error: 'Valid message is required'});
+    }
     if (apiName === 'ArvanCloud' && !model) return res.status(400).json({error: 'Model is required'});
 
     const {sessionId, conversationHistory, userId, isEteqMode} = req;
 
     try {
+        console.log(`[DEBUG] Constructing system prompt for ${apiName}`);
         const systemInstruction = await constructSystemPrompt(req, message);
         let fileData = null;
 
@@ -139,14 +149,17 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
                 : raw;
         }
 
+        console.log(`[DEBUG] Calling API for ${apiName}...`);
         const response = apiName === 'ArvanCloud'
             ? await apiCall(message, conversationHistory, model, fileData, systemInstruction)
             : await apiCall(message, conversationHistory, systemInstruction);
+        console.log(`[DEBUG] API Response for ${apiName}: Success`);
 
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, response);
         res.json({reply: response, sessionId});
         if (!isEteqMode) syncToDB(sessionId, userId, updated);
     } catch (error) {
+        console.error(`[DEBUG] Error in handleAPIEndpoint for ${apiName}:`, error.message, error.stack);
         console.error(error.message);
         res.status(500).json({error: 'Sorry, I encountered an error. Please try again.', details: error.message});
     }
