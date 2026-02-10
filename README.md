@@ -104,7 +104,7 @@ SITE_URL=https://your-domain.com
 
 # --- AI Model Keys (Primary & Fallbacks) ---
 GEMINI_API_KEY_PREMIUM=your_google_gemini_key
-GROK_API_KEY=your_groq_key
+GROQ_API_KEY=your_groq_key
 OPENROUTER_API_KEY=your_openrouter_key
 ARVANCLOUD_API_KEY=your_arvancloud_key
 
