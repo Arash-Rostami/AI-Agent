@@ -6,7 +6,7 @@ export const guardChatRoutes = (req, res, next) => {
 
     if (publicPaths.includes(req.path)) return next();
 
-    if (protectedPaths.includes(req.path) || req.path.startsWith('/ask-') || req.path.startsWith('/initial-prompt')) {
+    if (protectedPaths.includes(req.path) || req.path.startsWith('/initial-prompt')) {
         return protect(req, res, next);
     }
 
