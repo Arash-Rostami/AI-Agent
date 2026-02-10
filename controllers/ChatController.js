@@ -121,16 +121,26 @@ export const ask = async (req, res) => {
 
 export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
     console.log(`[DEBUG] Request received in controller for: ${apiName}`);
+    console.log('[DEBUG] Content-Type:', req.headers['content-type']);
+    console.log('[DEBUG] Body:', req.body);
+
     if (!apiCall) return res.status(501).json({error: `${apiName} service not available`});
 
     const {message, model} = req.body;
-    if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
+
+    if (!validateMessage(message)) {
+        console.error('[DEBUG] Validation Failed: Message is invalid', message);
+        return res.status(400).json({error: 'Valid message is required'});
+    }
     if (apiName === 'ArvanCloud' && !model) return res.status(400).json({error: 'Model is required'});
 
     const {sessionId, conversationHistory, userId, isEteqMode} = req;
 
     try {
+        console.log(`[DEBUG] Constructing system prompt...`);
         const systemInstruction = await constructSystemPrompt(req, message);
+        console.log(`[DEBUG] System prompt constructed. File data processing...`);
+
         let fileData = null;
 
         if (req.file) {
