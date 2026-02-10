@@ -5,7 +5,7 @@ import AccessLog from '../models/AccessLog.js';
 
 export const protect = async (req, res, next) => {
 
-    if (req.isRestrictedMode || req.isBmsMode) {
+    if (req.isRestrictedMode || req.isBmsMode || req.isEteqMode) {
         try {
             await AccessLog.create({
                 userId: req.userId || req.query.user || 'anonymous_iframe',

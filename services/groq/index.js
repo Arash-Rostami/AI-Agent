@@ -6,6 +6,7 @@ if (!GROK_API_KEY) console.warn('GROK_API_KEY is not set. Set it in .env or your
 const groq = GROK_API_KEY ? new Groq({apiKey: GROK_API_KEY}) : null;
 
 export async function getGroqChatCompletion() {
+    if (!groq) throw new Error('Groq client is not initialized. Please check your GROQ_API_KEY.');
     return groq.chat.completions.create({
         messages: [{role: 'system', content: SYSTEM_INSTRUCTION_TEXT}],
         model: 'qwen/qwen3-32b'
@@ -13,9 +14,8 @@ export async function getGroqChatCompletion() {
 }
 
 export default async function callGrokAPI(message, conversationHistory = [], customSystemInstruction = null) {
-    if (!message || typeof message !== 'string') {
-        throw new Error('Message must be a non-empty string');
-    }
+    if (!groq) throw new Error('Groq client is not initialized. Please check your GROQ_API_KEY.');
+    if (!message || typeof message !== 'string') throw new Error('Message must be a non-empty string');
 
     const messages = [
         {role: 'system', content: customSystemInstruction || SYSTEM_INSTRUCTION_TEXT},
@@ -30,8 +30,8 @@ export default async function callGrokAPI(message, conversationHistory = [], cus
 
     const content = completion?.choices?.[0]?.message?.content;
     if (!content) {
-        console.error('Grok raw completion:', completion);
-        throw new Error('No content returned from Grok');
+        console.error('Groq raw completion:', completion);
+        throw new Error('No content returned from Groq');
     }
     return content;
 }
