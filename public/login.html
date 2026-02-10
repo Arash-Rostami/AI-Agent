@@ -27,25 +27,13 @@
             </li>
             <li>
                 <button type="button" class="signin-nav active" data-view="signin">
-                    <img
-                        class="nav-icon-img"
-                        src="/assets/img/login.jpg"
-                        alt="Sign In"
-                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
-                    />
-                    <i class="fas fa-user-check nav-fallback-icon" style="display: none;"></i>
+                    <i class="fas fa-user-check"></i>
                     <span>Sign In</span>
                 </button>
             </li>
             <li>
                 <button type="button" class="signup-nav" data-view="signup">
-                    <img
-                        class="nav-icon-img"
-                        src="/assets/img/signup.jpg"
-                        alt="Sign Up"
-                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
-                    />
-                    <i class="fas fa-user-plus nav-fallback-icon" style="display: none;"></i>
+                    <i class="fas fa-user-plus"></i>
                     <span>Sign Up</span>
                 </button>
             </li>
@@ -55,15 +43,17 @@
                 <div class="card-hero-content signin">
                     <h2>Welcome Back.</h2>
                     <h3>Please enter your credentials.</h3>
-                    <div class="hero-icon">
+                    <img class="hero-img" src="/assets/img/login.jpg" alt="Welcome Back" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" />
+                    <div class="hero-icon" style="display: none;">
                         <i class="fas fa-sign-in-alt"></i>
                     </div>
                 </div>
                 <div class="card-hero-content signup">
                     <h2>Sign Up Now.</h2>
                     <h3>Join the crowd and get started.</h3>
-                    <div class="hero-icon">
-                         <i class="fas fa-rocket"></i>
+                    <img class="hero-img" src="/assets/img/signup.jpg" alt="Sign Up Now" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" />
+                    <div class="hero-icon" style="display: none;">
+                        <i class="fas fa-rocket"></i>
                     </div>
                 </div>
             </div>
