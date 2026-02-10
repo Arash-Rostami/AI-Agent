@@ -3,6 +3,7 @@ import {OPENROUTER_API_KEY, OPENROUTER_API_URL, SITE_NAME, SITE_URL, SYSTEM_INST
 
 
 export default async function callOpenRouterAPI(message, conversationHistory = [], customSystemInstruction = null) {
+    console.log('[DEBUG] callOpenRouterAPI started');
     if (!OPENROUTER_API_KEY) throw new Error("OPEN_ROUTER_API_KEY is missing");
 
     try {

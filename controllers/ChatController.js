@@ -120,6 +120,7 @@ export const ask = async (req, res) => {
 };
 
 export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
+    console.log(`[DEBUG] handleAPIEndpoint called for: ${apiName}`);
     if (!apiCall) return res.status(501).json({error: `${apiName} service not available`});
 
     const {message, model} = req.body;
