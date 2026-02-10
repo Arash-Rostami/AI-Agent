@@ -6,9 +6,6 @@ import {
 } from '../../config/index.js';
 
 export default async function callArvanCloudAPI(message, conversationHistory = [], model, fileData = null, customSystemInstruction = null) {
-    console.log('[DEBUG] callArvanCloudAPI started');
-    console.log('[DEBUG] ARVANCLOUD_API_KEY present:', !!ARVANCLOUD_API_KEY);
-
     if (!ARVANCLOUD_API_KEY) {
         console.log('[CRITICAL ERROR] ARVANCLOUD_API_KEY is not set.');
         throw new Error('ARVANCLOUD_API_KEY is not set.');
@@ -47,7 +44,6 @@ export default async function callArvanCloudAPI(message, conversationHistory = [
     ];
 
     try {
-        console.log(`[DEBUG] Sending ArvanCloud request to: ${endpointUrl} (Model: ${modelId})`);
         const response = await fetch(endpointUrl, {
             method: 'POST',
             headers: {
@@ -61,7 +57,6 @@ export default async function callArvanCloudAPI(message, conversationHistory = [
                 temperature: 0.7
             })
         });
-        console.log('[DEBUG] ArvanCloud response status:', response.status);
 
         if (!response.ok) {
             const errorText = await response.text();
