@@ -40,13 +40,14 @@ export default async function callGrokAPI(message, conversationHistory = [], cus
         const completion = await groq.chat.completions.create({
             messages, model: 'qwen/qwen3-32b',
         });
-        console.log('[DEBUG] Groq response received');
+        console.log('[DEBUG] Groq response received. Keys:', Object.keys(completion || {}));
 
         const content = completion?.choices?.[0]?.message?.content;
         if (!content) {
-            console.error('Groq raw completion:', completion);
+            console.log('[DEBUG] Groq raw completion:', JSON.stringify(completion));
             throw new Error('No content returned from Groq');
         }
+        console.log('[DEBUG] Groq content extracted. Length:', content.length);
         return content;
     } catch (error) {
         console.error('[ERROR] Groq API Failed:', error.message);

@@ -154,10 +154,13 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
             ? await apiCall(message, conversationHistory, model, fileData, systemInstruction)
             : await apiCall(message, conversationHistory, systemInstruction);
 
+        console.log(`[DEBUG] API Call returned for ${apiName}. Response length:`, response?.length);
+
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, response);
         res.json({reply: response, sessionId});
         if (!isEteqMode) syncToDB(sessionId, userId, updated);
     } catch (error) {
+        console.log('[DEBUG] Catch block entered in ChatController');
         console.log(`[CRITICAL ERROR] API Handler Failed for ${apiName}:`, error.message);
         console.log('[CRITICAL ERROR STACK]', error.stack);
         if (error.response?.data) {

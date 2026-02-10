@@ -42,13 +42,19 @@ export default async function callOpenRouterAPI(message, conversationHistory = [
                 timeout: 60000
             }
         );
+        console.log('[DEBUG] OpenRouter response received. Status:', response.status);
 
         const content = response.data.choices?.[0]?.message?.content;
-        if (!content) throw new Error('No content received from OpenRouter');
+        if (!content) {
+            console.log('[DEBUG] OpenRouter no content. Data:', JSON.stringify(response.data));
+            throw new Error('No content received from OpenRouter');
+        }
+        console.log('[DEBUG] OpenRouter content extracted. Length:', content.length);
 
         return content;
 
     } catch (error) {
+        console.log('[DEBUG] OpenRouter catch block entered');
         console.error('[ERROR] OpenRouter API Failed:', error.message);
         if (error.response?.data) console.error('OpenRouter Response Data:', JSON.stringify(error.response.data, null, 2));
         throw error;
