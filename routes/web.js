@@ -5,7 +5,7 @@ import * as EmailController from "../controllers/EmailController.js";
 import * as VectorController from "../controllers/VectorController.js";
 import * as ChatController from "../controllers/ChatController.js";
 import * as PageController from "../controllers/PageController.js";
-import callGroqAPI from '../services/groq/index.js';
+import callGrokAPI from '../services/groq/index.js';
 import callOpenRouterAPI from '../services/openrouter/index.js';
 import callArvanCloudAPI from '../services/arvancloud/index.js';
 
@@ -18,7 +18,7 @@ router.get('/initial-prompt', ChatController.initialPrompt);
 
 router.post('/ask', upload.single('file'), ChatController.ask);
 
-router.post('/ask-groq', upload.single('file'), ChatController.handleAPIEndpoint(callGroqAPI, 'Groq'));
+router.post('/ask-groq', upload.single('file'), ChatController.handleAPIEndpoint(callGrokAPI, 'Groq'));
 
 router.post('/ask-openrouter', upload.single('file'), ChatController.handleAPIEndpoint(callOpenRouterAPI, 'OpenRouter'));
 

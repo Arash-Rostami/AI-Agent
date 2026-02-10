@@ -41,7 +41,7 @@ export default async function callOpenRouterAPI(message, conversationHistory = [
         return content;
 
     } catch (error) {
-        console.error('❌ OpenRouter API Error:', error.response?.data || error.message);
+        console.error('❌ OpenRouter API Error:', error.message, error.response?.data || 'No response data');
         throw error;
     }
 }
