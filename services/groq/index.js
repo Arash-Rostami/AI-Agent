@@ -28,16 +28,19 @@ export default async function callGrokAPI(message, conversationHistory = [], cus
     }
 
     try {
+        console.log('[DEBUG] Preparing Groq messages...');
         const messages = [
             {role: 'system', content: customSystemInstruction || SYSTEM_INSTRUCTION_TEXT},
             ...conversationHistory.map(m => ({
                 role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content
             })), {role: 'user', content: message}
         ];
+        console.log('[DEBUG] Groq messages prepared. Sending request to model: qwen/qwen3-32b');
 
         const completion = await groq.chat.completions.create({
             messages, model: 'qwen/qwen3-32b',
         });
+        console.log('[DEBUG] Groq response received');
 
         const content = completion?.choices?.[0]?.message?.content;
         if (!content) {

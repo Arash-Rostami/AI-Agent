@@ -12,18 +12,20 @@ export default async function callOpenRouterAPI(message, conversationHistory = [
     }
 
     try {
+        console.log('[DEBUG] Preparing OpenRouter history...');
         const formattedHistory = conversationHistory.map(msg => ({
             role: msg.role === 'assistant' ? 'assistant' : 'user',
             content: msg.content
         }));
 
+        console.log('[DEBUG] Preparing OpenRouter messages...');
         const messages = [
             {role: 'system', content: customSystemInstruction || SYSTEM_INSTRUCTION_TEXT},
             ...formattedHistory,
             {role: 'user', content: message}
         ];
 
-
+        console.log('[DEBUG] Sending OpenRouter request to:', OPENROUTER_API_URL);
         const response = await axios.post(
             OPENROUTER_API_URL,
             {
