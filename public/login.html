@@ -8,49 +8,135 @@
     <link rel="stylesheet" href="./assets/css/login.css"/>
     <meta name="description" content="Login to AI Assistant — secure access to the assistant dashboard."/>
     <meta name="robots" content="noindex,nofollow,noarchive,nosnippet"/>
-    <meta name="googlebot" content="noindex,nofollow"/>
-    <meta name="referrer" content="no-referrer-when-downgrade"/>
 </head>
 <body>
+
+<button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+    <i class="fas fa-sun"></i>
+</button>
+
 <div class="container">
-    <div class="login-container">
-        <div class="logo">
-            <i class="fas fa-robot"></i>
-            AI Assistant
+    <div class="card">
+        <ul class="card-nav">
+            <li>
+                <div class="logo" title="AI Assistant ✦">
+                    <i class="fas fa-robot"></i>
+                    <span class="logo-text">AI Assistant <sup>✦</sup></span>
+                </div>
+                <span class="active-bar"></span>
+            </li>
+            <li>
+                <button type="button" class="signin-nav active" data-view="signin">
+                    <i class="fas fa-user-check"></i>
+                    <span>Sign In</span>
+                </button>
+            </li>
+            <li>
+                <button type="button" class="signup-nav" data-view="signup">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Sign Up</span>
+                </button>
+            </li>
+        </ul>
+        <div class="card-hero">
+            <div class="card-hero-inner">
+                <div class="card-hero-content signin">
+                    <h2>Welcome Back.</h2>
+                    <h3>Please enter your credentials.</h3>
+                    <img class="hero-img" src="/assets/img/login.jpg" alt="Welcome Back"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"/>
+                    <div class="hero-icon" style="display: none;">
+                        <i class="fas fa-sign-in-alt"></i>
+                    </div>
+                </div>
+                <div class="card-hero-content signup">
+                    <h2>Sign Up Now.</h2>
+                    <h3>Join the crowd and get started.</h3>
+                    <img class="hero-img" src="/assets/img/signup.jpg" alt="Sign Up Now"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"/>
+                    <div class="hero-icon" style="display: none;">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                </div>
+            </div>
         </div>
-        <h2>Welcome Back</h2>
-        <div id="error-msg" class="error-message"></div>
-        <form id="login-form">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        required
-                        autocomplete="username"
-                />
+        <div class="card-form">
+            <div class="forms">
+
+                <form id="login-form" class="active">
+                    <div class="mobile-logo">
+                        <i class="fas fa-robot"></i>
+                        <span>AI Assistant <sup>✦</sup></span>
+                    </div>
+
+                    <div id="login-error-msg" class="error-message"></div>
+
+                    <p>Don't have an account? <a href="#" class="switch-to-signup">Sign Up</a>.</p>
+
+                    <div class="input-group">
+                        <label>Username</label>
+                        <div class="control">
+                            <input type="text" name="username" placeholder="Username" required autocomplete="username"/>
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Password</label>
+                        <div class="control">
+                            <input type="password" name="password" placeholder="Password" required
+                                   autocomplete="current-password"/>
+                            <i class="fas fa-lock"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit">SIGN IN</button>
+                </form>
+
+                <form id="signup-form">
+                    <div class="mobile-logo">
+                        <i class="fas fa-robot"></i>
+                        <span>AI Assistant <sup>✦</sup></span>
+                    </div>
+
+                    <div id="signup-error-msg" class="error-message"></div>
+
+                    <p>Already have an account? <a href="#" class="switch-to-signin">Sign In</a>.</p>
+
+                    <div class="input-group">
+                        <label>Username</label>
+                        <div class="control">
+                            <input type="text" name="username" placeholder="Choose a username" required
+                                   autocomplete="username"/>
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Password</label>
+                        <div class="control">
+                            <input type="password" name="password" placeholder="Create a password" required
+                                   autocomplete="new-password"/>
+                            <i class="fas fa-lock"></i>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Secret Key</label>
+                        <div class="control">
+                            <input type="password" name="secretKey" placeholder="Enter secret key" required
+                                   autocomplete="off"/>
+                            <i class="fas fa-key"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit">SIGN UP</button>
+                </form>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        required
-                        autocomplete="current-password"
-                />
-            </div>
-            <button type="submit" class="login-button">
-                <span>Login</span>
-                <i class="fas fa-arrow-right"></i>
-            </button>
-        </form>
-        <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
-            <i class="fas fa-sun"></i>
-        </button>
+        </div>
     </div>
 </div>
+
 <script type="module" src="./assets/js/app.js"></script>
 </body>
 </html>

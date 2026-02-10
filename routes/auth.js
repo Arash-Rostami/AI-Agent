@@ -2,9 +2,10 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import {generateToken} from '../utils/authManager.js';
-import {JWT_SECRET, NODE_ENV, uploadDir} from '../config/index.js';
+import {JWT_SECRET, NODE_ENV, SIGNUP_SECRET, uploadDir} from '../config/index.js';
 import avatarUpload from '../middleware/avatarUpload.js';
 import {protect} from '../middleware/authGuard.js';
+import {createAppUser} from '../utils/userManager.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -41,6 +42,40 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.post('/signup', async (req, res) => {
+    const {username, password, secretKey} = req.body;
+
+    if (!SIGNUP_SECRET) return res.status(500).json({message: 'Signup is currently disabled (Server Config Error)'});
+    if (secretKey !== SIGNUP_SECRET) return res.status(403).json({message: 'Invalid Secret Key'});
+
+
+    try {
+        const user = await createAppUser({username, password});
+
+        if (user) {
+            const token = generateToken(user._id);
+
+            res.cookie('jwt', token, {
+                httpOnly: true,
+                secure: NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 24 * 60 * 60 * 1000
+            });
+
+            res.status(201).json({
+                _id: user._id,
+                username: user.username,
+                token: token
+            });
+        }
+    } catch (error) {
+        if (error.message === 'User already exists') {
+            return res.status(400).json({message: 'User already exists'});
+        }
+        console.error(error);
+        res.status(500).json({message: 'Server error'});
+    }
+});
 router.post('/logout', (req, res) => {
     res.cookie('jwt', '', {
         httpOnly: true,

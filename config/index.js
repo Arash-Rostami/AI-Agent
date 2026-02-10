@@ -28,6 +28,8 @@ export const ARVANCLOUD_EMBEDDING_URL = process.env.ARVANCLOUD_EMBEDDING_URL;
 export const AI_SERVICE_SECRET = process.env.AI_SERVICE_SECRET;
 export const MONGO_URI = process.env.MONGO_URI;
 export const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key_change_me';
+export const SIGNUP_SECRET = process.env.SIGNUP_SECRET;
+
 export const CRAWLER_STORAGE_DIR = path.resolve(__dirname, '../data/crawler');
 
 // Email Configuration
