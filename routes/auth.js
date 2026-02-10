@@ -7,6 +7,7 @@ import avatarUpload from '../middleware/avatarUpload.js';
 import {protect} from '../middleware/authGuard.js';
 import fs from 'fs';
 import path from 'path';
+import { createAppUser } from '../utils/userManager.js';
 
 const router = express.Router();
 
@@ -53,17 +54,7 @@ router.post('/signup', async (req, res) => {
     }
 
     try {
-        const userExists = await User.findOne({username});
-
-        if (userExists) {
-            return res.status(400).json({message: 'User already exists'});
-        }
-
-        const user = await User.create({
-            username,
-            password,
-            role: 'user' // Default role
-        });
+        const user = await createAppUser({username, password});
 
         if (user) {
             const token = generateToken(user._id);
@@ -80,10 +71,11 @@ router.post('/signup', async (req, res) => {
                 username: user.username,
                 token: token
             });
-        } else {
-            res.status(400).json({message: 'Invalid user data'});
         }
     } catch (error) {
+        if (error.message === 'User already exists') {
+            return res.status(400).json({message: 'User already exists'});
+        }
         console.error(error);
         res.status(500).json({message: 'Server error'});
     }
