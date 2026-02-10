@@ -39,7 +39,8 @@ export default async function callGrokAPI(message, conversationHistory = [], cus
         }
         return content;
     } catch (error) {
-        console.error('❌ Groq API Error:', error.message, error.response?.data || error.error);
+        console.error('[ERROR] Groq API Failed:', error.message);
+        if (error.response?.data) console.error('Groq Response Data:', JSON.stringify(error.response.data, null, 2));
         throw error;
     }
 }
