@@ -68,6 +68,17 @@ body {
     100% { background-position: 0% 50%; }
 }
 
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
 /* === CARD LAYOUT === */
 .container {
     width: 100%;
@@ -116,11 +127,41 @@ body {
     flex: 0 0 80px; /* Logo area fixed height */
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 1rem;
+    flex-direction: column;
+    justify-content: center;
 }
 
-.logo-container i {
-    font-size: 1.8rem;
+/* Logo Styles */
+.logo {
+    font-weight: 700;
+    font-size: 0.9rem; /* Adjusted for sidebar width */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-color);
+    white-space: nowrap;
+    letter-spacing: -0.02em;
+}
+
+.logo i {
     color: var(--primary-color);
+    font-size: 1.5rem;
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logo:hover i {
+    transform: rotate(360deg) scale(1.2);
+    cursor: pointer;
+}
+
+.logo sup {
+    position: relative;
+    top: -0.2em;
+    vertical-align: super;
+    font-size: smaller;
+    line-height: 0;
+    animation: pulse 3s ease-in-out infinite;
 }
 
 .card-nav button {
