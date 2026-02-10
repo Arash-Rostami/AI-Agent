@@ -14,40 +14,32 @@ export async function getGroqChatCompletion() {
 }
 
 export default async function callGrokAPI(message, conversationHistory = [], customSystemInstruction = null) {
-    console.log('[DEBUG] callGrokAPI started');
-    console.log('[DEBUG] GROK_API_KEY present:', !!GROK_API_KEY);
-
     if (!groq) {
         console.log('[CRITICAL ERROR] Groq client not initialized');
         throw new Error('Groq client is not initialized. Please check your GROK_API_KEY.');
     }
 
     if (!message || typeof message !== 'string') {
-        console.log('[ERROR] Invalid message format');
         throw new Error('Message must be a non-empty string');
     }
 
     try {
-        console.log('[DEBUG] Preparing Groq messages...');
         const messages = [
             {role: 'system', content: customSystemInstruction || SYSTEM_INSTRUCTION_TEXT},
             ...conversationHistory.map(m => ({
                 role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content
             })), {role: 'user', content: message}
         ];
-        console.log('[DEBUG] Groq messages prepared. Sending request to model: qwen/qwen3-32b');
 
         const completion = await groq.chat.completions.create({
             messages, model: 'qwen/qwen3-32b',
         });
-        console.log('[DEBUG] Groq response received. Keys:', Object.keys(completion || {}));
 
         const content = completion?.choices?.[0]?.message?.content;
         if (!content) {
-            console.log('[DEBUG] Groq raw completion:', JSON.stringify(completion));
+            console.log('[ERROR] Groq raw completion:', JSON.stringify(completion));
             throw new Error('No content returned from Groq');
         }
-        console.log('[DEBUG] Groq content extracted. Length:', content.length);
         return content;
     } catch (error) {
         console.error('[ERROR] Groq API Failed:', error.message);

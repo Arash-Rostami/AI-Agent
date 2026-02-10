@@ -120,27 +120,16 @@ export const ask = async (req, res) => {
 };
 
 export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
-    console.log(`[DEBUG] Request received in controller for: ${apiName}`);
-    console.log('[DEBUG] Content-Type:', req.headers['content-type']);
-    console.log('[DEBUG] Body:', req.body);
-
     if (!apiCall) return res.status(501).json({error: `${apiName} service not available`});
 
     const {message, model} = req.body;
-
-    if (!validateMessage(message)) {
-        console.error('[DEBUG] Validation Failed: Message is invalid', message);
-        return res.status(400).json({error: 'Valid message is required'});
-    }
+    if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
     if (apiName === 'ArvanCloud' && !model) return res.status(400).json({error: 'Model is required'});
 
     const {sessionId, conversationHistory, userId, isEteqMode} = req;
 
     try {
-        console.log(`[DEBUG] Constructing system prompt...`);
         const systemInstruction = await constructSystemPrompt(req, message);
-        console.log(`[DEBUG] System prompt constructed. File data processing...`);
-
         let fileData = null;
 
         if (req.file) {
@@ -154,13 +143,10 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
             ? await apiCall(message, conversationHistory, model, fileData, systemInstruction)
             : await apiCall(message, conversationHistory, systemInstruction);
 
-        console.log(`[DEBUG] API Call returned for ${apiName}. Response length:`, response?.length);
-
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, response);
         res.json({reply: response, sessionId});
         if (!isEteqMode) syncToDB(sessionId, userId, updated);
     } catch (error) {
-        console.log('[DEBUG] Catch block entered in ChatController');
         console.log(`[CRITICAL ERROR] API Handler Failed for ${apiName}:`, error.message);
         console.log('[CRITICAL ERROR STACK]', error.stack);
         if (error.response?.data) {
