@@ -206,7 +206,7 @@ export default class ChatHandler extends BaseHandler {
     }
 
     updateThinkingModeTitle(usage) {
-        if (!this.thinkingModeBtn) return;
+        if (!this.thinkingModeBtn || !usage) return;
         const count = usage.count || 0;
         this.thinkingModeBtn.title = `Thinking Mode (${count}/2 used)`;
     }
