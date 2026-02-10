@@ -18,17 +18,9 @@ router.get('/initial-prompt', ChatController.initialPrompt);
 
 router.post('/ask', upload.single('file'), ChatController.ask);
 
-router.post('/ask-groq', upload.single('file'), (req, res, next) => {
-    console.log('[DEBUG] /ask-groq middleware start');
-    next();
-    console.log('[DEBUG] /ask-groq middleware end');
-}, ChatController.handleAPIEndpoint(callGrokAPI, 'Groq'));
+router.post('/ask-groq', upload.single('file'), ChatController.handleAPIEndpoint(callGrokAPI, 'Groq'));
 
-router.post('/ask-openrouter', upload.single('file'), (req, res, next) => {
-    console.log('[DEBUG] /ask-openrouter middleware start');
-    next();
-    console.log('[DEBUG] /ask-openrouter middleware end');
-}, ChatController.handleAPIEndpoint(callOpenRouterAPI, 'OpenRouter'));
+router.post('/ask-openrouter', upload.single('file'), ChatController.handleAPIEndpoint(callOpenRouterAPI, 'OpenRouter'));
 
 router.post('/ask-arvan', upload.single('file'), ChatController.handleAPIEndpoint(callArvanCloudAPI, 'ArvanCloud'));
 
