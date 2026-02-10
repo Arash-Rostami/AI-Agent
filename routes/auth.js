@@ -2,7 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import {generateToken} from '../utils/authManager.js';
-import {JWT_SECRET, NODE_ENV, uploadDir} from '../config/index.js';
+import {JWT_SECRET, NODE_ENV, uploadDir, SIGNUP_SECRET} from '../config/index.js';
 import avatarUpload from '../middleware/avatarUpload.js';
 import {protect} from '../middleware/authGuard.js';
 import fs from 'fs';
@@ -34,6 +34,54 @@ router.post('/login', async (req, res) => {
             });
         } else {
             res.status(401).json({message: 'Invalid username or password'});
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: 'Server error'});
+    }
+});
+
+router.post('/signup', async (req, res) => {
+    const {username, password, secretKey} = req.body;
+
+    if (!SIGNUP_SECRET) {
+        return res.status(500).json({message: 'Signup is currently disabled (Server Config Error)'});
+    }
+
+    if (secretKey !== SIGNUP_SECRET) {
+        return res.status(403).json({message: 'Invalid Secret Key'});
+    }
+
+    try {
+        const userExists = await User.findOne({username});
+
+        if (userExists) {
+            return res.status(400).json({message: 'User already exists'});
+        }
+
+        const user = await User.create({
+            username,
+            password,
+            role: 'user' // Default role
+        });
+
+        if (user) {
+            const token = generateToken(user._id);
+
+            res.cookie('jwt', token, {
+                httpOnly: true,
+                secure: NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 24 * 60 * 60 * 1000
+            });
+
+            res.status(201).json({
+                _id: user._id,
+                username: user.username,
+                token: token
+            });
+        } else {
+            res.status(400).json({message: 'Invalid user data'});
         }
     } catch (error) {
         console.error(error);
