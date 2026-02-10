@@ -5,9 +5,15 @@ import {
     SYSTEM_INSTRUCTION_TEXT
 } from '../../config/index.js';
 
-if (!ARVANCLOUD_API_KEY) console.warn('ARVANCLOUD_API_KEY is not set.');
-
 export default async function callArvanCloudAPI(message, conversationHistory = [], model, fileData = null, customSystemInstruction = null) {
+    console.log('[DEBUG] callArvanCloudAPI started');
+    console.log('[DEBUG] ARVANCLOUD_API_KEY present:', !!ARVANCLOUD_API_KEY);
+
+    if (!ARVANCLOUD_API_KEY) {
+        console.log('[CRITICAL ERROR] ARVANCLOUD_API_KEY is not set.');
+        throw new Error('ARVANCLOUD_API_KEY is not set.');
+    }
+
     if (!message || typeof message !== 'string') throw new Error('Message must be a non-empty string');
 
     const MODELS = {
@@ -41,6 +47,7 @@ export default async function callArvanCloudAPI(message, conversationHistory = [
     ];
 
     try {
+        console.log(`[DEBUG] Sending ArvanCloud request to: ${endpointUrl} (Model: ${modelId})`);
         const response = await fetch(endpointUrl, {
             method: 'POST',
             headers: {
@@ -54,20 +61,25 @@ export default async function callArvanCloudAPI(message, conversationHistory = [
                 temperature: 0.7
             })
         });
+        console.log('[DEBUG] ArvanCloud response status:', response.status);
 
         if (!response.ok) {
             const errorText = await response.text();
+            console.log('[CRITICAL ERROR] ArvanCloud Response:', errorText);
             throw new Error(`ArvanCloud API Error: ${response.status} ${response.statusText} - ${errorText}`);
         }
 
         const data = await response.json();
         const content = data?.choices?.[0]?.message?.content;
 
-        if (!content) throw new Error('No content returned from ArvanCloud API');
+        if (!content) {
+            console.log('[ERROR] No content in ArvanCloud response:', JSON.stringify(data));
+            throw new Error('No content returned from ArvanCloud API');
+        }
 
         return content;
     } catch (error) {
-        console.error('ArvanCloud API call failed:', error);
+        console.log('[CRITICAL ERROR] ArvanCloud API call failed:', error.message);
         throw error;
     }
 }
