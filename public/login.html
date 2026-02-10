@@ -27,13 +27,25 @@
             </li>
             <li>
                 <button type="button" class="signin-nav active" data-view="signin">
-                    <i class="fas fa-user-check"></i>
+                    <img
+                        class="nav-icon-img"
+                        src="/assets/img/login.jpg"
+                        alt="Sign In"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
+                    />
+                    <i class="fas fa-user-check nav-fallback-icon" style="display: none;"></i>
                     <span>Sign In</span>
                 </button>
             </li>
             <li>
                 <button type="button" class="signup-nav" data-view="signup">
-                    <i class="fas fa-user-plus"></i>
+                    <img
+                        class="nav-icon-img"
+                        src="/assets/img/signup.jpg"
+                        alt="Sign Up"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
+                    />
+                    <i class="fas fa-user-plus nav-fallback-icon" style="display: none;"></i>
                     <span>Sign Up</span>
                 </button>
             </li>

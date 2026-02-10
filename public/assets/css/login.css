@@ -200,13 +200,26 @@ body {
     transition: var(--transition);
 }
 
-.card-nav button i {
+.card-nav button img.nav-icon-img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 0;
+    transition: var(--transition);
+}
+
+.card-nav button i.nav-fallback-icon {
     font-size: 1.4rem;
     transition: var(--transition);
 }
 
 .card-nav button.active {
     color: var(--primary-color);
+}
+
+.card-nav button.active img.nav-icon-img {
+    box-shadow: 0 0 0 2px var(--primary-color);
 }
 
 .card-nav button:hover {
