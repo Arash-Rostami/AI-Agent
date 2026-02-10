@@ -14,9 +14,16 @@ export async function getGroqChatCompletion() {
 }
 
 export default async function callGrokAPI(message, conversationHistory = [], customSystemInstruction = null) {
-    if (!groq) throw new Error('Groq client is not initialized. Please check your GROK_API_KEY.');
+    console.log('[DEBUG] callGrokAPI started');
+    console.log('[DEBUG] GROK_API_KEY present:', !!GROK_API_KEY);
+
+    if (!groq) {
+        console.log('[CRITICAL ERROR] Groq client not initialized');
+        throw new Error('Groq client is not initialized. Please check your GROK_API_KEY.');
+    }
 
     if (!message || typeof message !== 'string') {
+        console.log('[ERROR] Invalid message format');
         throw new Error('Message must be a non-empty string');
     }
 

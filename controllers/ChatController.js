@@ -158,9 +158,11 @@ export const handleAPIEndpoint = (apiCall, apiName) => async (req, res) => {
         res.json({reply: response, sessionId});
         if (!isEteqMode) syncToDB(sessionId, userId, updated);
     } catch (error) {
-        console.error(`[ERROR] API Handler Failed for ${apiName}:`, error.message);
-        if (error.stack) console.error(error.stack);
-        if (error.response?.data) console.error('API Response Data:', JSON.stringify(error.response.data, null, 2));
+        console.log(`[CRITICAL ERROR] API Handler Failed for ${apiName}:`, error.message);
+        console.log('[CRITICAL ERROR STACK]', error.stack);
+        if (error.response?.data) {
+            console.log('[CRITICAL API RESPONSE DATA]', JSON.stringify(error.response.data, null, 2));
+        }
 
         res.status(500).json({error: 'Sorry, I encountered an error. Please try again.', details: error.message});
     }
