@@ -8,49 +8,114 @@
     <link rel="stylesheet" href="./assets/css/login.css"/>
     <meta name="description" content="Login to AI Assistant — secure access to the assistant dashboard."/>
     <meta name="robots" content="noindex,nofollow,noarchive,nosnippet"/>
-    <meta name="googlebot" content="noindex,nofollow"/>
-    <meta name="referrer" content="no-referrer-when-downgrade"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+
+<button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+    <i class="fas fa-sun"></i>
+</button>
+
 <div class="container">
-    <div class="login-container">
-        <div class="logo">
-            <i class="fas fa-robot"></i>
-            AI Assistant
+    <div class="card">
+        <ul class="card-nav">
+            <li>
+                <div class="logo-container">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <span class="active-bar"></span>
+            </li>
+            <li>
+                <button type="button" class="signin-nav active" data-view="signin">
+                    <i class="fas fa-user-check"></i>
+                    <span>Sign In</span>
+                </button>
+            </li>
+            <li>
+                <button type="button" class="signup-nav" data-view="signup">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Sign Up</span>
+                </button>
+            </li>
+        </ul>
+        <div class="card-hero">
+            <div class="card-hero-inner">
+                <div class="card-hero-content signin">
+                    <h2>Welcome Back.</h2>
+                    <h3>Please enter your credentials.</h3>
+                    <!-- Placeholder for signin.svg -->
+                    <div class="hero-icon">
+                        <i class="fas fa-sign-in-alt"></i>
+                    </div>
+                </div>
+                <div class="card-hero-content signup">
+                    <h2>Sign Up Now.</h2>
+                    <h3>Join the crowd and get started.</h3>
+                    <!-- Placeholder for signup.svg -->
+                    <div class="hero-icon">
+                         <i class="fas fa-rocket"></i>
+                    </div>
+                </div>
+            </div>
         </div>
-        <h2>Welcome Back</h2>
-        <div id="error-msg" class="error-message"></div>
-        <form id="login-form">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        required
-                        autocomplete="username"
-                />
+        <div class="card-form">
+            <div class="forms">
+                <!-- Sign In Form -->
+                <form id="login-form" class="active">
+                    <div id="login-error-msg" class="error-message"></div>
+
+                    <p>Don't have an account? <a href="#" class="switch-to-signup">Sign Up</a>.</p>
+
+                    <label>Username</label>
+                    <div class="control">
+                        <input type="text" name="username" placeholder="Username" required autocomplete="username" />
+                        <i class="fas fa-user"></i>
+                    </div>
+
+                    <label>Password</label>
+                    <div class="control">
+                        <input type="password" name="password" placeholder="Password" required autocomplete="current-password" />
+                        <i class="fas fa-lock"></i>
+                    </div>
+
+                    <button type="submit">SIGN IN</button>
+
+                    <p class="footer">
+                        By clicking Sign In you agree to our terms and conditions.
+                    </p>
+                </form>
+
+                <!-- Sign Up Form -->
+                <form id="signup-form">
+                    <div id="signup-error-msg" class="error-message"></div>
+
+                    <p>Already have an account? <a href="#" class="switch-to-signin">Sign In</a>.</p>
+
+                    <label>Username</label>
+                    <div class="control">
+                        <input type="text" name="username" placeholder="Choose a username" required autocomplete="username" />
+                        <i class="fas fa-user"></i>
+                    </div>
+
+                    <label>Password</label>
+                    <div class="control">
+                        <input type="password" name="password" placeholder="Create a password" required autocomplete="new-password" />
+                        <i class="fas fa-lock"></i>
+                    </div>
+
+                    <label>Secret Key</label>
+                    <div class="control">
+                        <input type="password" name="secretKey" placeholder="Enter secret key" required autocomplete="off" />
+                        <i class="fas fa-key"></i>
+                    </div>
+
+                    <button type="submit">SIGN UP</button>
+                </form>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        required
-                        autocomplete="current-password"
-                />
-            </div>
-            <button type="submit" class="login-button">
-                <span>Login</span>
-                <i class="fas fa-arrow-right"></i>
-            </button>
-        </form>
-        <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
-            <i class="fas fa-sun"></i>
-        </button>
+        </div>
     </div>
 </div>
+
 <script type="module" src="./assets/js/app.js"></script>
 </body>
 </html>
