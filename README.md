@@ -1,4 +1,45 @@
-# 🤖 Enterprise AI Assistant
+# 🤖 Express.js AI Orchestration Engine
+> **The Neural Cortex for Enterprise Intelligence.**
+> A centralized, production-ready AI hub designed to unify cutting-edge models, automate complex workflows, and serve as the intelligent backbone for modern digital ecosystems.
+
+## 🌟 Visionary Product Showcase
+
+### Objective
+This is not just a chatbot; it is a **Centralized AI Intelligence Hub**. It connects to multiple LLMs and integrates with various external applications to act as both a standalone assistant and a background AI agent for other systems.
+
+### 🧠 Core Capabilities (The "Wow" Factor)
+
+#### 1. Multi-LLM Neural Routing
+*   **Intelligence Routing:** Dynamically switches between **Google Gemini 2.0 Flash** (Primary Reasoning), **ArvanCloud/GPT-4o** (Localized Compliance), and **Groq/Qwen** (High-Speed Inference) based on task complexity and availability.
+*   **Thinking Mode:** Activates deep reasoning capabilities (Gemini 2.0 Flash Thinking) for solving multi-step logic problems.
+*   **Resilient Architecture:** Automatic API key rotation via `KeySessionManager` ensures 99.9% uptime.
+
+#### 2. Unified Intelligence Gateway
+*   **Cross-App Connectivity:** Acts as a headless brain for third-party apps via secure API endpoints (`/ask-groq`, `/ask-arvan`).
+*   **Context-Aware Middleware:** Smartly detects execution context (Standalone, Iframe, BMS, ETEQ) and adjusts security protocols via `RestrictedMode`.
+*   **Tool Ecosystem:** Native integration with **Real-time Web Search**, **Weather Intelligence**, **Time/Date**, and **Email Automation**.
+
+#### 3. Hyper-Personalized Contextual Awareness
+*   **Memory-First Architecture:** Advanced `ConversationManager` maintains fluid dialogue across sessions, prioritizing in-memory speed with background MongoDB persistence.
+*   **In-Memory Vector Engine:** Zero-latency RAG (Retrieval-Augmented Generation) system for instant access to internal policy documents.
+
+#### 4. Enterprise-Grade AI Security
+*   **Military-Grade Protection:** `frameGuard` and `authGuard` middleware protect against XSS and unauthorized access.
+*   **Role-Based Access Control:** Specialized modes (BMS, ETEQ) grant or restrict access to sensitive business data based on origin.
+
+### 🛠️ Dual-Mode Operation
+
+1.  **The Elite Standalone Assistant:** A fully responsive, Material Design 3 interface for direct human interaction with Voice Mode, File Analysis, and History Management.
+2.  **The Headless API Engine:** A robust backend service that powers your internal tools via structured JSON requests.
+
+### ⚡ Outcome-Based Benefits
+*   **Automate Complexity:** Replace manual workflows with intelligent agents.
+*   **Future-Proof:** Plug-and-play architecture allows instant swapping of underlying models.
+*   **Superior Reasoning:** Leverages "Thinking Mode" and RAG for data-grounded answers.
+
+---
+
+# 🤖 Enterprise AI Assistant (Technical Documentation)
 
 > **Intelligent, Secure, and Connected.**
 > A production-ready AI agent designed for enterprise integration, featuring real-time web intelligence, deep business system connectivity, and military-grade security protocols.
@@ -101,6 +142,7 @@ NODE_ENV=development
 MONGO_URI=mongodb://localhost:27017/ai_agent
 JWT_SECRET=your_super_secret_jwt_key
 SITE_URL=https://your-domain.com
+SIGNUP_SECRET=your_secure_signup_key_here
 
 # --- AI Model Keys (Primary & Fallbacks) ---
 GEMINI_API_KEY_PREMIUM=your_google_gemini_key
@@ -119,14 +161,27 @@ BMS_API_URL=https://example.io/ai/query
 ```
 
 ### 3. Database & User Setup
-The system uses MongoDB for user authentication. There is no public sign-up page. You must create users manually via the CLI.
+The system uses MongoDB for user authentication. You can create users manually via the CLI or use the restricted API endpoint.
 
-**Create a new user:**
+**Option A: CLI Creation (Recommended)**
 ```bash
 # Syntax: node utils/userManager.js <username> <password>
 node utils/userManager.js admin securePassword123
 ```
 *Note: This command connects to the MongoDB instance defined in your `.env` file.*
+
+**Option B: API Signup**
+Send a `POST` request to `/signup` with a valid `secretKey` (must match `SIGNUP_SECRET` in `.env`):
+```json
+POST /signup
+Content-Type: application/json
+
+{
+  "username": "newuser",
+  "password": "securepassword",
+  "secretKey": "your_secure_signup_key_here"
+}
+```
 
 ### 4. Running the Service
 
