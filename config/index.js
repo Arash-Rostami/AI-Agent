@@ -14,16 +14,16 @@ export const BMS_API_URL = process.env.BMS_API_URL;
 export const SITE_NAME = process.env.SITE_NAME || 'AI Assistant';
 export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const GEMINI_API_URL = process.env.GEMINI_API_URL;
-export const GEMINI_API_KEY = process.env.GEMINI_API_KEY_PREMIUM;
-export const GEMINI_API_URL_PREMIUM = process.env.GEMINI_API_URL_PREMIUM;
-export const GEMINI_API_URL_THINKING = process.env.GEMINI_API_URL_THINKING;
+// Primary key for the fallback cascade in services/gemini/index.js (GEMINI_API_KEY_ALT removed — persistent 403).
+export const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 export const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 export const GROK_API_KEY = process.env.GROK_API_KEY;
-export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-export const OPENROUTER_API_URL = process.env.OPENROUTER_API_URL;
 export const ARVANCLOUD_API_KEY = process.env.ARVANCLOUD_API_KEY;
 export const ARVANCLOUD_CHATGPT_URL = process.env.ARVANCLOUD_CHATGPT_URL;
-export const ARVANCLOUD_DEEPSEEK_URL = process.env.ARVANCLOUD_DEEPSEEK_URL;
+// Last-resort fallback when both free Gemini keys fail — an ArvanCloud-hosted Gemini model.
+export const ARVANCLOUD_GEMINI_URL = process.env.ARVANCLOUD_GEMINI_URL;
+// Thinking mode's backend — an ArvanCloud-hosted Gemini model, OpenAI-style, no tool-calling.
+export const ARVANCLOUD_THINKING_URL = process.env.ARVANCLOUD_THINKING_URL;
 export const ARVANCLOUD_EMBEDDING_URL = process.env.ARVANCLOUD_EMBEDDING_URL;
 export const AI_SERVICE_SECRET = process.env.AI_SERVICE_SECRET;
 export const MONGO_URI = process.env.MONGO_URI;
@@ -69,6 +69,6 @@ if (!GEMINI_API_URL) {
 }
 
 if (!GEMINI_API_KEY) {
-    console.error('❌ Missing GOOGLE_API_KEY in .env file');
+    console.error('❌ Missing GEMINI_API_KEY in .env file');
     process.exit(1);
 }

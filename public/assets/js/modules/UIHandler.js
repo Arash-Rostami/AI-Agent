@@ -217,14 +217,15 @@ export default class UIHandler {
 
     updateServiceUI(service, webSearchBtn, isWebSearchActive, toggleWebSearchCallback, thinkingModeBtn, isThinkingModeActive, toggleThinkingModeCallback) {
         const isGemini = service === 'gemini';
-        webSearchBtn.classList.toggle('hidden', !isGemini);
+        const supportsTools = isGemini || service === 'chatgpt';
+        webSearchBtn.classList.toggle('hidden', !supportsTools);
         if (thinkingModeBtn) thinkingModeBtn.classList.toggle('hidden', !isGemini);
 
         this.micBtn.classList.toggle('hidden', !isGemini);
-        if (!isGemini && isWebSearchActive) toggleWebSearchCallback();
+        if (!supportsTools && isWebSearchActive) toggleWebSearchCallback();
         if (!isGemini && isThinkingModeActive && toggleThinkingModeCallback) toggleThinkingModeCallback();
 
-        const supportsAttachments = ['gemini', 'gpt-4o'].includes(service);
+        const supportsAttachments = service === 'gemini';
         this.attachmentBtn.style.display = supportsAttachments ? 'inline-block' : 'none';
         if (!supportsAttachments) this.clearFileSelection();
     }

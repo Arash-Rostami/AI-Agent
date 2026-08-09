@@ -6,7 +6,7 @@ export const checkRestrictedMode = (req, _, next) => {
     const referer = (frameRef || stdRef || '').toLowerCase();
 
     req.isRestrictedMode = ALLOWED_ORIGINS.some(o => referer.startsWith(o));
-    req.isBmsMode = referer.includes('export.communitasker.io');
+    req.isBmsMode = referer.includes('export.bmsflow.org');
     req.isEteqMode = referer.includes('eteq.vercel.app');
 
     if (!SILENT_PATH(req)) {

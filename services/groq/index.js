@@ -9,7 +9,7 @@ export async function getGroqChatCompletion() {
     if (!groq) throw new Error('Groq client is not initialized. Please check your GROQ_API_KEY.');
     return groq.chat.completions.create({
         messages: [{role: 'system', content: SYSTEM_INSTRUCTION_TEXT}],
-        model: 'qwen/qwen3-32b'
+        model: 'llama-3.1-8b-instant'
     });
 }
 
@@ -25,7 +25,7 @@ export default async function callGrokAPI(message, conversationHistory = [], cus
     ];
 
     const completion = await groq.chat.completions.create({
-        messages, model: 'qwen/qwen3-32b',
+        messages, model: 'llama-3.1-8b-instant',
     });
 
     const content = completion?.choices?.[0]?.message?.content;
@@ -33,5 +33,13 @@ export default async function callGrokAPI(message, conversationHistory = [], cus
         console.error('Groq raw completion:', completion);
         throw new Error('No content returned from Groq');
     }
-    return content;
+    return stripThinkTags(content);
+}
+
+// Defensive no-op for llama-3.1-8b-instant; strips <think> tags if a reasoning model is swapped back in.
+function stripThinkTags(content) {
+    return content
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/<think>[\s\S]*$/gi, '')
+        .trim();
 }

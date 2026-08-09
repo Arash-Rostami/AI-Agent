@@ -1,23 +1,15 @@
-import {KeySessionManager} from '../utils/sessionManager.js';
 import {ConversationManager} from '../utils/conversationManager.js';
 import {SILENT_PATH} from "../utils/logManager.js";
+import {GEMINI_API_KEY} from '../config/index.js';
 
-
-export const sessionManager = new KeySessionManager([
-    process.env.GOOGLE_API_KEY_ALT,
-    process.env.GEMINI_API_KEY,
-    process.env.GEMINI_API_KEY_ALT,
-    process.env.GEMINI_API_KEY_PREMIUM,
-]);
-
+// req.geminiApiKey is only consumed by ChatController.simpleApi now — see services/gemini/index.js for the real fallback cascade.
 export const apiKeyMiddleware = (req, res, next) => {
-    const isExternalService = ['/ask-groq', '/ask-openrouter', '/ask-arvan'].some(p => req.path.startsWith(p));
+    const isExternalService = ['/ask-groq', '/ask-arvan'].some(p => req.path.startsWith(p));
 
     //first time hitting:iframe and app users
     const isRootGet = req.path === '/' && req.method === 'GET';
 
-    // API Key rotation for gemini
-    req.geminiApiKey = isExternalService ? null : sessionManager.getKeyForIP(req.keyIdentifier)
+    req.geminiApiKey = isExternalService ? null : GEMINI_API_KEY;
 
     //follow-up requests of app & iframe users respectively
     let sessionId = req.cookies?.session_id;

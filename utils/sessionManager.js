@@ -11,9 +11,22 @@ if (!fs.existsSync(path.dirname(STORAGE_FILE))) {
     fs.mkdirSync(path.dirname(STORAGE_FILE), {recursive: true});
 }
 
+// Per-identity sticky provider slot ('primary' | 'alt' | 'arvan'), TTL-expiring back to default.
+export const DEFAULT_PROVIDER_SLOT = 'primary';
+
 export class KeySessionManager {
-    constructor(keys) {
-        this.keys = keys.filter(Boolean);
+    primaryDownUntil = 0;
+
+    isPrimaryDown() {
+        return Date.now() < this.primaryDownUntil;
+    }
+
+    markPrimaryDown(cooldownMs) {
+        this.primaryDownUntil = Date.now() + cooldownMs;
+    }
+
+    clearPrimaryDown() {
+        this.primaryDownUntil = 0;
     }
 
     _load() {
@@ -29,44 +42,29 @@ export class KeySessionManager {
         fs.writeFileSync(STORAGE_FILE, JSON.stringify(data, null, 2));
     }
 
-    getKeyForIP(ip) {
-        // Fallback if IP is missing
-        if (!ip) return this.keys[0];
+    getProviderSlot(identifier) {
+        if (!identifier) return DEFAULT_PROVIDER_SLOT;
+
+        const sessions = this._load();
+        const entry = sessions[identifier];
+
+        if (entry && (Date.now() - entry.timestamp < SESSION_DURATION)) return entry.slot;
+        return DEFAULT_PROVIDER_SLOT;
+    }
+
+    setProviderSlot(identifier, slot) {
+        if (!identifier || !slot) return;
 
         const sessions = this._load();
         const now = Date.now();
-        const userSession = sessions[ip];
+        sessions[identifier] = {slot, timestamp: now};
 
-        // 1. If session exists and is fresh (< 2 hours), return saved key
-        if (userSession && (now - userSession.timestamp < SESSION_DURATION)) return userSession.key;
-
-
-        // 2. Otherwise, assign a NEW random key
-        const newKey = this.keys[Math.floor(Math.random() * this.keys.length)];
-
-        sessions[ip] = {
-            key: newKey,
-            timestamp: now
-        };
-
-        Object.keys(sessions).forEach(storedIp => {
-            if (now - sessions[storedIp].timestamp > SESSION_DURATION) {
-                delete sessions[storedIp];
-            }
+        Object.keys(sessions).forEach(id => {
+            if (now - sessions[id].timestamp > SESSION_DURATION) delete sessions[id];
         });
 
         this._save(sessions);
-        return newKey;
-    }
-
-    updateKeyForIP(ip, newKey) {
-        if (!ip || !newKey) return;
-
-        const sessions = this._load();
-        sessions[ip] = {
-            key: newKey,
-            timestamp: Date.now()
-        };
-        this._save(sessions);
     }
 }
+
+export const sessionManager = new KeySessionManager();

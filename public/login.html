@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="./assets/css/login.css"/>
     <meta name="description" content="Login to AI Assistant — secure access to the assistant dashboard."/>
     <meta name="robots" content="noindex,nofollow,noarchive,nosnippet"/>
+
+    <link rel="preload" as="image" href="/assets/img/login.jpg" type="image/jpeg">
+    <link rel="preload" as="image" href="/assets/img/signup.jpg" type="image/jpeg" media="(min-width: 768px)">
+
 </head>
 <body>
 
@@ -43,8 +47,14 @@
                 <div class="card-hero-content signin">
                     <h2>Welcome Back.</h2>
                     <h3>Please enter your credentials.</h3>
-                    <img class="hero-img" src="/assets/img/login.jpg" alt="Welcome Back"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"/>
+                    <img
+                            class="hero-img"
+                            src="/assets/img/login.jpg"
+                            alt="Welcome Back"
+                            loading="eager"
+                            decoding="async"
+                            fetchpriority="high"
+                    />
                     <div class="hero-icon" style="display: none;">
                         <i class="fas fa-sign-in-alt"></i>
                     </div>
@@ -52,8 +62,13 @@
                 <div class="card-hero-content signup">
                     <h2>Sign Up Now.</h2>
                     <h3>Join the crowd and get started.</h3>
-                    <img class="hero-img" src="/assets/img/signup.jpg" alt="Sign Up Now"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"/>
+                    <img
+                            class="hero-img"
+                            src="/assets/img/signup.jpg"
+                            alt="Sign Up Now"
+                            loading="lazy"
+                            decoding="async"
+                    />
                     <div class="hero-icon" style="display: none;">
                         <i class="fas fa-rocket"></i>
                     </div>

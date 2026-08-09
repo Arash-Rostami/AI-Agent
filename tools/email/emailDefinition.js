@@ -2,7 +2,7 @@ export const emailToolDefinition = {
     functionDeclarations: [
         {
             name: "sendEmail",
-            description: "Sends an email to a recipient. Automatically generate the subject, text, and html content based on the conversation context if the user does not provide them explicitly. Do not ask for content that can be inferred.",
+            description: "Sends a real email via this function — you have direct, working access to send it. Never tell the user you lack email/SMTP access; call this function instead. Automatically generate the subject, text, and html content based on the conversation context if the user does not provide them explicitly. Do not ask for content that can be inferred.",
             parameters: {
                 type: "OBJECT",
                 properties: {

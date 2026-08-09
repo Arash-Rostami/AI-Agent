@@ -10,7 +10,7 @@ This is not just a chatbot; it is a **Centralized AI Intelligence Hub**. It conn
 ### 🧠 Core Capabilities (The "Wow" Factor)
 
 #### 1. Multi-LLM Neural Routing
-*   **Intelligence Routing:** Dynamically switches between **Google Gemini 2.0 Flash** (Primary Reasoning), **ArvanCloud/GPT-4o** (Localized Compliance), and **Groq/Qwen** (High-Speed Inference) based on task complexity and availability.
+*   **Intelligence Routing:** Dynamically switches between **Google Gemini** (Primary Reasoning, with automatic free-tier-key and ArvanCloud-Gemini fallback), **ArvanCloud/GPT-OSS-120B** (Localized Compliance), and **Groq/Llama 3.1 8B Instant** (High-Speed Inference) based on task complexity and availability.
 *   **Thinking Mode:** Activates deep reasoning capabilities (Gemini 2.0 Flash Thinking) for solving multi-step logic problems.
 *   **Resilient Architecture:** Automatic API key rotation via `KeySessionManager` ensures 99.9% uptime.
 
@@ -51,8 +51,8 @@ This is not just a chatbot; it is a **Centralized AI Intelligence Hub**. It conn
 ### 1. Multi-Model Cognitive Engine
 Built to adapt to any task using a federated architecture of best-in-class models.
 *   **Google Gemini (Primary):** Powered by **Gemini 2.0 Flash** & **Gemini 1.5 Pro**. Supports native **Multimodal** input (Text, Images, Audio, PDFs) and **Function Calling**.
-*   **ArvanCloud Integration:** Secure, localized routing to **GPT-4o** (Multimodal) and **DeepSeek V3**.
-*   **OpenRouter & Groq:** High-speed inference using **Grok 4.1 Fast** (via OpenRouter) and **Qwen 2.5** (via Groq) for cost-effective scaling.
+*   **ArvanCloud Integration:** Secure, localized routing to **GPT-OSS-120B**, plus an ArvanCloud-hosted Gemini model used as an automatic fallback when Gemini's free-tier keys are unavailable.
+*   **Groq:** High-speed inference using **Llama 3.1 8B Instant** for cost-effective scaling.
 *   **Thinking Mode:** Activates **Gemini 2.0 Flash Thinking** for complex reasoning tasks. *Note: Limited daily usage applies to manage computational resources.*
 
 ### 2. Live Web Intelligence & Tools
@@ -80,7 +80,7 @@ More than just a chatbot—it's a business tool.
 *   **File Analysis:** Upload Images or PDFs for instant analysis, OCR, and data extraction.
 
 ### 5. Multimodal Interaction
-*   **Voice Input:** Record and send audio messages directly to supported models (Gemini, GPT-4o).
+*   **Voice Input:** Record and send audio messages directly to Gemini.
 *   **Audio Response:** AI generates natural speech playback for a hands-free experience.
 
 ---
@@ -119,7 +119,7 @@ More than just a chatbot—it's a business tool.
 ### Prerequisites
 *   Node.js (v18 or higher)
 *   MongoDB Instance (Local or Atlas)
-*   API Keys (Gemini, ArvanCloud, OpenRouter, Groq)
+*   API Keys (Gemini, ArvanCloud, Groq)
 
 ### 1. Installation
 
@@ -144,20 +144,26 @@ JWT_SECRET=your_super_secret_jwt_key
 SITE_URL=https://your-domain.com
 SIGNUP_SECRET=your_secure_signup_key_here
 
-# --- AI Model Keys (Primary & Fallbacks) ---
-GEMINI_API_KEY_PREMIUM=your_google_gemini_key
+# --- AI Model Keys ---
+GEMINI_API_KEY=your_google_gemini_key
 GROK_API_KEY=your_groq_key
-OPENROUTER_API_KEY=your_openrouter_key
 ARVANCLOUD_API_KEY=your_arvancloud_key
 
 # --- Service URLs & Tools ---
 GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
-ARVANCLOUD_CHATGPT_URL=https://napi.arvancloud.ir/paas/v1/chat/completions
-ARVANCLOUD_DEEPSEEK_URL=https://napi.arvancloud.ir/paas/v1/chat/completions
-OPENROUTER_API_URL=https://openrouter.ai/api/v1/chat/completions
+ARVANCLOUD_CHATGPT_URL=https://arvancloudai.ir/gateway/models/GPT-OSS-120B/.../v1/chat/completions
+ARVANCLOUD_GEMINI_URL=https://arvancloudai.ir/gateway/models/Gemini-3.1-Flash-Lite-Preview/.../v1/chat/completions
+ARVANCLOUD_THINKING_URL=https://arvancloudai.ir/gateway/models/Gemini-3-Flash-Preview/.../v1/chat/completions
 WEATHER_API_KEY=your_openweathermap_key
 AI_SERVICE_SECRET=your_bms_backend_secret
 BMS_API_URL=https://example.io/ai/query
+
+# --- Email (SMTP) ---
+SMTP_HOST=your_smtp_host
+SMTP_PORT=587
+SMTP_USER=your_smtp_user
+SMTP_PASS=your_smtp_password
+EMAIL_FROM='AI Assistant <you@example.com>'
 ```
 
 ### 3. Database & User Setup

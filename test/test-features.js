@@ -1,5 +1,5 @@
-import {callGeminiAPI} from '../services/gemini/index.js';
-import callArvanCloudAPI from '../services/arvancloud/index.js';
+import {askGemini, callGeminiAPI} from '../services/gemini/index.js';
+import callArvanCloudAPI, {ARVAN_THINKING_MODEL_ID} from '../services/arvancloud/index.js';
 import {createTransport} from 'nodemailer';
 import {SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_USER} from '../config/index.js';
 import dotenv from 'dotenv';
@@ -9,17 +9,15 @@ dotenv.config();
 async function testFeatures() {
     console.log('🧪 Starting Comprehensive Feature Test...\n');
 
-    // 1. Test Web Search (Gemini)
+    // 1. Test Web Search (Gemini, via the free-tier fallback cascade)
     try {
         console.log('🔍 Testing Web Search (Gemini)...');
-        // Note: useWebSearch = true
-        const searchResponse = await callGeminiAPI(
+        const searchResponse = await askGemini(
             'What is the current stock price of Apple (AAPL)?',
             [],
-            process.env.GEMINI_API_KEY_PREMIUM,
+            'test-user',
             false, // isRestrictedMode
-            true,  // useWebSearch
-            'test-user'
+            true   // useWebSearch
         );
         console.log('✅ Web Search Success!');
         console.log('Preview:', searchResponse.text.substring(0, 100) + '...\n');
@@ -33,20 +31,20 @@ async function testFeatures() {
         console.log('\n');
     }
 
-    // 2. Test Image Understanding (Multimodal)
+    // 2. Test Image Understanding (native Gemini multimodal — ArvanCloud has no vision-capable model anymore)
     try {
-        console.log('🖼️  Testing Image Understanding (Arvan Cloud GPT-4o)...');
-        // 1x1 Transparent PNG Base64
-        const base64Image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+        console.log('🖼️  Testing Image Understanding (Gemini)...');
+        const base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
-        const imageResponse = await callArvanCloudAPI(
+        const imageResponse = await callGeminiAPI(
             'What color is this image? (It should be transparent/empty)',
             [],
-            'GPT-4o-mini-4193n',
-            base64Image
+            process.env.GEMINI_API_KEY,
+            false, false, 'test-user', false,
+            {mimeType: 'image/png', data: base64Image}
         );
         console.log('✅ Image Analysis Success!');
-        console.log('Response:', imageResponse + '\n');
+        console.log('Response:', imageResponse.text + '\n');
     } catch (error) {
         console.error('❌ Image Analysis Failed:', error.message);
         console.log('\n');
@@ -76,25 +74,17 @@ async function testFeatures() {
     }
     console.log('\n');
 
-    // 4. Test Thinking Mode (Gemini)
+    // 4. Test Thinking Mode (calls the ArvanCloud Thinking model directly — bypasses
+    // THINKING_MODE_ENABLED on purpose, to verify the underlying endpoint/key still work)
     try {
-        console.log('wc  Testing Thinking Mode (Gemini)...');
-        // useThinkingMode = true
-        // Note: This might take longer
-        const thinkResponse = await callGeminiAPI(
+        console.log('🧠 Testing Thinking Mode (ArvanCloud Gemini-3-Flash-Preview)...');
+        const thinkResponse = await callArvanCloudAPI(
             'How many Rs are in Strawberry?',
             [],
-            process.env.GEMINI_API_KEY_PREMIUM,
-            false,
-            false,
-            'test-user',
-            false, // isBmsMode
-            null, // fileData
-            null, // systemInstruction
-            true // useThinkingMode
+            ARVAN_THINKING_MODEL_ID
         );
         console.log('✅ Thinking Mode Success!');
-        console.log('Response:', thinkResponse.text.substring(0, 100) + '...\n');
+        console.log('Response:', thinkResponse.substring(0, 100) + '...\n');
     } catch (error) {
         console.error('❌ Thinking Mode Failed:', error.message);
         console.log('\n');

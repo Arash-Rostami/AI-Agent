@@ -1,26 +1,28 @@
-import {sessionManager} from '../../middleware/keySession.js';
-import {GEMINI_API_KEY} from '../../config/index.js';
-
-export async function handle(error, message, conversationHistory, apiKey, isRestrictedMode, useWebSearch, keyIdentifier, retryFunction) {
-    console.error(`❌ Gemini API Error (${retryFunction.name}):`, error.response?.data || error.message);
-
+// Classifies only — services/gemini/index.js's askGemini decides whether/how to retry.
+export function classify(error) {
     const response = error.response;
     const status = response?.status;
     const errorMessage = response?.data?.error?.message;
+    const errorDetails = response?.data?.error?.details;
 
+    const isTimeout = error.code === 'ECONNABORTED' || /timeout/i.test(error.message || '');
     const isQuotaExceeded = status === 429;
     const isLeakedKey = status === 403 && errorMessage?.includes('Your API key was reported as leaked');
+    const isDailyQuotaExceeded = isQuotaExceeded && (
+        errorMessage?.includes('PerDay') ||
+        errorDetails?.some(d => d.violations?.some(v => v.quotaId?.includes('PerDay')))
+    );
 
-    if (isQuotaExceeded || isLeakedKey) {
-        if (GEMINI_API_KEY && apiKey !== GEMINI_API_KEY) {
-            console.log(`⚠️ Switching to premium key for user ${keyIdentifier || 'unknown'} (Reason: ${status})...`);
+    return {
+        status,
+        isTimeout,
+        isQuotaExceeded,
+        isLeakedKey,
+        isDailyQuotaExceeded,
+        failoverEligible: isTimeout || isQuotaExceeded || isLeakedKey
+    };
+}
 
-            if (keyIdentifier) sessionManager.updateKeyForIP(keyIdentifier, GEMINI_API_KEY);
-
-            return retryFunction.name === 'callSimpleGeminiAPI'
-                ? retryFunction(message, GEMINI_API_KEY, keyIdentifier)
-                : retryFunction(message, conversationHistory, GEMINI_API_KEY, isRestrictedMode, useWebSearch, keyIdentifier);
-        }
-    }
-    throw error;
+export function logError(context, error) {
+    console.error(`❌ Gemini API Error (${context}):`, error.response?.data || error.message);
 }

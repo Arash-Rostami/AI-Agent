@@ -35,3 +35,14 @@ export function getAllowedTools(isRestrictedMode, useWebSearch, allTools, isBmsM
     }
     return useWebSearch ? allTools : allTools.filter(t => !isWebSearchTool(t));
 }
+
+// Execution-layer check, shared by responseHandler.js and ArvanCloud's tool loop.
+export function isToolExecutionAllowed(toolName, isRestrictedMode, useWebSearch, isBmsMode = false, isEteqMode = false) {
+    if (!isRestrictedMode) return true;
+
+    const isBmsAllowed = (toolName === 'searchBmsDatabase' && isBmsMode);
+    const isEteqAllowed = isEteqMode && (toolName === 'sendEmail' || (useWebSearch && (toolName === 'getWebSearch' || toolName === 'crawlWebPage')));
+    const isWebSearchAllowed = (toolName === 'getWebSearch' || toolName === 'crawlWebPage') && useWebSearch;
+
+    return isBmsAllowed || isEteqAllowed || isWebSearchAllowed;
+}

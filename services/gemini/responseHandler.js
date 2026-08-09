@@ -1,4 +1,5 @@
 import {executeTool, safeParseArgs} from './toolHandler.js';
+import {isToolExecutionAllowed} from './formatter.js';
 import {callGeminiAPI} from './index.js';
 
 export async function handle(
@@ -42,17 +43,9 @@ async function handleToolCall(
     console.log(`🤖 Gemini requested to call tool: ${toolName} with arguments:`, rawArgs);
 
 
-    if (isRestrictedMode) {
-        const isBmsAllowed = (toolName === 'searchBmsDatabase' && isBmsMode);
-        const isEteqAllowed = isEteqMode && (toolName === 'sendEmail' || (useWebSearch && (toolName === 'getWebSearch' || toolName === 'crawlWebPage')));
-        const isWebSearchAllowed = (toolName === 'getWebSearch' || toolName === 'crawlWebPage') && useWebSearch;
-
-        const allowed = isBmsAllowed || isEteqAllowed || isWebSearchAllowed;
-
-        if (!allowed) {
-            console.log(`🚫 Blocked tool call in restricted mode. isRestrictedMode=${isRestrictedMode}, useWebSearch=${useWebSearch}, toolName=${toolName}, isBmsMode=${isBmsMode}, isEteqMode=${isEteqMode}`);
-            return {text: "I apologize, but I cannot perform external actions in this mode.", sources: []};
-        }
+    if (isRestrictedMode && !isToolExecutionAllowed(toolName, isRestrictedMode, useWebSearch, isBmsMode, isEteqMode)) {
+        console.log(`🚫 Blocked tool call in restricted mode. isRestrictedMode=${isRestrictedMode}, useWebSearch=${useWebSearch}, toolName=${toolName}, isBmsMode=${isBmsMode}, isEteqMode=${isEteqMode}`);
+        return {text: "I apologize, but I cannot perform external actions in this mode.", sources: []};
     }
 
     try {
@@ -87,7 +80,6 @@ async function handleToolCall(
             isRestrictedMode,
             useWebSearch,
             keyIdentifier,
-            isBmsMode,
             isBmsMode,
             null,
             null,

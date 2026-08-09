@@ -116,13 +116,10 @@ export default class ChatHandler extends BaseHandler {
         try {
             const serviceEndpoints = {
                 'groq': '/ask-groq',
-                'openrouter': '/ask-openrouter',
-                'gpt-4o': '/ask-arvan',
-                'deepseek': '/ask-arvan'
+                'chatgpt': '/ask-arvan'
             };
             const modelMap = {
-                'gpt-4o': 'GPT-4o-mini-4193n',
-                'deepseek': 'DeepSeek-Chat-V3-0324-mbxyd'
+                'chatgpt': 'GPT-OSS-120B-burmt'
             };
 
             const endpoint = serviceEndpoints[selectedService] ?? '/ask';
@@ -208,7 +205,7 @@ export default class ChatHandler extends BaseHandler {
     updateThinkingModeTitle(usage) {
         if (!this.thinkingModeBtn) return;
         const count = usage.count || 0;
-        this.thinkingModeBtn.title = `Thinking Mode (${count}/2 used)`;
+        this.thinkingModeBtn.title = `Thinking Mode (${count}/3 used)`;
     }
 
     closeKebabMenu() {
@@ -321,5 +318,15 @@ export default class ChatHandler extends BaseHandler {
         this.isThinkingModeActive = !this.isThinkingModeActive;
         this.thinkingModeBtn?.classList.toggle('active', this.isThinkingModeActive);
         this.mobileThinkingModeToggle?.classList.toggle('active', this.isThinkingModeActive);
+
+        if (this.isThinkingModeActive && this.isWebSearchActive) this.toggleWebSearch();
+        this.webSearchBtn.classList.toggle('hidden', this.isThinkingModeActive);
+        this.mobileWebSearchToggle?.classList.toggle('hidden', this.isThinkingModeActive);
+        this.attachmentBtn.classList.toggle('hidden', this.isThinkingModeActive);
+        this.micBtn.classList.toggle('hidden', this.isThinkingModeActive);
+        if (this.isThinkingModeActive) {
+            this.uiHandler.clearFileSelection();
+            this.uiHandler.clearAudioSelection();
+        }
     }
 }
