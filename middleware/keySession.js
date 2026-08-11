@@ -2,7 +2,7 @@ import {ConversationManager} from '../utils/conversationManager.js';
 import {SILENT_PATH} from "../utils/logManager.js";
 import {GEMINI_API_KEY} from '../config/index.js';
 
-// req.geminiApiKey is only consumed by ChatController.simpleApi now — see services/gemini/index.js for the real fallback cascade.
+// req.geminiApiKey is only consumed by ChatController.simpleApi; askGemini/askNativeGemini read GEMINI_API_KEY directly.
 export const apiKeyMiddleware = (req, res, next) => {
     const isExternalService = ['/ask-groq', '/ask-arvan'].some(p => req.path.startsWith(p));
 

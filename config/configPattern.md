@@ -4,7 +4,7 @@
 
 `config/index.js` is the single place environment variables are read, validated, and turned into typed exports — but `utils/userManager.js` loads its own `.env` independently for standalone CLI use, bypassing this module. If you add a new API key or config value, decide up front whether it needs to be readable from a bare CLI script — if so, follow `userManager.js`'s pattern of resolving `.env` relative to its own file rather than assuming CWD.
 
-There's exactly one Gemini key now: `GEMINI_API_KEY`, the sole hop of the free-tier fallback cascade in `services/gemini/index.js` before it falls through to ArvanCloud. (`GEMINI_API_KEY_ALT` was removed — that project returned a persistent `403 PERMISSION_DENIED`, not a transient error, so it was dead weight in the rotation. `GEMINI_API_KEY_PREMIUM`/`GEMINI_API_URL_THINKING` were also removed — Thinking mode now runs entirely through ArvanCloud's `Gemini-3-Flash-Preview-kc6io`, not native Google Gemini at all, since the two APIs are structurally incompatible; see [[../services/servicesPattern]] §3a.)
+There's exactly one native Gemini key: `GEMINI_API_KEY`, used by the vision path of the Gemini option (image attachment → `callGeminiAPI`), `askNativeGemini` (the `/ask-smart` path), and `callSimpleGeminiAPI`. The free-tier fallback cascade was removed — `askGemini` is now a content dispatch (no loop): thinking-mode → ArvanCloud's `ARVANCLOUD_THINKING_URL` (`Gemini-3-Flash-Preview-kc6io`); image attachment → native `callGeminiAPI`; plain text → ArvanCloud-hosted Gemini via `ARVANCLOUD_GEMINI_URL` (`Gemini-3.1-Flash-Lite-Preview-8dzyx`, `ARVAN_GEMINI_MODEL_ID`). (`GEMINI_API_KEY_ALT` was removed — persistent `403 PERMISSION_DENIED`, not transient. `GEMINI_API_KEY_PREMIUM`/`GEMINI_API_URL_THINKING` were removed — Thinking mode runs through ArvanCloud, not native Google Gemini. The `KeySessionManager` key-rotation/circuit-breaker (`utils/sessionManager.js` + `data/sessions.json`) is **deleted entirely** — both files removed, zero callers; see [[../services/servicesPattern]] §3a.)
 
 (Historically `GEMINI_API_KEY`'s export was wired to read `GEMINI_API_KEY_PREMIUM`'s value — a naming trap. That's fixed; the export now reads its own like-named env var.)
 
@@ -16,7 +16,7 @@ if (!GEMINI_API_KEY) {
     process.exit(1);
 }
 ```
-This runs at **import time** — a top-level side effect — before `connectDB()` is ever called and before any Mongoose model is registered. `ARVANCLOUD_GEMINI_URL`/`ARVANCLOUD_THINKING_URL` are not fail-fast — a missing one just means that cascade hop or Thinking mode throws at call time instead of at boot. When adding a new required env var, decide whether it deserves the same fail-fast treatment or should degrade gracefully (most optional integrations — weather, BMS — currently just throw at call time instead, e.g. `bmsTool.js`'s `if (!AI_SERVICE_SECRET) throw new Error(...)`).
+This runs at **import time** — a top-level side effect — before `connectDB()` is ever called and before any Mongoose model is registered. `ARVANCLOUD_GEMINI_URL`/`ARVANCLOUD_THINKING_URL` are not fail-fast — a missing one just means the ArvanCloud-hosted Gemini hop or Thinking mode throws at call time instead of at boot. When adding a new required env var, decide whether it deserves the same fail-fast treatment or should degrade gracefully (most optional integrations — weather, BMS — currently just throw at call time instead, e.g. `bmsTool.js`'s `if (!AI_SERVICE_SECRET) throw new Error(...)`).
 
 ## 3. Insecure default — fix before deploying anywhere real
 ```js
@@ -41,7 +41,7 @@ Thin `mongoose.connect(MONGO_URI)` wrapper, called from `utils/serverManager.js`
 
 ## 7. Anti-patterns
 
-❌ **Don't reintroduce a second native-Gemini key into the fallback cascade without checking it first.** `GEMINI_API_KEY_ALT` was removed because its project returned a persistent `403 PERMISSION_DENIED` — a real, non-transient failure, not something the cascade could route around. Verify a new key actually works before wiring it in.
+❌ **Don't reintroduce a second native-Gemini key expecting automatic rotation.** The fallback cascade and `KeySessionManager` key-rotation/circuit-breaker were removed (`utils/sessionManager.js` and `data/sessions.json` are deleted — zero callers); `GEMINI_API_KEY_ALT` was removed because its project returned a persistent `403 PERMISSION_DENIED`, a non-transient failure. A premium key is coming; wire it explicitly rather than reintroducing a rotation loop.
 
 ❌ **Don't assume editing a `documents/*.txt` file takes effect without a restart.** Only `cxRag.txt` (via `promptManager.getRagFileContent`'s fallback path) is read live; the four instruction constants are boot-time snapshots.
 

@@ -16,7 +16,7 @@ if (!/^[0-9a-fA-F]{24}$/.test(userId)) return { allowed: false, ... };
 Iframe-identity users get `userId = "${hostname}_${rawUserId}"` from `identityMiddleware` — that string never matches the ObjectId regex, so **thinking mode is silently unavailable for all embedded/iframe traffic**, not just deliberately disabled for it. If thinking mode should ever be offered to iframe users, this is the gate to change, not something to route around downstream.
 
 ### `initialPrompt(req, res)` — `GET /initial-prompt`
-Builds a locale-appropriate greeting (Persian if `isRestrictedMode && !isBmsMode && !isEteqMode`, else English), calls `constructSystemPrompt` then `askGemini` (not `callGeminiAPI` directly — see [[../services/servicesPattern]] §3a for the fallback cascade this runs), persists via `ConversationManager.appendAndSave` + fire-and-forget `syncToDB` (skipped for ETEQ mode). Has its own hardcoded fallback greeting text on error — this endpoint **never** returns a non-2xx to the client, even on internal failure, by design (a broken greeting shouldn't block the chat UI from loading).
+Builds a locale-appropriate greeting (Persian if `isRestrictedMode && !isBmsMode && !isEteqMode`, else English), calls `constructSystemPrompt` then `askGemini` (not `callGeminiAPI` directly — see [[../services/servicesPattern]] §3a for the content dispatch this runs), persists via `ConversationManager.appendAndSave` + fire-and-forget `syncToDB` (skipped for ETEQ mode). Has its own hardcoded fallback greeting text on error — this endpoint **never** returns a non-2xx to the client, even on internal failure, by design (a broken greeting shouldn't block the chat UI from loading).
 
 ### `ask(req, res)` — `POST /ask`, the primary chat endpoint
 ```js
@@ -33,7 +33,10 @@ const updated = ConversationManager.appendAndSave(sessionId, conversationHistory
 res.json({reply: text, sources, thinkingModeUsage: usage, sessionId});
 if (!isEteqMode) syncToDB(sessionId, userId, updated);       // fires AFTER res.json — response never waits on Mongo
 ```
-Note the response is sent before the database write starts — the client never waits on Mongo latency, and a Mongo failure here is caught and logged but never surfaces to the user (`syncToDB = (...) => syncToDatabase(...).catch(err => console.error(err.message))`). `req.geminiApiKey` is no longer used here — `askGemini` resolves its own keys per hop from `keyIdentifier`; only `simpleApi` below still reads `req.geminiApiKey`.
+Note the response is sent before the database write starts — the client never waits on Mongo latency, and a Mongo failure here is caught and logged but never surfaces to the user (`syncToDB = (...) => syncToDatabase(...).catch(err => console.error(err.message))`). `req.geminiApiKey` is no longer used here — `askGemini`/`askNativeGemini` read `GEMINI_API_KEY` directly (no per-hop key resolution anymore — the cascade is gone); only `simpleApi` below still reads `req.geminiApiKey`.
+
+### `askSmart(req, res)` — `POST /ask-smart`, the Gemini Smart option
+Mirrors `ask` but calls `askNativeGemini` (pure native Gemini — vision + tools, **no thinking mode**) instead of `askGemini`, so it drops the `useThinkingMode`/`manageThinkingMode` plumbing and responds `{reply, sources, sessionId}` (no `thinkingModeUsage`). Same `getFileData`/`appendAndSave`/fire-and-forget `syncToDB` shape. The UI's `gemini-smart` option is `disabled` ("coming soon") until the premium key lands — the route works today but the free-tier key 429s, which is exactly why the option is hidden. Enable by removing the `disabled` attribute in `public/index.html` once the premium key is configured.
 
 ### `handleAPIEndpoint(apiCall, apiName)` — higher-order factory backing `/ask-groq`, `/ask-arvan`
 ```js

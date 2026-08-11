@@ -1,4 +1,4 @@
-import {askGemini, callSimpleGeminiAPI, THINKING_MODE_ENABLED} from '../services/gemini/index.js';
+import {askGemini, askNativeGemini, callSimpleGeminiAPI, THINKING_MODE_ENABLED} from '../services/gemini/index.js';
 import {syncToDatabase} from '../utils/interactionLogManager.js';
 import {ConversationManager} from '../utils/conversationManager.js';
 import {constructSystemPrompt} from '../utils/promptManager.js';
@@ -114,6 +114,39 @@ export const ask = async (req, res) => {
 
         const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, text);
         res.json({reply: text, sources, thinkingModeUsage: usage, sessionId});
+        if (!isEteqMode) syncToDB(sessionId, userId, updated);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({error: 'Sorry, I encountered an error. Please try again.', details: error.message});
+    }
+};
+
+export const askSmart = async (req, res) => {
+    const {message, useWebSearch} = req.body;
+
+    if (!validateMessage(message)) return res.status(400).json({error: 'Valid message is required'});
+
+    const {
+        isRestrictedMode,
+        isBmsMode,
+        isEteqMode,
+        sessionId,
+        conversationHistory,
+        keyIdentifier,
+        userId
+    } = req;
+
+    try {
+        const systemInstruction = await constructSystemPrompt(req, message);
+        const fileData = getFileData(req.file);
+
+        const {
+            text,
+            sources
+        } = await askNativeGemini(message, conversationHistory, keyIdentifier, isRestrictedMode, useWebSearch, isBmsMode, fileData, systemInstruction, isEteqMode);
+
+        const updated = ConversationManager.appendAndSave(sessionId, conversationHistory, message, text);
+        res.json({reply: text, sources, sessionId});
         if (!isEteqMode) syncToDB(sessionId, userId, updated);
     } catch (error) {
         console.error(error.message);

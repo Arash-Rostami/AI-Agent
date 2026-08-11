@@ -115,8 +115,9 @@ export default class ChatHandler extends BaseHandler {
 
         try {
             const serviceEndpoints = {
-                'groq': '/ask-groq',
-                'chatgpt': '/ask-arvan'
+                'chatgpt': '/ask-arvan',
+                'ollama': '/ask-groq',
+                'gemini-smart': '/ask-smart'
             };
             const modelMap = {
                 'chatgpt': 'GPT-OSS-120B-burmt'

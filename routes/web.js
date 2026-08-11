@@ -17,6 +17,8 @@ router.get('/initial-prompt', ChatController.initialPrompt);
 
 router.post('/ask', upload.single('file'), ChatController.ask);
 
+router.post('/ask-smart', upload.single('file'), ChatController.askSmart);
+
 router.post('/ask-groq', upload.single('file'), ChatController.handleAPIEndpoint(callGrokAPI, 'Groq'));
 
 router.post('/ask-arvan', upload.single('file'), ChatController.handleAPIEndpoint(callArvanCloudAPIWithTools, 'ArvanCloud'));

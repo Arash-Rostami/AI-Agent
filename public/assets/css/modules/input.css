@@ -536,6 +536,11 @@ body.interface-unpinned .header:hover ~ .chat-container .service-selector {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23e3e3e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
 }
 
+.service-selector select option:disabled {
+    opacity: 0.55;
+    font-style: italic;
+}
+
 .web-search-btn.active {
     background: var(--primary-color);
     color: #ffffff;

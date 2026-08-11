@@ -10,9 +10,9 @@ This is not just a chatbot; it is a **Centralized AI Intelligence Hub**. It conn
 ### 🧠 Core Capabilities (The "Wow" Factor)
 
 #### 1. Multi-LLM Neural Routing
-*   **Intelligence Routing:** Dynamically switches between **Google Gemini** (Primary Reasoning, with automatic free-tier-key and ArvanCloud-Gemini fallback), **ArvanCloud/GPT-OSS-120B** (Localized Compliance), and **Groq/Llama 3.1 8B Instant** (High-Speed Inference) based on task complexity and availability.
-*   **Thinking Mode:** Activates deep reasoning capabilities (Gemini 2.0 Flash Thinking) for solving multi-step logic problems.
-*   **Resilient Architecture:** Automatic API key rotation via `KeySessionManager` ensures 99.9% uptime.
+*   **Intelligence Routing:** A 4-option model selector — **Gemini** (default: text/tools via ArvanCloud-hosted Gemini, vision via native Gemini), **GPT** (ArvanCloud GPT-OSS-120B), **Ollama** (Groq-hosted Llama 3.1 8B Instant), and **Gemini Smart** (pure native Gemini, disabled until a premium key is configured). Content-based dispatch, no fallback loop.
+*   **Thinking Mode:** Activates deep reasoning capabilities (ArvanCloud Gemini-3-Flash thinking model) for solving multi-step logic problems.
+*   **Resilient Architecture:** The Gemini option keeps working even when the free-tier native key is quota-exhausted, because text/tools route to ArvanCloud-hosted Gemini (only vision needs the native key).
 
 #### 2. Unified Intelligence Gateway
 *   **Cross-App Connectivity:** Acts as a headless brain for third-party apps via secure API endpoints (`/ask-groq`, `/ask-arvan`).
@@ -108,7 +108,6 @@ More than just a chatbot—it's a business tool.
 *   **Vector Engine:** Custom **In-Memory Vector Store** (initialized on startup from `documents/RAG`) for zero-latency context retrieval.
 *   **Security:**
     *   `frameGuard` Middleware (Iframe protection)
-    *   `KeySessionManager` (API Key Rotation & Quota Management)
     *   `RestrictedMode` (Context-aware tool blocking)
 *   **Architecture Pattern:** Controller-Service-Repository pattern with "Memory-First" fallbacks for high availability.
 
@@ -133,27 +132,35 @@ npm install
 ```
 
 ### 2. Configuration
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory. **Required** (app exits at boot without these):
+
+```env
+# --- Required (boot fails if missing) ---
+GEMINI_API_KEY=your_google_gemini_key
+GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+MONGO_URI=mongodb://localhost:27017/ai_agent
+```
+
+**Required for full functionality** (app boots but the feature is disabled without them):
 
 ```env
 # --- Server Config ---
 PORT=3000
 NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/ai_agent
-JWT_SECRET=your_super_secret_jwt_key
+JWT_SECRET=your_super_secret_jwt_key          # ⚠ has a hardcoded fallback if unset — always set it in prod
 SITE_URL=https://your-domain.com
-SIGNUP_SECRET=your_secure_signup_key_here
+SIGNUP_SECRET=your_secure_signup_key_here     # required for the /signup endpoint
+ALLOWED_ORIGINS=https://app1.example.com,https://app2.example.com  # CSV of external sites permitted to embed this app (iframe/restricted mode). Do NOT list this app's own URL here.
 
-# --- AI Model Keys ---
-GEMINI_API_KEY=your_google_gemini_key
-GROK_API_KEY=your_groq_key
+# --- LLM Provider Keys & URLs (ArvanCloud is the Gemini option's text/tools backend today) ---
+GROK_API_KEY=your_groq_key                                       # Ollama option (/ask-groq)
 ARVANCLOUD_API_KEY=your_arvancloud_key
-
-# --- Service URLs & Tools ---
-GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
 ARVANCLOUD_CHATGPT_URL=https://arvancloudai.ir/gateway/models/GPT-OSS-120B/.../v1/chat/completions
 ARVANCLOUD_GEMINI_URL=https://arvancloudai.ir/gateway/models/Gemini-3.1-Flash-Lite-Preview/.../v1/chat/completions
 ARVANCLOUD_THINKING_URL=https://arvancloudai.ir/gateway/models/Gemini-3-Flash-Preview/.../v1/chat/completions
+ARVANCLOUD_EMBEDDING_URL=https://arvancloudai.ir/gateway/models/Embedding-3-Large/.../v1/embeddings  # BMS RAG vector search
+
+# --- Tools ---
 WEATHER_API_KEY=your_openweathermap_key
 AI_SERVICE_SECRET=your_bms_backend_secret
 BMS_API_URL=https://example.io/ai/query
@@ -165,6 +172,8 @@ SMTP_USER=your_smtp_user
 SMTP_PASS=your_smtp_password
 EMAIL_FROM='AI Assistant <you@example.com>'
 ```
+
+> **Gemini key tiers:** `GEMINI_API_KEY` is the **native** Google key — used today only for image/vision on the Gemini option, the `Gemini Smart` option, and the stateless `/api/` endpoint. Text and tool-calling on the Gemini option route to **ArvanCloud-hosted Gemini** (`ARVANCLOUD_GEMINI_URL`), so the app keeps working on the default path even when the free-tier native key is quota-exhausted. The free tier currently 429s on vision/Smart until a **premium** key replaces `GEMINI_API_KEY`; until then `Gemini Smart` is disabled in the UI.
 
 ### 3. Database & User Setup
 The system uses MongoDB for user authentication. You can create users manually via the CLI or use the restricted API endpoint.
@@ -199,13 +208,57 @@ npm run auto
 npm start
 ```
 
+### 5. Testing
+
+The suite uses Node's built-in `node:test` runner (no extra deps) and exercises a live server + real providers over HTTP.
+
+```bash
+npm test                 # boot server, run suite, tear down
+npm test -- --email      # also run the real-SMTP email tests (off by default)
+```
+
+The orchestrator (`test/run.js`) starts `node app.js`, waits for readiness, runs `node --test test/` (serialized, `--test-concurrency=1`), then kills the server. If a server is already reachable at `TEST_BASE` (default `http://localhost:3000`), it reuses it instead of booting one.
+
+| File | Covers |
+|---|---|
+| `test/01-auth.test.js` | signup/login, `/auth/admin`, protect-gate redirect, change-password, avatar upload/remove |
+| `test/02-services.test.js` | ArvanCloud (GPT/Gemini/Thinking), `askGemini` hybrid dispatch, `/initial-prompt`, `/ask`, `/ask-arvan` tool-calling |
+| `test/03-tools.test.js` | weather, forecast, air quality, time, web search (sources), web crawler, business-info doc, sendEmail |
+| `test/04-modes.test.js` | iframe restricted mode, BMS (`searchBmsDatabase`), ETEQ (web search + non-persistence) |
+| `test/05-history-sessions.test.js` | `session_id` cookie, in-memory continuity, list/details, restore, clear, delete, email-history |
+
+**Skipped by design (not failures):**
+- **Groq / `/ask-groq` (Ollama option)** — `test.skip` to protect the Groq daily quota. The route and UI stay fully functional; exercise manually.
+- **Vision (`/ask` + image), `/ask-smart` (Gemini Smart), `/api/` simpleApi** — `test.skip` because they hit the free-tier **native** Gemini key (429 today). They un-skip once a premium key replaces `GEMINI_API_KEY`.
+- **`POST /api/vector/sync` (RAG rebuild)** — not run by default (destructive full-rebuild of the vector store); exercise manually when changing the RAG path.
+
+**Notes**
+- A 3s `afterEach` pause (`test/helpers.js` `pace`) keeps the suite from pressuring the LLM provider rate limit.
+- Tests hit live external services (ArvanCloud, Groq, Gemini, OpenWeather, DDG web search, BMS API, SMTP). Failures may reflect upstream outages, quota, or local DNS issues — not just regressions. Check `test/.server.log` and the console evidence lines.
+- First run creates `qa_*` users in MongoDB (no delete-user endpoint); later runs log them in.
+
+| Var / flag | Purpose |
+|---|---|
+| `TEST_BASE=http://host:port` | Target an already-running server instead of booting one. |
+| `TEST_SEND_EMAIL=1` or `--email` | Enable real-SMTP email tests (off by default — side-effecting). Recipient parsed from `EMAIL_FROM`. |
+| `TEST_USER_PREFIX` | Prefix for `qa_*` test users (default `qa`). |
+| `TEST_PASS` | Password for test users (default `Qa!Pass1_Test`). |
+
+### 6. Production Deployment Notes
+
+- **Set `JWT_SECRET` explicitly.** If unset, `config/index.js` falls back to a hardcoded `'default_secret_key_change_me'` and the app still boots — silently insecure. Always set it in production.
+- **`ALLOWED_ORIGINS`** is a CSV of *external* sites permitted to embed this app (drives iframe/restricted mode). Do **not** list the app's own serving URL — browsers send `Referer: <current page>` on same-origin fetches, so listing your own URL misclassifies every direct visit as embedded and silently strips tools. BMS detection is hardcoded to `export.bmsflow.org`; ETEQ to `eteq.vercel.app`.
+- **Single point of failure:** with the fallback cascade removed, the default **Gemini** option routes text + tool-calling through ArvanCloud (`ARVANCLOUD_GEMINI_URL`). An ArvanCloud outage takes the default chat path down; image/vision and `Gemini Smart` need the native `GEMINI_API_KEY`. Wire a premium native key (and un-skip + UI-enable `Gemini Smart`) to restore a second independent path.
+- **Process model:** chat history is "memory-first" — an in-process `Map` with fire-and-forget Mongo persistence. A **process restart wipes the in-memory map**; non-ETEQ conversations survive in Mongo but don't auto-rehydrate (only the explicit restore flow brings one back). Run a single long-lived process, or add a shared store (Mongo/Redis) before horizontal scaling. ETEQ-mode conversations are never persisted and are lost on restart by design.
+- **File uploads:** `/ask`, `/ask-groq`, `/ask-arvan` accept uploads via `multer.memoryStorage()` with no size cap — put a body-size limit at your reverse proxy (nginx `client_max_body_size`, etc.). Avatar uploads (`/auth/upload-avatar`) are disk-stored with a 3 MB cap and extension allowlist.
+- **DNS:** the app resolves `arvancloudai.ir` and `generativelanguage.googleapis.com` per request. Use a stable resolver (e.g. `8.8.8.8` / `1.1.1.1`); a flaky system DNS will surface as intermittent "Sorry, I encountered an error" responses (the chat catch block).
+
 ---
 
 ## 🛡️ Security Features
 
 *   **Restricted Mode:** Automatically locks down sensitive tools (Web Search, BMS) when embedded in external websites. Detects origin via `Referer` or `X-Frame-Referer` headers.
 *   **Data Privacy:** "Restricted Mode" conversations are never stored in the vector database.
-*   **Key Rotation:** The `KeySessionManager` automatically rotates API keys to handle rate limits and ensure uptime.
 *   **Sanitized Inputs:** All inputs are validated against injection attacks before processing.
 *   **Access Control:** Strict separation between "Public" tools (Web Search, Weather) and "Private" tools (BMS, Internal Docs).
 

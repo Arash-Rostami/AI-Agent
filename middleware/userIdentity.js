@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
 import {JWT_SECRET} from '../config/index.js';
 
 const hostName = ref => {
@@ -32,6 +33,15 @@ export const identityMiddleware = (req, res, next) => {
         } catch (e) {
             userId = null;
         }
+    }
+
+    // Fully-anonymous (no JWT, no X-User-Id/?user): mint a stable anon_id so each
+    // browser is a distinct identity — saved to Mongo under a unique id, not the
+    // literal 'anonymous' bucket. Prevents two anon users sharing one history.
+    if (!userId) {
+        userId = req.cookies?.anon_id || crypto.randomUUID();
+        req.anonId = userId;
+        res.cookie('anon_id', req.anonId, {httpOnly: true, maxAge: 365 * 24 * 60 * 60 * 1000, sameSite: 'strict'});
     }
 
     const userIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();

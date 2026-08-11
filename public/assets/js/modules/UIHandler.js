@@ -217,15 +217,16 @@ export default class UIHandler {
 
     updateServiceUI(service, webSearchBtn, isWebSearchActive, toggleWebSearchCallback, thinkingModeBtn, isThinkingModeActive, toggleThinkingModeCallback) {
         const isGemini = service === 'gemini';
-        const supportsTools = isGemini || service === 'chatgpt';
+        const isSmart = service === 'gemini-smart';
+        const supportsTools = isGemini || isSmart || service === 'chatgpt';
         webSearchBtn.classList.toggle('hidden', !supportsTools);
         if (thinkingModeBtn) thinkingModeBtn.classList.toggle('hidden', !isGemini);
 
-        this.micBtn.classList.toggle('hidden', !isGemini);
+        this.micBtn.classList.toggle('hidden', !(isGemini || isSmart));
         if (!supportsTools && isWebSearchActive) toggleWebSearchCallback();
         if (!isGemini && isThinkingModeActive && toggleThinkingModeCallback) toggleThinkingModeCallback();
 
-        const supportsAttachments = service === 'gemini';
+        const supportsAttachments = isGemini || isSmart;
         this.attachmentBtn.style.display = supportsAttachments ? 'inline-block' : 'none';
         if (!supportsAttachments) this.clearFileSelection();
     }

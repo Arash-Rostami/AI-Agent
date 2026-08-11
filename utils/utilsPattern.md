@@ -2,12 +2,13 @@
 
 ## 1. Philosophy
 
-`utils/` holds the app's stateful managers — the README's "Memory-First Architecture" claim lives here, concretely, in two files that are easy to confuse by name: `conversationManager.js` (chat history — what the README actually means by "ConversationManager") and `sessionManager.js` (exports `KeySessionManager`, which remembers **which Gemini/ArvanCloud provider slot last worked for a given identity**, not chat sessions). Keep these conceptually separate when reading or extending this layer — nothing about the naming makes that obvious on its own.
+`utils/` holds the app's stateful managers — the README's "Memory-First Architecture" claim lives here, concretely, in one file whose name is easy to take at face value but isn't: `conversationManager.js` (chat history — what the README actually means by "ConversationManager"). A former sibling, `sessionManager.js` (exports `KeySessionManager`, which remembered which Gemini/ArvanCloud provider slot last worked for a given identity), is **deleted** (see §3).
 
-There are, in fact, **three unrelated things called "session" in this codebase**, none sharing storage or code:
+There are, in fact, **two unrelated things called "session" in this codebase**, none sharing storage or code:
 1. `session_id` cookie / `ConversationManager`'s in-memory Map — chat-history correlation.
 2. `jwt` cookie — login/auth, fully stateless (no server-side session record).
-3. `KeySessionManager`'s per-identity provider-slot assignment, persisted to `data/sessions.json`.
+
+A third — `KeySessionManager`'s per-identity provider-slot assignment, persisted to `data/sessions.json` — was removed with the fallback cascade (§3) and no longer exists.
 
 ## 2. `conversationManager.js` — in-memory chat state
 ```js
@@ -22,10 +23,10 @@ Both are module-level, process-local `Map`s with **no eviction logic** — they 
 
 **ETEQ mode is the one exception to "memory-first, Mongo-backed": ETEQ conversations are never persisted.** `ChatController` gates every `syncToDB` call with `if (!isEteqMode)`. An ETEQ session that outlives the process (restart, Map eviction if that's ever added) is lost permanently — not degraded, gone.
 
-## 3. `sessionManager.js` — `KeySessionManager` (per-identity provider stickiness + a global circuit breaker, unrelated to chat)
-Maps `identifier → {slot, timestamp}` (`slot` is `'primary'|'arvan'`) with a 2-hour sticky TTL, persisted to `data/sessions.json` via **synchronous** `fs.readFileSync`/`writeFileSync`. `getProviderSlot(id)` returns the last-known-working slot for that identity (or `'primary'` if none/expired); `setProviderSlot(id, slot)` is called by `services/gemini/index.js`'s `askGemini` after a slot successfully answers, so the next request from that identity starts there instead of re-trying a dead one. This is real synchronous disk I/O per request that needs a lookup — the opposite of "memory-first" for this specific concern — and has no file locking, so concurrent requests racing a read-modify-write are a real (if currently low-probability, single-process) hazard. If this app is ever scaled to multiple processes/instances, this file-backed store becomes a correctness problem, not just a performance one — it would need to move to Mongo or Redis.
+## 3. `sessionManager.js` / `data/sessions.json` — DELETED (cascade removed)
+This file is **gone**, not dormant. It used to back the Gemini free-tier fallback cascade (`getProviderSlot`/`setProviderSlot` per-identity sticky slots + `isPrimaryDown`/`markPrimaryDown` global circuit breaker), persisted to `data/sessions.json` via synchronous `fs.readFileSync`/`writeFileSync`. The cascade was removed (see [[../services/servicesPattern]] §3a — `askGemini` is now a content dispatch, no loop), and the file's only import in `services/gemini/index.js` was deleted, so both `utils/sessionManager.js` and `data/sessions.json` were removed outright (zero callers, `data/sessions.json` was gitignored). A content dispatch has nothing for a sticky slot to remember.
 
-The same class also holds `isPrimaryDown()`/`markPrimaryDown(cooldownMs)`/`clearPrimaryDown()` — an **in-memory-only, global** (not per-identity) flag `askGemini` sets when it detects Gemini's *daily* free-tier quota is exhausted, so a brand-new identity with no sticky slot of its own doesn't also have to eat one guaranteed-fail `primary` attempt before falling over. Don't confuse the two mechanisms: per-identity stickiness remembers what worked for *one caller*; the circuit breaker remembers whether a shared resource is known-broken for *everyone*, right now. See [[../services/servicesPattern]] §3a for the full fallback cascade this backs.
+If a real fallback is ever re-introduced (e.g. premium-primary → ArvanCloud-secondary), re-add a real datastore (Mongo/Redis), not the old synchronous-file approach: its hazards were synchronous disk I/O per request (opposite of "memory-first"), no file locking (read-modify-write race under concurrency), and it was not safe for horizontal scaling. Don't confuse it with chat history (`conversationManager.js`) despite the shared "session" name.
 
 ## 4. `vectorManager.js` — RAG ingestion, in-memory search
 ```js
@@ -51,10 +52,10 @@ let vectorCache = [];   // mirrors the Vector Mongo collection, rebuilt at start
 
 ## 8. Anti-patterns
 
-❌ **Don't confuse `sessionManager.js` (provider-slot stickiness) with `conversationManager.js` (chat history)** when tracing a bug that mentions "session" — check which of the three session concepts in §1 is actually implicated first.
+❌ **Don't go looking for `sessionManager.js` (provider-slot stickiness)** — it was deleted with the cascade (§3). If a bug mentions "session" today, it's one of the two remaining concepts in §1: chat history (`conversationManager.js`) or login (`jwt` cookie). The file `middleware/keySession.js` is the chat-history `session_id` setter, unrelated to the deleted manager despite the name.
 
 ❌ **Don't assume a `documents/RAG/*.txt` file is searchable from every mode.** Only BMS mode calls `searchVectors` today; a new RAG file needs `promptManager.js` changes to be reachable elsewhere.
 
 ❌ **Don't add a fourth read-side compensation for the `role: 'assistant'` vs. Mongoose-enum mismatch.** Fix it at the write side (`conversationManager.appendAndSave` or the schema) instead — see [[../models/modelsPattern]].
 
-❌ **Don't treat `KeySessionManager`'s file-backed store as production-scale-safe.** It's fine for a single process; it is not safe for horizontal scaling without a real datastore behind it.
+❌ **Don't re-add the old `KeySessionManager` file-backed store as-is.** It's fine for a single process; it is not safe for horizontal scaling without a real datastore behind it. (Deleted now — re-applies only if a future fallback re-introduces a persistent store; use Mongo/Redis, not `fs.readFileSync`/`writeFileSync`.)

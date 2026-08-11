@@ -14,13 +14,13 @@ export const BMS_API_URL = process.env.BMS_API_URL;
 export const SITE_NAME = process.env.SITE_NAME || 'AI Assistant';
 export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const GEMINI_API_URL = process.env.GEMINI_API_URL;
-// Primary key for the fallback cascade in services/gemini/index.js (GEMINI_API_KEY_ALT removed — persistent 403).
+// Native Gemini key — vision path of the Gemini option + askNativeGemini (Gemini Smart) + callSimpleGeminiAPI.
 export const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 export const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 export const GROK_API_KEY = process.env.GROK_API_KEY;
 export const ARVANCLOUD_API_KEY = process.env.ARVANCLOUD_API_KEY;
 export const ARVANCLOUD_CHATGPT_URL = process.env.ARVANCLOUD_CHATGPT_URL;
-// Last-resort fallback when both free Gemini keys fail — an ArvanCloud-hosted Gemini model.
+// ArvanCloud-hosted Gemini — the Gemini option's text/tools backend (callArvanGemini in services/gemini/index.js).
 export const ARVANCLOUD_GEMINI_URL = process.env.ARVANCLOUD_GEMINI_URL;
 // Thinking mode's backend — an ArvanCloud-hosted Gemini model, OpenAI-style, no tool-calling.
 export const ARVANCLOUD_THINKING_URL = process.env.ARVANCLOUD_THINKING_URL;

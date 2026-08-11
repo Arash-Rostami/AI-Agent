@@ -45,10 +45,10 @@ const { 'x-frame-referer': frameRef, referer: stdRef } = req.headers;
 const referer = (frameRef || stdRef || '').toLowerCase();
 
 req.isRestrictedMode = ALLOWED_ORIGINS.some(o => referer.startsWith(o));
-req.isBmsMode = referer.includes('export.communitasker.io');
+req.isBmsMode = referer.includes('export.bmsflow.org');
 req.isEteqMode = referer.includes('eteq.vercel.app');
 ```
-Three **independent** booleans, not a tiered enum. `isBmsMode`/`isEteqMode` are hardcoded hostname substring checks, computed without reference to `ALLOWED_ORIGINS` — so a request can have `isBmsMode=true` while `isRestrictedMode=false` if `export.communitasker.io` isn't also listed in `ALLOWED_ORIGINS`. This matters downstream: `authGuard.protect` and `responseHandler.handleToolCall`'s execution-time tool gate both branch on `isRestrictedMode`, not on `isBmsMode`/`isEteqMode` directly — see §5.
+Three **independent** booleans, not a tiered enum. `isBmsMode`/`isEteqMode` are hardcoded hostname substring checks, computed without reference to `ALLOWED_ORIGINS` — so a request can have `isBmsMode=true` while `isRestrictedMode=false` if `export.bmsflow.org` isn't also listed in `ALLOWED_ORIGINS`. This matters downstream: `authGuard.protect` and `responseHandler.handleToolCall`'s execution-time tool gate both branch on `isRestrictedMode`, not on `isBmsMode`/`isEteqMode` directly — see §5.
 
 ### `userIdentity.js` — `identityMiddleware`
 ```js
@@ -61,9 +61,15 @@ if (rawUserId && String(rawUserId).trim().toLowerCase() !== 'null') {
     const decoded = jwt.verify(req.cookies.jwt, JWT_SECRET);
     userId = decoded.id;                                          // direct-login identity — signed
 }
+// fully-anonymous (no JWT, no X-User-Id/?user): stable per-browser anon_id
+if (!userId) {
+    userId = req.cookies?.anon_id || crypto.randomUUID();
+    req.anonId = userId;
+    res.cookie('anon_id', req.anonId, {httpOnly:true, maxAge:365*24*60*60*1000, sameSite:'strict'});
+}
 req.keyIdentifier = userId || userIp;
 ```
-Two identity sources, and **branch (a) wins over branch (b)**: if `x-user-id`/`?user=` is present, the JWT cookie is ignored for identity purposes even for a logged-in user. Iframe identity is trusted verbatim with zero signature check — namespacing by `${refererHostname}_${rawUserId}` only prevents ID collisions across different embedding sites, it is not an authorization mechanism. Anything downstream that treats `req.userId` as proof of identity (thinking-mode rate limiting, history ownership) inherits this trust assumption for embedded traffic.
+Three identity sources, tried in order: **(a) `x-user-id`/`?user=`** wins over **(b) JWT cookie** — if the iframe header/query is present, the JWT is ignored for identity even for a logged-in user. Iframe identity is trusted verbatim with zero signature check — namespacing by `${refererHostname}_${rawUserId}` only prevents ID collisions across embedding sites, it is not an authorization mechanism. **(c) `anon_id` cookie** is the fallback when neither (a) nor (b) resolves a user: a fully-anonymous visitor (no JWT, no `?user`) gets a stable per-browser UUID minted and stored in an `httpOnly` `anon_id` cookie (1-year, `sameSite:'strict'`), set on every anon response. This is what makes a fully-anon user a *distinct, Mongo-saveable identity* instead of the old literal `'anonymous'` bucket — and it closes a latent collision in `keySession.js`'s `getActiveSession(userId)` in-memory map (two anon browsers used to share one `'anonymous'` entry → shared history). `req.anonId` is set only when this branch fired; downstream code reading `req.userId` cannot tell an anon id from a signed one — anything that treats `req.userId` as proof of identity (thinking-mode rate limiting, history ownership) inherits that trust assumption for embedded *and* anonymous traffic.
 
 ### `keySession.js` — `apiKeyMiddleware`
 ```js
@@ -80,7 +86,7 @@ if (isRootGet) res.cookie('session_id', sessionId, {httpOnly: true, maxAge: 24*6
 req.sessionId = sessionId;
 req.conversationHistory = ConversationManager.getHistory(sessionId);
 ```
-The `session_id` cookie is only **set** on `GET /` — every other route relies on the cookie already being there from the initial page load, or falls back to the in-memory `userId → sessionId` map. `req.geminiApiKey` is just the primary key now, and only `ChatController.simpleApi` still reads it — the real chat path (`ask`/`initialPrompt`) calls `services/gemini/index.js`'s `askGemini` directly with `keyIdentifier`, which owns its own two-way fallback cascade (`GEMINI_API_KEY` → an ArvanCloud Gemini model) backed by `utils/sessionManager.js`'s per-identity sticky provider slot — see [[../services/servicesPattern]] §3a. This middleware no longer does any key rotation/assignment itself.
+The `session_id` cookie is only **set** on `GET /` — every other route relies on the cookie already being there from the initial page load, or falls back to the in-memory `userId → sessionId` map. `req.geminiApiKey` is just the primary key now, and only `ChatController.simpleApi` still reads it — the real chat path (`ask`/`initialPrompt`/`askSmart`) calls `services/gemini/index.js`'s `askGemini`/`askNativeGemini` directly, which read `GEMINI_API_KEY` themselves (content dispatch, no cascade — see [[../services/servicesPattern]] §3a). This middleware no longer does any key rotation/assignment itself.
 
 ### `authGuard.js` — `protect`
 ```js

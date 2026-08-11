@@ -25,6 +25,7 @@ Routes are thin: every handler is a controller function imported and wired direc
 | GET | `` (`/`) | — | `PageController.serveIndex` | ✅ protected |
 | GET | `/initial-prompt` | — | `ChatController.initialPrompt` | ✅ protected (prefix match) |
 | POST | `/ask` | `upload.single('file')` | `ChatController.ask` | ❌ **not** protected |
+| POST | `/ask-smart` | `upload.single('file')` | `ChatController.askSmart` → `askNativeGemini` | ✅ protected (prefix match) |
 | POST | `/ask-groq` | `upload.single('file')` | `ChatController.handleAPIEndpoint(callGrokAPI, 'Groq')` | ✅ protected (prefix match) |
 | POST | `/ask-arvan` | `upload.single('file')` | `ChatController.handleAPIEndpoint(callArvanCloudAPIWithTools, 'ArvanCloud')` | ✅ protected |
 | POST | `/clear-chat` | — | `InteractionController.clearChat` | ❌ manual `req.userId` check only |
@@ -37,9 +38,9 @@ Routes are thin: every handler is a controller function imported and wired direc
 | POST | `/api/vector/sync` | — | `VectorController.syncVectors` | ❌ **no auth check anywhere**, UI-only restriction via `canSync` |
 | POST | `/api/` | — | `ChatController.simpleApi` | ❌ |
 
-All ArvanCloud model selections (currently `chatgpt`, backend model `GPT-OSS-120B-burmt`) route through the same `/ask-arvan` — disambiguated inside the request body (`model` field), not by URL, so adding a new ArvanCloud-backed model doesn't need a new route, just a new entry in `services/arvancloud/index.js`'s `MODELS` map (see [[servicesPattern]]). The Gemini fallback cascade's ArvanCloud hop (`Gemini-3.1-Flash-Lite-Preview-8dzyx`) is called internally by `services/gemini/index.js`, not through this route.
+All ArvanCloud model selections (currently `chatgpt`, backend model `GPT-OSS-120B-burmt`) route through the same `/ask-arvan` — disambiguated inside the request body (`model` field), not by URL, so adding a new ArvanCloud-backed model doesn't need a new route, just a new entry in `services/arvancloud/index.js`'s `MODELS` map (see [[servicesPattern]]). The ArvanCloud-hosted Gemini used by the Gemini option's text/tools path (`Gemini-3.1-Flash-Lite-Preview-8dzyx`, `ARVAN_GEMINI_MODEL_ID`) is called internally by `services/gemini/index.js` via `callArvanGemini` → `callArvanCloudAPIWithTools`, not through this route. The Gemini fallback cascade was removed — `askGemini` is now a content dispatch (thinking-mode → ArvanCloud thinking model; image → native `callGeminiAPI`; plain text → the ArvanCloud-hosted Gemini above), not a loop. The UI `#service-select` offers four options: **Gemini** (default → `/ask`), **GPT** (→ `/ask-arvan`), **Ollama** (→ `/ask-groq` — relabeled from "Llama"; route and backend `callGrokAPI` Groq-hosted `llama-3.1-8b-instant` are unchanged and still enabled), and **Gemini Smart** (→ `/ask-smart`, UI-disabled/greyed "coming soon" but the route exists and works).
 
-`upload.single('file')` on the four `/ask*` routes uses `middleware/uploadHandler.js`'s **memory storage with no size/type filter** — every uploaded chat attachment is buffered in RAM unbounded before the controller ever sees it.
+`upload.single('file')` on the five `/ask*` routes uses `middleware/uploadHandler.js`'s **memory storage with no size/type filter** — every uploaded chat attachment is buffered in RAM unbounded before the controller ever sees it.
 
 ## 4. Anti-patterns
 

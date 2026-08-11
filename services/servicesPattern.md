@@ -2,22 +2,22 @@
 
 ## 1. Philosophy
 
-Three LLM providers (Gemini, Groq, ArvanCloud) live side by side with **no shared interface**. Each `services/{provider}/index.js` exports a differently-shaped function; the only reconciliation point is `ChatController.handleAPIEndpoint`, which special-cases ArvanCloud's extra `model`/`fileData` args (see [[../controllers/controllersPattern]]). **Two of the three now support tool-calling**: Gemini natively, and ArvanCloud (GPT-OSS-120B, plus the Gemini-fallback hop) via a parallel OpenAI-style tool-calling loop that reuses Gemini's exact tool definitions and mode-gating rules — see §3b. Groq remains a plain single-turn completion with no tools at all. Don't assume "non-Gemini = no tools" anymore; check §3b before treating ArvanCloud as a dumb passthrough.
+Three LLM providers (Gemini, Groq, ArvanCloud) live side by side with **no shared interface**. Each `services/{provider}/index.js` exports a differently-shaped function; the only reconciliation point is `ChatController.handleAPIEndpoint`, which special-cases ArvanCloud's extra `model`/`fileData` args (see [[../controllers/controllersPattern]]). **Two of the three now support tool-calling**: Gemini natively, and ArvanCloud (GPT-OSS-120B, plus the ArvanCloud-hosted Gemini used by the Gemini option's text path) via a parallel OpenAI-style tool-calling loop that reuses Gemini's exact tool definitions and mode-gating rules — see §3b. Groq (the "Ollama" option) remains a plain single-turn completion with no tools at all. Don't assume "non-Gemini = no tools" anymore; check §3b before treating ArvanCloud as a dumb passthrough.
 
-> **Removed:** OpenRouter, and the old `GPT-4o-mini-4193n`/`DeepSeek-Chat-V3-0324-mbxyd` ArvanCloud models, are gone. ArvanCloud now serves three models: `GPT-OSS-120B-burmt` (the "ChatGPT" option), `Gemini-3.1-Flash-Lite-Preview-8dzyx` (the Gemini fallback cascade's last hop), and `Gemini-3-Flash-Preview-kc6io` (Thinking mode's backend). **None are vision-capable** — see §2. None are user-selectable except ChatGPT; the two Gemini-named ones are internal-only.
+> **Removed:** OpenRouter, and the old `GPT-4o-mini-4193n`/`DeepSeek-Chat-V3-0324-mbxyd` ArvanCloud models, are gone. ArvanCloud now serves three models: `GPT-OSS-120B-burmt` (the "GPT" option), `Gemini-3.1-Flash-Lite-Preview-8dzyx` (the Gemini option's text/tools backend), and `Gemini-3-Flash-Preview-kc6io` (Thinking mode's backend). **None are vision-capable** — see §2. Only GPT is directly user-selectable; the two Gemini-named ones back the Gemini option / Thinking mode.
 
 ```
 services/
 ├── gemini/
-│   ├── index.js         # callGeminiAPI (single-attempt primitive) + askGemini (the real entry point — owns the fallback cascade + Thinking mode)
+│   ├── index.js         # callGeminiAPI (native single-attempt primitive) + askGemini (Gemini option — content dispatch, no cascade) + askNativeGemini (Gemini Smart option) + callArvanGemini/callArvanThinkingAPI (internal)
 │   ├── formatter.js       # shapes conversationHistory into Gemini's `contents`; getAllowedTools (offer-layer) + isToolExecutionAllowed (execution-layer) — shared with ArvanCloud
 │   ├── permissions.js      # scans history for "you may proceed" affirmations to auto-relax restricted mode
 │   ├── responseHandler.js   # dispatches text vs functionCall responses; owns the tool-call → follow-up loop
 │   ├── toolHandler.js       # maps named args → each tool fn's positional args; executes — shared with ArvanCloud
-│   └── errorHandler.js       # classifies a failure (timeout/quota/leaked-key/other) — does not retry itself
-├── groq/index.js      # single function, groq-sdk client, no tools
+│   └── errorHandler.js       # logs errors only (classify removed with the cascade)
+├── groq/index.js      # single function, groq-sdk client, no tools (the "Ollama" option)
 ├── arvancloud/
-│   ├── index.js        # chat completions for all three models; callArvanCloudAPIWithTools adds tool-calling (GPT-OSS-120B + the Gemini fallback hop)
+│   ├── index.js        # chat completions for all three models; callArvanCloudAPIWithTools adds tool-calling (GPT-OSS-120B + the Gemini option's text path)
 │   └── embeddings.js    # separate: RAG embedding generation, used by utils/vectorManager.js
 ├── bmsTool.js / emailTool.js / timeTool.js / weatherTool.js / webCrawlerTool.js / webSearchTool.js / persolBSDocumentTool.js
 │                       # tool implementations — plain positional-arg functions, called from both Gemini's and ArvanCloud's tool loops
@@ -33,27 +33,34 @@ tools/
 ## 2. Provider signatures — memorize these before wiring a new call site
 
 ```js
-// Gemini — what ChatController actually calls. Owns the free-tier fallback cascade
-// (GEMINI_API_KEY -> GEMINI_API_KEY_ALT -> ArvanCloud Gemini) and the Thinking-mode
-// short-circuit (fixed GEMINI_API_KEY_PREMIUM key, no cascade). See §3.
+// Gemini option — what ChatController.ask/initialPrompt call. A content dispatch, NOT a loop:
+//   useThinkingMode -> callArvanThinkingAPI (ArvanCloud thinking model, tool-less)
+//   fileData        -> native callGeminiAPI (vision; free-tier key, 429s today until premium key)
+//   otherwise       -> callArvanGemini (ArvanCloud-hosted Gemini, tool-calling). See §3a.
 askGemini(message, conversationHistory, keyIdentifier, isRestrictedMode, useWebSearch,
           isBmsMode, fileData, customSystemInstruction, useThinkingMode, isEteqMode)
 // → { text, sources }
 
-// callGeminiAPI — the single-attempt Gemini-native primitive askGemini calls per hop.
+// Gemini Smart option (UI disabled until premium key) — pure native Gemini, vision + tools, no thinking.
+// Reached via POST /ask-smart -> ChatController.askSmart.
+askNativeGemini(message, conversationHistory, keyIdentifier, isRestrictedMode, useWebSearch,
+                isBmsMode, fileData, customSystemInstruction, isEteqMode)
+// → { text, sources }
+
+// callGeminiAPI — the native single-attempt Gemini primitive askGemini/askNativeGemini call.
 // Also reused unmodified by responseHandler.js's tool-call follow-up recursion. Frozen
 // at 11 positional params — see §3 Step 5's argument-count bug before adding a 12th.
 callGeminiAPI(message, conversationHistory, apiKey, isRestrictedMode, useWebSearch,
               keyIdentifier, isBmsMode, fileData, customSystemInstruction, useThinkingMode, isEteqMode)
 // → { text, sources }
 
-// Groq — 3-arg shape, no tools
+// Groq — 3-arg shape, no tools (the "Ollama" option)
 callGrokAPI(message, conversationHistory, customSystemInstruction)          // → string
 
 // ArvanCloud, plain — no tools, backward-compatible shape for simple callers
 callArvanCloudAPI(message, conversationHistory, model, fileData, customSystemInstruction, timeoutMs) // → string
 
-// ArvanCloud, tool-calling — used for the ChatGPT dropdown option and the Gemini cascade's 'arvan' hop
+// ArvanCloud, tool-calling — used for the GPT option and the Gemini option's text path (callArvanGemini)
 callArvanCloudAPIWithTools(message, conversationHistory, model, fileData, customSystemInstruction,
                             {isRestrictedMode, useWebSearch, isBmsMode, isEteqMode, timeoutMs})
 // → { text, sources }
@@ -139,39 +146,32 @@ nextResponse = await callGeminiAPI(
 ```
 **This used to pass 12 arguments into the 11-parameter signature** — position 8 (`fileData`) got a duplicate `isBmsMode` boolean instead of `null`, and position 11 (`isEteqMode`) got a hardcoded `false` (the real value silently dropped as the 12th arg). When `isBmsMode` was `true`, `formatContents` (`formatter.js`) read that truthy boolean via `if (fileData)` and pushed a malformed `inlineData: {mimeType: undefined, data: undefined}` into the request — Gemini's API would reject it, throwing, which `handleToolCall`'s catch turned into the generic *"I executed the requested tool but failed to produce a follow-up explanation"* message. This is what was breaking tool calls (including `sendEmail`) in BMS-mode conversations. Fixed — verified live by reproducing the exact `isBmsMode: true` + tool-call scenario post-fix. If you're adding a new recursive `callGeminiAPI` call anywhere, count your arguments against the 11-param signature before shipping.
 
-### Step 6 — failure classification (`errorHandler.js`) — classifies only, never retries
+### Step 6 — error logging (`errorHandler.js`)
+`callGeminiAPI` has no try/catch — a thrown error propagates straight to its caller. `errorHandler.logError(context, error)` just logs the response body / message; the old `classify()` (timeout/quota/leaked-key classification that drove the now-removed cascade) was deleted with the cascade. `responseHandler.js`'s tool-call follow-up recursion still catches its own `callGeminiAPI` call independently (see Step 5).
+
+## 3a. `askGemini` — the Gemini option's content dispatch (no cascade)
+
+`ChatController.ask`/`initialPrompt` call `askGemini`, not `callGeminiAPI` directly. **There is no fallback loop anymore** — the old free-tier cascade (`GEMINI_API_KEY` → ArvanCloud-hosted Gemini, with per-identity sticky slots + a global circuit breaker) was removed because the free-tier daily quota kept exhausting and the loop was unwanted; a premium key is coming. `askGemini` is now a 3-way content dispatch:
+
 ```js
-export function classify(error) {
-    // ...
-    return {status, isTimeout, isQuotaExceeded, isLeakedKey, failoverEligible};
-}
+if (useThinkingMode) return callArvanThinkingAPI(message, conversationHistory, customSystemInstruction);
+if (fileData)        return callGeminiAPI(..., GEMINI_API_KEY, ..., fileData, ...);   // native vision
+return                     callArvanGemini(message, conversationHistory, customSystemInstruction, ...); // ArvanCloud Gemini text/tools
 ```
-`callGeminiAPI` itself has no try/catch anymore — a thrown error propagates straight to its caller. `errorHandler.classify` just answers "what kind of failure was this"; only `askGemini`'s cascade loop (§3a) decides whether that justifies moving to the next provider. `responseHandler.js`'s tool-call follow-up recursion still catches its own `callGeminiAPI` call independently (unrelated to this — see Step 5).
 
-## 3a. The free-tier fallback cascade (`askGemini`) — the real entry point
+1. **Thinking mode** — short-circuits, no native call: `callArvanThinkingAPI` posts to ArvanCloud's `ARVAN_THINKING_MODEL_ID` (`Gemini-3-Flash-Preview-kc6io`) via the **plain** `callArvanCloudAPI` (no tools) — **not** `callGeminiAPI`. This is deliberate: ArvanCloud's gateway speaks OpenAI-style chat completions (`messages`, `Authorization: apikey`), while native Gemini speaks Google's own REST shape (`contents`/`tools`/`systemInstruction`, `?key=` query auth) — structurally incompatible, so Thinking mode cannot just point `callGeminiAPI` at a different URL. Deliberately tool-less and file-less. If you want Thinking mode to gain tools, switch it to `callArvanCloudAPIWithTools` (see §3b). Thinking mode's only config is `ARVANCLOUD_THINKING_URL` + the shared `ARVANCLOUD_API_KEY`.
+2. **Image attachment** (`fileData` set, no thinking) → native `callGeminiAPI` with `GEMINI_API_KEY` — the **only** path that touches the free-tier key today, so image attachments 429 until the premium key lands. This is why vision lives on the native path, not on ArvanCloud: `services/arvancloud/index.js`'s `VISION_CAPABLE_MODELS` is empty, and routing images through ArvanCloud would drop `fileData`.
+3. **Plain text** → `callArvanGemini` → `callArvanCloudAPIWithTools(..., ARVAN_GEMINI_MODEL_ID, null, customSystemInstruction, {isRestrictedMode, useWebSearch, isBmsMode, isEteqMode})`. Tool-calling-capable (`sendEmail`, weather, BMS lookup, web search, etc.) with the same mode-gating Gemini applies — see §3b. **No file/vision on this path** (fileData is the dispatch key, not forwarded here). Default 60s timeout (no per-slot timeout budget anymore).
 
-`ChatController.ask`/`initialPrompt` call `askGemini`, not `callGeminiAPI` directly. `askGemini` owns two independent things:
+`THINKING_MODE_ENABLED = true` — **enabled**. `ChatController.ask` checks the flag defensively before spending a quota credit via `manageThinkingMode` (capped at `THINKING_MODE_DAILY_LIMIT = 3`/24h per user), and the UI (`#thinking-mode-btn`, `#mobile-thinking-mode-toggle`) shows only for the Gemini service (`UIHandler.updateServiceUI`'s `isGemini` check — not for Gemini Smart, not for GPT/Ollama). Because Thinking mode has no tool/file support, `ChatHandler.toggleThinkingMode` also **hides and clears** Web Search, the attachment button, and the mic button whenever Thinking is toggled on.
 
-**Thinking mode** — short-circuits immediately, no cascade, no fallback: if `useThinkingMode`, it calls `callArvanThinkingAPI`, which posts to ArvanCloud's `ARVAN_THINKING_MODEL_ID` (`Gemini-3-Flash-Preview-kc6io`) via the **plain** `callArvanCloudAPI` (no tools) — **not** `callGeminiAPI`. This is deliberate, not an oversight: ArvanCloud's gateway speaks OpenAI-style chat completions (`messages`, `Authorization: apikey`), while native Gemini speaks Google's own REST shape (`contents`/`tools`/`systemInstruction`, `?key=` query auth) — the two are structurally incompatible, so Thinking mode cannot just point `callGeminiAPI` at a different URL. Deliberately kept tool-less and file-less (unlike the `'arvan'` cascade hop and the ChatGPT option, which both got tool-calling — see §3b) — if you want Thinking mode to gain tools too, switch it to `callArvanCloudAPIWithTools`. `GEMINI_API_KEY_PREMIUM`/`GEMINI_API_URL_THINKING` are no longer read anywhere in code (removed from `config/index.js`'s exports) — Thinking mode's only remaining config is `ARVANCLOUD_THINKING_URL` + the shared `ARVANCLOUD_API_KEY`.
+### `askNativeGemini` — the Gemini Smart option (UI disabled until premium)
 
-`THINKING_MODE_ENABLED = true` (`services/gemini/index.js`) — **enabled**. `ChatController.ask` still checks the flag defensively before spending a quota credit via `manageThinkingMode` (capped at `THINKING_MODE_DAILY_LIMIT = 3`/24h per user), and the UI (`#thinking-mode-btn`, `#mobile-thinking-mode-toggle`) shows/hides with the Gemini service selection exactly like the Web Search button (`UIHandler.updateServiceUI`'s `isGemini` check). Because Thinking mode has no tool/file support, `ChatHandler.toggleThinkingMode` also **hides and clears** Web Search, the attachment button, and the mic button whenever Thinking is toggled on (and force-disables Web Search if it was already active) — so the UI never offers a control that would silently no-op.
+`ChatController.askSmart` (route `POST /ask-smart`) calls `askNativeGemini`, which calls native `callGeminiAPI` with `GEMINI_API_KEY` — pure native Gemini, vision + tools, **no thinking mode**. This is the premium-ready path: today it 429s on the free tier, so the `#service-select` option `gemini-smart` is `disabled` with a "coming soon" tooltip. Enable the option (remove the `disabled` attribute in `public/index.html`) once the premium key is in. `askSmart` mirrors `ask` but drops `useThinkingMode`/`manageThinkingMode` and responds `{reply, sources, sessionId}` (no `thinkingModeUsage`).
 
-**The cascade** (everything else):
-```js
-const PROVIDER_ORDER = ['primary', 'arvan'];
-const PROVIDER_KEYS = {primary: GEMINI_API_KEY};
-const FALLBACK_TIMEOUT_MS = 10000;
-```
-1. Look up the caller's last-known-working slot via `sessionManager.getProviderSlot(keyIdentifier)` (default `'primary'`), rotate `PROVIDER_ORDER` to start there, and drop any slot whose key isn't configured **or whose global circuit breaker is tripped** (`isSlotConfigured`, which now also checks `sessionManager.isPrimaryDown()`).
-2. Try each slot in order. `'primary'` calls `callGeminiAPI` (full Gemini-native request — tools, RAG-augmented system prompt, everything); `'arvan'` calls `callArvanGeminiFallback`, which now calls `callArvanCloudAPIWithTools(..., ARVAN_GEMINI_MODEL_ID, null, ..., {isRestrictedMode, useWebSearch, isBmsMode, isEteqMode})` — see §3b. **Still no file/vision support on this hop** (fileData is never forwarded), but tool actions (`sendEmail`, weather, BMS lookup, web search, etc.) now work on the fallback too, with the same mode-gating Gemini applies.
-3. Each attempt is wrapped in `withTimeout(attempt, timeoutMs, label)` — a `Promise.race` against a timer, **not** a true `AbortController` cancellation (the original request isn't killed, just no longer awaited; a late response is silently discarded). This exists specifically so `callGeminiAPI`'s signature never needs a `timeoutMs` parameter — see the note in §2 about why a 12th positional param would corrupt the Step 5 bug. **The timeout differs per slot**: `primary` gets `PRIMARY_TIMEOUT_MS = 10000` (fast discovery — a real 429/leak is near-instant, so 10s is plenty and keeps failover snappy); `arvan` gets `ARVAN_TIMEOUT_MS = 30000`. This split exists because of a **real, confirmed bug**: with both hops sharing one 10s budget, a genuinely-working tool call on the `arvan` hop (e.g. `sendEmail` — LLM round trip + an actual SMTP send + a follow-up LLM call to confirm) could exceed 10s and get killed by the timeout even though the email had already sent — and since `arvan` is the *last* hop, that timeout was a hard, unrecoverable failure with no further fallback. Verified live both ways: failed at 10s, succeeded at ~11.3s once the budget was raised to 30s. If you ever add a third hop after `arvan`, don't assume `ARVAN_TIMEOUT_MS` transfers — reason about that hop's actual worst-case latency.
-4. On success: `sessionManager.setProviderSlot(keyIdentifier, slot)` persists the winner, then return.
-5. On failure: `errorHandler.classify(error)`. If `failoverEligible` is `false` (a real error — bad request, malformed response, missing-key config error, or a `403` that isn't the literal "reported as leaked" text) it's rethrown **immediately**, no further hops attempted — the cascade only continues past **timeout, 429, or leaked-key** errors. If eligible, log a warning and move to the next slot.
-6. All slots exhausted → throw the last error.
+### Removed with the cascade (do not re-introduce lightly)
 
-This means two independent iframe users hitting a quota-exhausted `GEMINI_API_KEY` fail over **independently** (each identity has its own sticky slot in `data/sessions.json`) — one user's failure doesn't affect another's starting slot.
-
-**Global circuit breaker for a known-dead primary** (`sessionManager.isPrimaryDown()`/`markPrimaryDown()`/`clearPrimaryDown()`, in-memory only, not persisted): the per-identity sticky slot above only helps an identity that has *already* failed over once — a brand-new identity would still try the doomed `primary` and eat a guaranteed failure first. When `errorHandler.classify()` detects the `primary` failure was specifically a **daily** quota exhaustion (`isDailyQuotaExceeded` — checks the error's `quotaId` for `PerDay`, not just any 429), `askGemini` calls `sessionManager.markPrimaryDown(PRIMARY_DOWN_COOLDOWN_MS)` (15 minutes), and `isSlotConfigured('primary')` then filters `primary` out of the rotation entirely for **every** identity until the cooldown expires — zero wasted calls, zero added latency, invisible to the user. Verified live: a second, unrelated identity's very next request skipped `primary` with no attempt/error logged at all and went straight to `arvan`, ~1.8s faster than the first request that discovered the outage. Don't confuse this with the per-identity sticky slot — one is per-caller memory of "what worked last for you," the other is global memory of "is this resource known-broken for everyone right now."
+`PROVIDER_ORDER`, `PROVIDER_KEYS`, `PRIMARY_TIMEOUT_MS`/`ARVAN_TIMEOUT_MS`/`PRIMARY_DOWN_COOLDOWN_MS`, `rotateToStart`, `isSlotConfigured`, `withTimeout`, `callArvanGeminiFallback` (renamed `callArvanGemini`), and `errorHandler.classify` are all gone. `utils/sessionManager.js` (`KeySessionManager`) and `data/sessions.json` are **deleted entirely** — their only import was removed, so they had zero callers and were deleted (filesystem + gitignored `data/sessions.json`). Re-introduce a real datastore (Mongo/Redis) only if a real fallback (e.g. premium-primary → ArvanCloud-secondary) is ever re-added; a content dispatch has nothing for a sticky slot to remember.
 
 ## 3b. ArvanCloud tool-calling (`callArvanCloudAPIWithTools`)
 
@@ -184,7 +184,7 @@ Reuses Gemini's tool definitions and gating rules rather than duplicating them �
 
 **A real bug found and fixed here**: GPT-OSS-120B is trained on OpenAI's "harmony" multi-channel response format. When it wants a tool that wasn't offered (e.g. every tool stripped by restricted-mode gating with no BMS/ETEQ/web-search match), it can emit a raw, unparsed channel/tool-call attempt as plain text instead of declining — e.g. `<|start|>assistant<|channel|>commentary to=web_getCurrentWeather<|constrain|>json<|message|>{...}<|call|>`. `stripHarmonyArtifacts()` in `services/arvancloud/index.js` detects the `<|` marker and drops everything from there onward, falling back to *"I'm not able to perform that action in this mode."* if nothing legitimate is left. Applied to **both** `callArvanCloudAPI` and `callArvanCloudAPIWithTools`'s content extraction — verified live, reproduced consistently before the fix, clean after.
 
-Wired into: the ChatGPT dropdown option (`ChatController.handleAPIEndpoint`, routed via `routes/web.js`'s `callArvanCloudAPIWithTools` injection) and the free-tier cascade's `'arvan'` hop (§3a). **Not** wired into Thinking mode (`callArvanThinkingAPI` deliberately still uses the plain, tool-less `callArvanCloudAPI`) or Groq (no tool mechanism exists for it at all).
+Wired into: the GPT dropdown option (`ChatController.handleAPIEndpoint`, routed via `routes/web.js`'s `callArvanCloudAPIWithTools` injection) and the Gemini option's text path (`callArvanGemini` in `services/gemini/index.js` — §3a). **Not** wired into Thinking mode (`callArvanThinkingAPI` deliberately still uses the plain, tool-less `callArvanCloudAPI`), the Gemini Smart option (`askNativeGemini` uses native Gemini directly), or Groq (no tool mechanism exists for it at all).
 
 ## 4. Adding a new tool — the full checklist
 
@@ -219,8 +219,8 @@ Wired into: the ChatGPT dropdown option (`ChatController.handleAPIEndpoint`, rou
 
 ❌ **Don't assume ArvanCloud's `content` field is always clean user-facing text.** GPT-OSS-120B can leak raw "harmony" format tokens (`<|channel|>...<|call|>`) when it wants a tool it wasn't given — `stripHarmonyArtifacts()` handles the known case, but if you see a response with `<|` in it, that's this issue, not new model output to trust.
 
-❌ **Don't call `callGeminiAPI` directly from a controller.** Call `askGemini` — it's the one that applies the fallback cascade and persists the winning provider slot. `callGeminiAPI` is a low-level primitive meant to be called per-hop (by `askGemini`) or for the tool-call follow-up (by `responseHandler.js`), not as a chat entry point.
+❌ **Don't call `callGeminiAPI` directly from a controller.** Call `askGemini` (Gemini option) or `askNativeGemini` (Gemini Smart, via `ChatController.askSmart`) — they're the chat entry points. `callGeminiAPI` is a low-level primitive meant to be called per-dispatch (by `askGemini`/`askNativeGemini`) or for the tool-call follow-up (by `responseHandler.js`), not as a chat entry point.
 
-❌ **Don't add a `timeoutMs` (or any 12th) positional parameter to `callGeminiAPI`.** See §2 — `responseHandler.js`'s follow-up recursion already overflows the 11-param signature by one; a 12th parameter would catch that overflowing argument instead of dropping it, corrupting whatever the new parameter controls. Use `withTimeout()` externally instead, as `askGemini` does.
+❌ **Don't add a `timeoutMs` (or any 12th) positional parameter to `callGeminiAPI`.** See §2 — `responseHandler.js`'s follow-up recursion already overflows the 11-param signature by one; a 12th parameter would catch that overflowing argument instead of dropping it, corrupting whatever the new parameter controls. Pass any timeout through the axios `timeout` config inside `callGeminiAPI` instead.
 
-❌ **Don't put `GEMINI_API_KEY_PREMIUM` in `PROVIDER_KEYS` or `PROVIDER_ORDER`.** It's reserved for Thinking mode exclusively — mixing it into the free-tier cascade defeats the point of having a dedicated key for that feature.
+❌ **Don't re-add a fallback loop into `askGemini`.** The cascade (`PROVIDER_ORDER`/`PROVIDER_KEYS`/`withTimeout`/sticky slots/circuit breaker) was deliberately removed; `askGemini` is a content dispatch now (§3a). If a premium-primary → ArvanCloud-secondary fallback is ever genuinely needed, re-introduce a real datastore (Mongo/Redis) deliberately rather than bolting an ad-hoc loop (or the old `fs`-backed `KeySessionManager`) back in.
